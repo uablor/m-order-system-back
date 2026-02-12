@@ -1,27 +1,21 @@
 import 'dotenv/config';
+import { join } from 'path';
 import { DataSource } from 'typeorm';
 
-const type = (process.env.DB_TYPE as 'mysql' | 'postgres') ?? 'mysql';
-
 export const AppDataSource = new DataSource({
-  type,
+  type: 'mysql',
   host: process.env.DB_HOST ?? 'localhost',
-  port: parseInt(
-    process.env.DB_PORT ?? (type === 'postgres' ? '5432' : '3306'),
-    10,
-  ),
-  username:
-    process.env.DB_USERNAME ?? (type === 'postgres' ? 'postgres' : 'root'),
+  port: Number(process.env.DB_PORT ?? 3306),
+  username: process.env.DB_USERNAME ?? 'root',
   password: process.env.DB_PASSWORD ?? '',
-  database: process.env.DB_DATABASE ?? 'm_order_system',
-  migrations: [
-    __dirname + '/migrations/*.ts',
-    __dirname + '/migrations/*.js',
+  database: process.env.DB_NAME ?? process.env.DB_DATABASE ?? 'm_order_system',
+  // src/common/database/typeorm/*.ts
+  entities: [
+    join(__dirname, '../common/base/base.orm-entities.ts'),
+    join(__dirname, '../modules/**/*.orm-entity.{ts,js}'),
   ],
-  migrationsTableName: 'typeorm_migrations',
-  migrationsRun: false,
-  synchronize: false,
+  synchronize: false, // ปิดใน production
   logging: process.env.DB_LOGGING === 'true',
+  migrationsTableName: 'migrations',
+  migrations: [join(__dirname, 'migrations', '*.{ts,js}')],
 });
-
-export default AppDataSource;

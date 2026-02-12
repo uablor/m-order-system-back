@@ -11,7 +11,7 @@ export class RolePermissionQueryRepository {
     private readonly repository: Repository<RolePermissionOrmEntity>,
   ) {}
 
-  async findPermissionsByRoleId(roleId: string): Promise<PermissionOrmEntity[]> {
+  async findPermissionsByRoleId(roleId: number): Promise<PermissionOrmEntity[]> {
     const rows = await this.repository.find({
       where: { roleId },
       relations: ['permission'],

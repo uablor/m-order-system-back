@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, ParseUUIDPipe, Patch, Post, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, Query, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiParam, ApiBearerAuth } from '@nestjs/swagger';
 import { BaseController } from '../../../common/base/base.controller';
 import { PermissionCommandService } from '../services/permission-command.service';
@@ -60,10 +60,10 @@ export class PermissionController extends BaseController<
 
   @Get(':id')
   @ApiOperation({ summary: 'Get permission by ID' })
-  @ApiParam({ name: 'id', format: 'uuid' })
+  @ApiParam({ name: 'id', description: 'Permission ID' })
   @ApiOkResponseBase(PermissionResponseDto)
   @ApiNotFoundBase()
-  async getById(@Param('id', ParseUUIDPipe) id: string) {
+  async getById(@Param('id', ParseIntPipe) id: number) {
     return this.queryService.getById(id);
   }
 
@@ -76,19 +76,19 @@ export class PermissionController extends BaseController<
 
   @Patch(':id')
   @ApiOperation({ summary: 'Update permission' })
-  @ApiParam({ name: 'id', format: 'uuid' })
+  @ApiParam({ name: 'id', description: 'Permission ID' })
   @ApiOkResponseBase()
   @ApiBadRequestBase()
   @ApiNotFoundBase()
-  async update(@Param('id', ParseUUIDPipe) id: string, @Body() dto: PermissionUpdateDto) {
+  async update(@Param('id', ParseIntPipe) id: number, @Body() dto: PermissionUpdateDto) {
     return this.commandService.update(id, dto);
   }
 
   @Delete(':id')
   @ApiOperation({ summary: 'Delete permission' })
-  @ApiParam({ name: 'id', format: 'uuid' })
+  @ApiParam({ name: 'id', description: 'Permission ID' })
   @ApiNotFoundBase()
-  async delete(@Param('id', ParseUUIDPipe) id: string) {
+  async delete(@Param('id', ParseIntPipe) id: number) {
     return this.commandService.delete(id);
   }
 }

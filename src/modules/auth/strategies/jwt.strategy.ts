@@ -6,9 +6,9 @@ import type { CurrentUserPayload } from '../../../common/decorators/current-user
 import { UserQueryService } from '../../users/services/user-query.service';
 
 export interface JwtPayload {
-  userId: string;
+  userId: number;
   email: string;
-  roleId: string;
+  roleId: number;
   roleName?: string;
   iat?: number;
   exp?: number;

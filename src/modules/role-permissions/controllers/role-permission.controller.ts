@@ -4,7 +4,7 @@ import {
   Delete,
   Get,
   Param,
-  ParseUUIDPipe,
+  ParseIntPipe,
   Post,
   UseGuards,
 } from '@nestjs/common';
@@ -47,21 +47,21 @@ export class RolePermissionController {
 
   @Delete(':roleId/:permissionId')
   @ApiOperation({ summary: 'Unassign permission from role' })
-  @ApiParam({ name: 'roleId', format: 'uuid' })
-  @ApiParam({ name: 'permissionId', format: 'uuid' })
+  @ApiParam({ name: 'roleId', description: 'Role ID' })
+  @ApiParam({ name: 'permissionId', description: 'Permission ID' })
   @ApiNotFoundBase()
   async unassign(
-    @Param('roleId', ParseUUIDPipe) roleId: string,
-    @Param('permissionId', ParseUUIDPipe) permissionId: string,
+    @Param('roleId', ParseIntPipe) roleId: number,
+    @Param('permissionId', ParseIntPipe) permissionId: number,
   ) {
     await this.commandService.unassign(roleId, permissionId);
   }
 
   @Get('role/:roleId')
   @ApiOperation({ summary: 'List permissions by role ID' })
-  @ApiParam({ name: 'roleId', format: 'uuid' })
+  @ApiParam({ name: 'roleId', description: 'Role ID' })
   @ApiOkResponseBase()
-  async getByRoleId(@Param('roleId', ParseUUIDPipe) roleId: string) {
+  async getByRoleId(@Param('roleId', ParseIntPipe) roleId: number) {
     return this.queryService.getPermissionsByRoleId(roleId);
   }
 }

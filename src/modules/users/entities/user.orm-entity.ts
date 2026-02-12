@@ -8,7 +8,7 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 import { RoleOrmEntity } from '../../roles/entities/role.orm-entity';
-import { BaseOrmEntity } from 'src/common/base/base.orm-entities';
+import { BaseOrmEntity } from '../../../common/base/base.orm-entities';
 
 @Entity('users')
 export class UserOrmEntity extends BaseOrmEntity {

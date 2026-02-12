@@ -13,7 +13,7 @@ export class RolePermissionCommandService {
     private readonly transactionService: TransactionService,
   ) {}
 
-  async assign(roleId: string, permissionId: string): Promise<void> {
+  async assign(roleId: number, permissionId: number): Promise<void> {
     await this.transactionService.run(async (manager) => {
       const role = await this.roleRepository.findOneById(roleId, manager);
       if (!role) throw new NotFoundException('Role not found');
@@ -25,7 +25,7 @@ export class RolePermissionCommandService {
     });
   }
 
-  async unassign(roleId: string, permissionId: string): Promise<void> {
+  async unassign(roleId: number, permissionId: number): Promise<void> {
     await this.transactionService.run(async (manager) => {
       const removed = await this.rolePermissionRepository.remove(roleId, permissionId, manager);
       if (!removed) {

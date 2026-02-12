@@ -6,7 +6,7 @@ import { PermissionResponseDto } from '../../permissions/dto/permission-response
 export class RolePermissionQueryService {
   constructor(private readonly rolePermissionQueryRepository: RolePermissionQueryRepository) {}
 
-  async getPermissionsByRoleId(roleId: string): Promise<PermissionResponseDto[]> {
+  async getPermissionsByRoleId(roleId: number): Promise<PermissionResponseDto[]> {
     const permissions = await this.rolePermissionQueryRepository.findPermissionsByRoleId(roleId);
     return permissions.map((p) => ({
       id: p.id,

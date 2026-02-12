@@ -49,6 +49,10 @@ $ pnpm run start:prod
 Migrations live in `src/database/migrations/`. Use the same `.env` as the app (e.g. `DB_HOST`, `DB_PORT`, `DB_USERNAME`, `DB_PASSWORD`, `DB_DATABASE`). Optional: `DB_TYPE` = `mysql` (default) or `postgres`.
 
 ```bash
+# Generate a new migration from entity changes (optional: pass name, e.g. AddUserTable)
+pnpm run migration:generate
+pnpm run migration:generate -- AddUserTable
+
 # Run all pending migrations (programmatic)
 pnpm run migration:run
 
@@ -59,6 +63,7 @@ pnpm run migration:revert
 Alternatively, with TypeORM CLI (requires `typeorm-ts-node-commonjs` or running from compiled `dist`):
 
 ```bash
+pnpm run migration:generate
 pnpm run migration:run:cli
 pnpm run migration:revert:cli
 ```

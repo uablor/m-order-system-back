@@ -1,15 +1,4 @@
-import {
-  Body,
-  Delete,
-  Get,
-  HttpCode,
-  HttpStatus,
-  Param,
-  ParseUUIDPipe,
-  Patch,
-  Post,
-  Query,
-} from '@nestjs/common';
+import { Body, Delete, Get, HttpCode, HttpStatus, Param, Patch, Post, Query } from '@nestjs/common';
 import { BaseCommandService } from './base-command.service';
 import { BaseQueryService } from './base-query.service';
 

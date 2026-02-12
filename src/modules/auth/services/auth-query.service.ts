@@ -6,7 +6,7 @@ import type { AuthUserDto } from '../dto/auth-response.dto';
 export class AuthQueryService {
   constructor(private readonly userQueryService: UserQueryService) {}
 
-  async getProfile(userId: string): Promise<AuthUserDto> {
+  async getProfile(userId: number): Promise<AuthUserDto> {
     const user = await this.userQueryService.getByIdOrFail(userId);
     return {
       userId: user.id,

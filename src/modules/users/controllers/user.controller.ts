@@ -6,7 +6,7 @@ import {
   HttpCode,
   HttpStatus,
   Param,
-  ParseUUIDPipe,
+  ParseIntPipe,
   Patch,
   Post,
   Query,
@@ -58,10 +58,10 @@ export class UserController extends BaseController<
 
   @Get(':id')
   @ApiOperation({ summary: 'Get user by ID' })
-  @ApiParam({ name: 'id', format: 'uuid' })
+  @ApiParam({ name: 'id', description: 'User ID' })
   @ApiOkResponseBase(UserResponseDto)
   @ApiNotFoundBase()
-  async getById(@Param('id', ParseUUIDPipe) id: string) {
+  async getById(@Param('id', ParseIntPipe) id: number) {
     return this.queryService.getById(id);
   }
 
@@ -75,14 +75,14 @@ export class UserController extends BaseController<
   @Patch(':id')
   @ApiOperation({ summary: 'Update user (self or ADMIN)' })
   @ApiBearerAuth('BearerAuth')
-  @ApiParam({ name: 'id', format: 'uuid' })
+  @ApiParam({ name: 'id', description: 'User ID' })
   @ApiOkResponseBase()
   @ApiBadRequestBase()
   @ApiNotFoundBase()
   @ApiUnauthorizedBase()
   @ApiForbiddenBase()
   async update(
-    @Param('id', ParseUUIDPipe) id: string,
+    @Param('id', ParseIntPipe) id: number,
     @Body() dto: UserUpdateDto,
     @CurrentUser() currentUser?: CurrentUserPayload,
   ) {
@@ -96,12 +96,12 @@ export class UserController extends BaseController<
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Delete user (self or ADMIN)' })
   @ApiBearerAuth('BearerAuth')
-  @ApiParam({ name: 'id', format: 'uuid' })
+  @ApiParam({ name: 'id', description: 'User ID' })
   @ApiNotFoundBase()
   @ApiUnauthorizedBase()
   @ApiForbiddenBase()
   async delete(
-    @Param('id', ParseUUIDPipe) id: string,
+    @Param('id', ParseIntPipe) id: number,
     @CurrentUser() currentUser?: CurrentUserPayload,
   ) {
     if (currentUser && !canDeleteUser(currentUser, id)) {

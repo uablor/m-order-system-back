@@ -1,21 +1,21 @@
 import { Injectable } from '@nestjs/common';
-import { DiscoveryService } from '@nestjs/core';
-import { PATH_METADATA, METHOD_METADATA } from '@nestjs/common/constants';
+import { DiscoveryService, Reflector } from '@nestjs/core';
+import { PATH_METADATA } from '@nestjs/common/constants';
 import { PermissionRepository } from '../repositories/permission.repository';
-import { TransactionService } from 'src/common/transaction/transaction.service';
+import { TransactionService } from '../../../common/transaction/transaction.service';
+import { SKIP_AUTO_PERMISSION_KEY } from '../../../common/decorators/skip-auto-permission.decorator';
 import { GeneratePermissionsResult, GeneratedPermission } from '../interface/generted-permssion.interfacet';
-
-
-
 
 /**
  * Generates permission codes from controller class name and route method names.
  * Pattern: {controllerPath}:{methodName} (e.g. users:create, roles:getById).
+ * Controllers decorated with @SkipAutoPermission() are excluded.
  */
 @Injectable()
 export class PermissionGeneratorService {
   constructor(
     private readonly discoveryService: DiscoveryService,
+    private readonly reflector: Reflector,
     private readonly permissionRepository: PermissionRepository,
     private readonly transactionService: TransactionService,
   ) {}
@@ -59,6 +59,7 @@ export class PermissionGeneratorService {
     for (const wrapper of controllers) {
       const metatype = wrapper.metatype as Type & { prototype?: object };
       if (!metatype?.prototype) continue;
+      if (this.reflector.get<boolean>(SKIP_AUTO_PERMISSION_KEY, metatype)) continue;
 
       const controllerPath = this.getControllerPath(metatype);
       if (!controllerPath) continue;
