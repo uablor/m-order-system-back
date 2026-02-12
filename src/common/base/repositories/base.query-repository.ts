@@ -1,20 +1,13 @@
-import { EntityManager, FindManyOptions, FindOptionsWhere, ObjectLiteral, Repository } from 'typeorm';
+import {
+  EntityManager,
+  FindManyOptions,
+  ObjectLiteral,
+  Repository,
+} from 'typeorm';
 import { EntityTarget } from 'typeorm/common/EntityTarget';
+import { PaginatedResult, PaginationOptions, PaginationResponse } from '../interfaces/paginted.interface';
 
-export interface PaginationOptions<E extends ObjectLiteral> {
-  page?: number;
-  limit?: number;
-  where?: FindOptionsWhere<E>;
-  order?: FindManyOptions<E>['order'];
-}
 
-export interface PaginatedResult<E> {
-  data: E[];
-  total: number;
-  page: number;
-  limit: number;
-  totalPages: number;
-}
 
 export abstract class BaseQueryRepository<E extends ObjectLiteral> {
   constructor(public readonly repository: Repository<E>) {}
@@ -27,7 +20,9 @@ export abstract class BaseQueryRepository<E extends ObjectLiteral> {
     options: PaginationOptions<E>,
     manager?: EntityManager,
   ): Promise<PaginatedResult<E>> {
-    const repo = manager ? manager.getRepository(this.repository.target as EntityTarget<E>) : this.repository;
+    const repo = manager
+      ? manager.getRepository(this.repository.target as EntityTarget<E>)
+      : this.repository;
     const page = Math.max(1, options.page ?? 1);
     const limit = Math.min(100, Math.max(1, options.limit ?? 10));
     const skip = (page - 1) * limit;
@@ -39,17 +34,29 @@ export abstract class BaseQueryRepository<E extends ObjectLiteral> {
       take: limit,
     });
 
-    return {
-      data: data as E[],
+    const totalPages = Math.ceil(total / limit);
+    const pagination: PaginationResponse = {
       total,
       page,
       limit,
-      totalPages: Math.ceil(total / limit),
+      totalPages,
+      hasNextPage: page < totalPages,
+      hasPreviousPage: page > 1,
+    };
+
+    return {
+      results: data as E[],
+      pagination,
     };
   }
 
-  async findMany(options: FindManyOptions<E>, manager?: EntityManager): Promise<E[]> {
-    const repo = manager ? manager.getRepository(this.repository.target as EntityTarget<E>) : this.repository;
+  async findMany(
+    options: FindManyOptions<E>,
+    manager?: EntityManager,
+  ): Promise<E[]> {
+    const repo = manager
+      ? manager.getRepository(this.repository.target as EntityTarget<E>)
+      : this.repository;
     return repo.find(options) as Promise<E[]>;
   }
 }

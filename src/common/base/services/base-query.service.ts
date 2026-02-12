@@ -1,10 +1,7 @@
 import { Injectable } from '@nestjs/common';
-import { PaginatedResult } from './base.query-repository';
+import { PaginatedResult, PaginationQuery } from '../interfaces/paginted.interface';
 
-export interface PaginationQuery {
-  page?: number;
-  limit?: number;
-}
+
 
 @Injectable()
 export abstract class BaseQueryService<E, TListQuery = PaginationQuery> {

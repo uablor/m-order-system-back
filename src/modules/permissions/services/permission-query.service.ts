@@ -2,7 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { PermissionQueryRepository } from '../repositories/permission.query-repository';
 import { PermissionListQueryDto } from '../dto/permission-list-query.dto';
 import { PermissionResponseDto } from '../dto/permission-response.dto';
-import { PaginatedResult } from '../../../common/base/base.query-repository';
+import { PaginatedResult } from '../../../common/base/interfaces/paginted.interface';
 
 @Injectable()
 export class PermissionQueryService {
@@ -28,8 +28,8 @@ export class PermissionQueryService {
       limit: query.limit,
     });
     return {
-      ...result,
-      data: result.data.map((e) => this.toResponse(e)),
+      results: result.results.map((e) => this.toResponse(e)),
+      pagination: result.pagination,
     };
   }
 

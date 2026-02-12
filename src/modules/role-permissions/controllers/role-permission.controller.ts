@@ -47,9 +47,11 @@ export class RolePermissionController {
 
   @Delete(':roleId/:permissionId')
   @ApiOperation({ summary: 'Unassign permission from role' })
+  @ApiBearerAuth('BearerAuth')
   @ApiParam({ name: 'roleId', description: 'Role ID' })
   @ApiParam({ name: 'permissionId', description: 'Permission ID' })
   @ApiNotFoundBase()
+  @ApiUnauthorizedBase()
   async unassign(
     @Param('roleId', ParseIntPipe) roleId: number,
     @Param('permissionId', ParseIntPipe) permissionId: number,
@@ -59,8 +61,10 @@ export class RolePermissionController {
 
   @Get('role/:roleId')
   @ApiOperation({ summary: 'List permissions by role ID' })
+  @ApiBearerAuth('BearerAuth')
   @ApiParam({ name: 'roleId', description: 'Role ID' })
   @ApiOkResponseBase()
+  @ApiUnauthorizedBase()
   async getByRoleId(@Param('roleId', ParseIntPipe) roleId: number) {
     return this.queryService.getPermissionsByRoleId(roleId);
   }

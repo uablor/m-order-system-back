@@ -1,6 +1,6 @@
 import { Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, Query, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiParam, ApiBearerAuth } from '@nestjs/swagger';
-import { BaseController } from '../../../common/base/base.controller';
+import { BaseController } from '../../../common/base/controllers/base.controller';
 import { PermissionCommandService } from '../services/permission-command.service';
 import { PermissionQueryService } from '../services/permission-query.service';
 import { PermissionGeneratorService } from '../services/permission-generator.service';
@@ -52,42 +52,52 @@ export class PermissionController extends BaseController<
 
   @Post()
   @ApiOperation({ summary: 'Create new permission' })
+  @ApiBearerAuth('BearerAuth')
   @ApiCreatedResponseBase()
   @ApiBadRequestBase()
+  @ApiUnauthorizedBase()
   async create(@Body() dto: PermissionCreateDto) {
     return this.commandService.create(dto);
   }
 
   @Get(':id')
   @ApiOperation({ summary: 'Get permission by ID' })
+  @ApiBearerAuth('BearerAuth')
   @ApiParam({ name: 'id', description: 'Permission ID' })
   @ApiOkResponseBase(PermissionResponseDto)
   @ApiNotFoundBase()
+  @ApiUnauthorizedBase()
   async getById(@Param('id', ParseIntPipe) id: number) {
     return this.queryService.getById(id);
   }
 
   @Get()
   @ApiOperation({ summary: 'List permissions with pagination (page, limit)' })
+  @ApiBearerAuth('BearerAuth')
   @ApiOkResponseBase()
+  @ApiUnauthorizedBase()
   async getList(@Query() query: PermissionListQueryDto) {
     return this.queryService.getList(query);
   }
 
   @Patch(':id')
   @ApiOperation({ summary: 'Update permission' })
+  @ApiBearerAuth('BearerAuth')
   @ApiParam({ name: 'id', description: 'Permission ID' })
   @ApiOkResponseBase()
   @ApiBadRequestBase()
   @ApiNotFoundBase()
+  @ApiUnauthorizedBase()
   async update(@Param('id', ParseIntPipe) id: number, @Body() dto: PermissionUpdateDto) {
     return this.commandService.update(id, dto);
   }
 
   @Delete(':id')
   @ApiOperation({ summary: 'Delete permission' })
+  @ApiBearerAuth('BearerAuth')
   @ApiParam({ name: 'id', description: 'Permission ID' })
   @ApiNotFoundBase()
+  @ApiUnauthorizedBase()
   async delete(@Param('id', ParseIntPipe) id: number) {
     return this.commandService.delete(id);
   }

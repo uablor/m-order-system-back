@@ -1,5 +1,5 @@
 import { Column, CreateDateColumn, Entity, PrimaryColumn, UpdateDateColumn } from 'typeorm';
-import { BaseOrmEntity } from '../../../common/base/base.orm-entities';
+import { BaseOrmEntity } from '../../../common/base/enities/base.orm-entities';
 
 @Entity('permissions')
 export class PermissionOrmEntity extends BaseOrmEntity {

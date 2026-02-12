@@ -1,13 +1,8 @@
 import { DeepPartial, EntityManager, FindOptionsWhere, Repository } from 'typeorm';
 import { EntityTarget } from 'typeorm/common/EntityTarget';
+import { IBaseRepository } from '../interfaces/repository.interface';
 
-export interface IBaseRepository<E> {
-  create(data: DeepPartial<E>, manager?: EntityManager): Promise<E>;
-  update(id: number, data: DeepPartial<E>, manager?: EntityManager): Promise<E | null>;
-  delete(id: number, manager?: EntityManager): Promise<boolean>;
-  findOneById(id: number, manager?: EntityManager): Promise<E | null>;
-  findOneBy(where: FindOptionsWhere<E>, manager?: EntityManager): Promise<E | null>;
-}
+
 
 export abstract class BaseRepository<E extends { id?: number }> implements IBaseRepository<E> {
   constructor(protected readonly repository: Repository<E>) {}

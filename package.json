@@ -24,7 +24,8 @@
     "migration:revert": "ts-node -r tsconfig-paths/register src/database/revert-migration.ts",
     "migration:run:cli": "npx typeorm-ts-node-commonjs migration:run -d src/database/data-source.ts",
     "migration:revert:cli": "npx typeorm-ts-node-commonjs migration:revert -d src/database/data-source.ts",
-    "permissions:generate": "ts-node -r tsconfig-paths/register src/database/generate-permissions.ts"
+    "permissions:generate": "ts-node -r tsconfig-paths/register src/database/generate-permissions.ts",
+    "seed": "ts-node -r tsconfig-paths/register src/database/seed.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.987.0",

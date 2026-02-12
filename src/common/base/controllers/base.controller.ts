@@ -1,11 +1,8 @@
 import { Body, Delete, Get, HttpCode, HttpStatus, Param, Patch, Post, Query } from '@nestjs/common';
-import { BaseCommandService } from './base-command.service';
-import { BaseQueryService } from './base-query.service';
+import { PaginationQueryDto } from '../interfaces/paginted.interface';
+import { BaseCommandService } from '../services/base-command.service';
+import { BaseQueryService } from '../services/base-query.service';
 
-export interface PaginationQueryDto {
-  page?: number;
-  limit?: number;
-}
 
 export abstract class BaseController<
   TCreateDto,

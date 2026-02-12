@@ -2,7 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { RoleQueryRepository } from '../repositories/role.query-repository';
 import { RoleListQueryDto } from '../dto/role-list-query.dto';
 import { RoleResponseDto } from '../dto/role-response.dto';
-import { PaginatedResult } from '../../../common/base/base.query-repository';
+import { PaginatedResult } from '../../../common/base/interfaces/paginted.interface';
 
 @Injectable()
 export class RoleQueryService {
@@ -28,8 +28,8 @@ export class RoleQueryService {
       limit: query.limit,
     });
     return {
-      ...result,
-      data: result.data.map((e) => this.toResponse(e)),
+      results: result.results.map((e) => this.toResponse(e)),
+      pagination: result.pagination,
     };
   }
 

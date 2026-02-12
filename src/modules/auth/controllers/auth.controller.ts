@@ -14,6 +14,7 @@ import {
   ApiBadRequestBase,
   ApiUnauthorizedBase,
 } from '../../../common/swagger/swagger.decorators';
+import { SkipAutoPermission } from '../../../common/decorators/skip-auto-permission.decorator';
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -29,6 +30,7 @@ export class AuthController {
   @ApiCreatedResponseBase()
   @ApiBadRequestBase()
   @ApiUnauthorizedBase()
+  @SkipAutoPermission()
   async login(@Body() dto: LoginDto): Promise<AuthResponseDto> {
     return this.commandService.login(dto);
   }
@@ -39,6 +41,7 @@ export class AuthController {
   @ApiOperation({ summary: 'Get current user profile' })
   @ApiOkResponseBase()
   @ApiUnauthorizedBase()
+  @SkipAutoPermission()
   async me(@CurrentUser() user: CurrentUserPayload) {
     return this.queryService.getProfile(user.userId);
   }

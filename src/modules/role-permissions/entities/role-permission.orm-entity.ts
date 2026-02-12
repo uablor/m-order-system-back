@@ -1,7 +1,7 @@
 import { Entity, ManyToOne, JoinColumn, Column } from 'typeorm';
 import { PermissionOrmEntity } from '../../permissions/entities/permission.orm-entity';
 import { RoleOrmEntity } from '../../roles/entities/role.orm-entity';
-import { BaseOrmEntity } from '../../../common/base/base.orm-entities';
+import { BaseOrmEntity } from '../../../common/base/enities/base.orm-entities';
 
 @Entity('role_permissions')
 export class RolePermissionOrmEntity extends BaseOrmEntity {

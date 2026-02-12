@@ -15,22 +15,31 @@ export class ApiResponseDto<T = unknown> {
 }
 
 /**
- * Paginated list response.
+ * Pagination response (matches PaginationResponse in paginted.interface).
  */
-export class ApiPaginatedMetaDto {
+export class ApiPaginationResultDto {
+  @ApiProperty({ example: 100 })
+  total: number;
+
   @ApiProperty({ example: 1 })
   page: number;
 
   @ApiProperty({ example: 10 })
   limit: number;
 
-  @ApiProperty({ example: 100 })
-  total: number;
-
   @ApiProperty({ example: 10 })
   totalPages: number;
+
+  @ApiProperty({ example: true })
+  hasNextPage: boolean;
+
+  @ApiProperty({ example: false })
+  hasPreviousPage: boolean;
 }
 
+/**
+ * Paginated list response: results + pagination (matches PaginatedResult).
+ */
 export class ApiPaginatedResponseDto<T = unknown> {
   @ApiProperty({ example: true })
   success: boolean;
@@ -38,11 +47,11 @@ export class ApiPaginatedResponseDto<T = unknown> {
   @ApiProperty({ example: 'List retrieved' })
   message: string;
 
-  @ApiProperty({ type: ApiPaginatedMetaDto })
-  meta: ApiPaginatedMetaDto;
+  @ApiProperty({ type: ApiPaginationResultDto })
+  pagination: ApiPaginationResultDto;
 
-  @ApiProperty({ type: 'array' })
-  data: T[];
+  @ApiProperty({ type: 'array', description: 'List of items' })
+  results: T[];
 }
 
 /**

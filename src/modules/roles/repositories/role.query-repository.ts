@@ -1,8 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { BaseQueryRepository, PaginatedResult } from '../../../common/base/base.query-repository';
+import { BaseQueryRepository } from '../../../common/base/repositories/base.query-repository';
 import { RoleOrmEntity } from '../entities/role.orm-entity';
+import { PaginatedResult } from '../../../common/base/interfaces/paginted.interface';
 
 @Injectable()
 export class RoleQueryRepository extends BaseQueryRepository<RoleOrmEntity> {

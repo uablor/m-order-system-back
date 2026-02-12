@@ -1,6 +1,6 @@
 import { Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, Query, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiParam, ApiBearerAuth } from '@nestjs/swagger';
-import { BaseController } from '../../../common/base/base.controller';
+import { BaseController } from '../../../common/base/controllers/base.controller';
 import { RoleCommandService } from '../services/role-command.service';
 import { RoleQueryService } from '../services/role-query.service';
 import { RoleCreateDto } from '../dto/role-create.dto';
@@ -47,34 +47,42 @@ export class RoleController extends BaseController<
 
   @Get(':id')
   @ApiOperation({ summary: 'Get role by ID' })
+  @ApiBearerAuth('BearerAuth')
   @ApiParam({ name: 'id', description: 'Role ID' })
   @ApiOkResponseBase(RoleResponseDto)
   @ApiNotFoundBase()
+  @ApiUnauthorizedBase()
   async getById(@Param('id', ParseIntPipe) id: number) {
     return this.queryService.getById(id);
   }
 
   @Get()
   @ApiOperation({ summary: 'List roles with pagination (page, limit)' })
+  @ApiBearerAuth('BearerAuth')
   @ApiOkResponseBase()
+  @ApiUnauthorizedBase()
   async getList(@Query() query: RoleListQueryDto) {
     return this.queryService.getList(query);
   }
 
   @Patch(':id')
   @ApiOperation({ summary: 'Update role' })
+  @ApiBearerAuth('BearerAuth')
   @ApiParam({ name: 'id', description: 'Role ID' })
   @ApiOkResponseBase()
   @ApiBadRequestBase()
   @ApiNotFoundBase()
+  @ApiUnauthorizedBase()
   async update(@Param('id', ParseIntPipe) id: number, @Body() dto: RoleUpdateDto) {
     return this.commandService.update(id, dto);
   }
 
   @Delete(':id')
   @ApiOperation({ summary: 'Delete role' })
+  @ApiBearerAuth('BearerAuth')
   @ApiParam({ name: 'id', description: 'Role ID' })
   @ApiNotFoundBase()
+  @ApiUnauthorizedBase()
   async delete(@Param('id', ParseIntPipe) id: number) {
     return this.commandService.delete(id);
   }

@@ -1,8 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { FindOptionsWhere, ILike, Repository } from 'typeorm';
-import { BaseQueryRepository, PaginatedResult } from '../../../common/base/base.query-repository';
+import { BaseQueryRepository } from '../../../common/base/repositories/base.query-repository';
 import { UserOrmEntity } from '../entities/user.orm-entity';
+import { PaginatedResult } from '../../../common/base/interfaces/paginted.interface';
 
 export interface UserListOptions {
   page?: number;

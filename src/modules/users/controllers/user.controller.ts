@@ -12,7 +12,7 @@ import {
   Query,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiParam, ApiBearerAuth } from '@nestjs/swagger';
-import { BaseController } from '../../../common/base/base.controller';
+import { BaseController } from '../../../common/base/controllers/base.controller';
 import { UserCommandService } from '../services/user-command.service';
 import { UserQueryService } from '../services/user-query.service';
 import { UserCreateDto } from '../dto/user-create.dto';
@@ -52,6 +52,9 @@ export class UserController extends BaseController<
   @ApiOperation({ summary: 'Create new user' })
   @ApiCreatedResponseBase()
   @ApiBadRequestBase()
+  @ApiUnauthorizedBase()
+  @ApiForbiddenBase()
+  @ApiBearerAuth('BearerAuth')
   async create(@Body() dto: UserCreateDto) {
     return this.commandService.create(dto);
   }
@@ -61,6 +64,10 @@ export class UserController extends BaseController<
   @ApiParam({ name: 'id', description: 'User ID' })
   @ApiOkResponseBase(UserResponseDto)
   @ApiNotFoundBase()
+  @ApiUnauthorizedBase()
+  @ApiForbiddenBase()
+  @ApiBadRequestBase()
+  @ApiBearerAuth('BearerAuth')
   async getById(@Param('id', ParseIntPipe) id: number) {
     return this.queryService.getById(id);
   }
@@ -68,6 +75,11 @@ export class UserController extends BaseController<
   @Get()
   @ApiOperation({ summary: 'List users with pagination (page, limit, search)' })
   @ApiOkResponseBase()
+  @ApiBadRequestBase()
+  @ApiUnauthorizedBase()
+  @ApiForbiddenBase()
+  @ApiNotFoundBase()
+  @ApiBearerAuth('BearerAuth')
   async getList(@Query() query: UserListQueryDto) {
     return this.queryService.getList(query);
   }
