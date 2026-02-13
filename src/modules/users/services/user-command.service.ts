@@ -1,4 +1,4 @@
-import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import { ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { hashPassword } from '../../../common/utils/password.util';
 import { TransactionService } from '../../../common/transaction/transaction.service';
 import { UserRepository } from '../repositories/user.repository';
@@ -9,6 +9,9 @@ import { UserUpdateDto } from '../dto/user-update.dto';
 import { UserMerchantCreateDto } from '../dto/user-merchant-create.dto';
 import { UserOrmEntity } from '../entities/user.orm-entity';
 import { MerchantOrmEntity } from '../../merchants/entities/merchant.orm-entity';
+import { RoleOrmEntity } from 'src/modules/roles/entities/role.orm-entity';
+import { ADMIN_MERCHANT_ROLE_NAME, ADMIN_ROLE_NAME, EMPLOYEE_MERCHANT_ROLE_NAME, SUPERADMIN_ROLE_NAME } from 'src/database/seeds/role.seeder';
+import { CurrentUserPayload } from 'src/common/decorators/current-user.decorator';
 
 @Injectable()
 export class UserCommandService {
@@ -57,11 +60,11 @@ export class UserCommandService {
       if (existing) {
         throw new ConflictException('User with this email already exists');
       }
-      const role = await this.roleRepository.findOneById(Number(dto.roleId), manager);
+      const passwordHash = await hashPassword(dto.password);
+      const role = await this.roleRepository.findOneBy({ roleName: ADMIN_MERCHANT_ROLE_NAME }, manager);
       if (!role) {
         throw new NotFoundException('Role not found');
       }
-      const passwordHash = await hashPassword(dto.password);
       const userEntity = await this.userRepository.create(
         {
           email: dto.email,
@@ -69,14 +72,13 @@ export class UserCommandService {
           fullName: dto.fullName,
           roleId: role.id,
           role,
-          isActive: dto.isActive ?? true,
         } as Partial<UserOrmEntity>,
         manager,
       );
       const merchantEntity = await this.merchantRepository.create(
         {
           ownerUserId: userEntity.id,
-          shopName: dto.shopName,
+          shopName: dto.shopName ?? userEntity.fullName ?? '',
           shopLogoUrl: dto.shopLogoUrl ?? null,
           shopAddress: dto.shopAddress ?? null,
           contactPhone: dto.contactPhone ?? null,
@@ -84,7 +86,7 @@ export class UserCommandService {
           contactFacebook: dto.contactFacebook ?? null,
           contactLine: dto.contactLine ?? null,
           contactWhatsapp: dto.contactWhatsapp ?? null,
-          defaultCurrency: dto.defaultCurrency ?? 'THB',
+          defaultCurrency: dto.defaultCurrency ?? 'LAK',
           isActive: true,
         } as Partial<MerchantOrmEntity>,
         manager,
@@ -95,7 +97,7 @@ export class UserCommandService {
 
   async update(id: number, dto: UserUpdateDto): Promise<void> {
     await this.transactionService.run(async (manager) => {
-      const existing = await this.userRepository.findOneById(id, manager);
+      const existing = await this.userRepository.findOneById(id, manager, { relations: ['role'] });
       if (!existing) {
         throw new NotFoundException('User not found');
       }
@@ -103,6 +105,7 @@ export class UserCommandService {
         const duplicate = await this.userRepository.findOneBy(
           { email: dto.email },
           manager,
+          { relations: ['role'] }
         );
         if (duplicate && duplicate.id !== id) {
           throw new ConflictException('User with this email already exists');
@@ -125,11 +128,23 @@ export class UserCommandService {
     });
   } 
 
-  async delete(id: number): Promise<void> {
+  async delete(id: number, currentUser: CurrentUserPayload): Promise<void> {
     await this.transactionService.run(async (manager) => {
-      const found = await this.userRepository.findOneById(id, manager);
+      const found = await this.userRepository.findOneById(id, manager, { relations: ['role'] });
       if (!found) {
         throw new NotFoundException('User not found');
+      }
+      if (found.role?.roleName === SUPERADMIN_ROLE_NAME && currentUser.roleName !== SUPERADMIN_ROLE_NAME) {
+        throw new ForbiddenException('You are not authorized to delete this user');
+      }
+      if (found.role?.roleName === ADMIN_ROLE_NAME && currentUser.roleName !== ADMIN_ROLE_NAME) {
+        throw new ForbiddenException('You are not authorized to delete this user');
+      }
+      if (found.role?.roleName === ADMIN_MERCHANT_ROLE_NAME && currentUser.roleName !== ADMIN_MERCHANT_ROLE_NAME) {
+        throw new ForbiddenException('You are not authorized to delete this user');
+      }
+      if (found.role?.roleName === EMPLOYEE_MERCHANT_ROLE_NAME && currentUser.roleName !== EMPLOYEE_MERCHANT_ROLE_NAME) {
+        throw new ForbiddenException('You are not authorized to delete this user');
       }
       await this.userRepository.delete(id, manager);
     });

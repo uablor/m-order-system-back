@@ -127,11 +127,21 @@ export class UserController extends BaseController<
   @ApiForbiddenBase()
   async delete(
     @Param('id', ParseIntPipe) id: number,
-    @CurrentUser() currentUser?: CurrentUserPayload,
+    @CurrentUser() currentUser: CurrentUserPayload,
   ) {
-    if (currentUser && !canDeleteUser(currentUser, id)) {
-      throw new ForbiddenException('You can only delete your own profile or must be ADMIN');
-    }
-    return this.commandService.delete(id);
+    return this.commandService.delete(id, currentUser);
   }
+
+  async SuperAdmin(@Param('id', ParseIntPipe) id: number) {
+  }
+
+  async Admin(@Param('id', ParseIntPipe) id: number) {
+  }
+
+  async AdminMerchant(@Param('id', ParseIntPipe) id: number) {
+  }
+
+  async EmployeeMerchant(@Param('id', ParseIntPipe) id: number) {
+  }
+
 }

@@ -2,6 +2,8 @@ import { Body, Delete, Get, HttpCode, HttpStatus, Param, Patch, Post, Query } fr
 import { PaginationQueryDto } from '../interfaces/paginted.interface';
 import { BaseCommandService } from '../services/base-command.service';
 import { BaseQueryService } from '../services/base-query.service';
+import { CurrentUser } from 'src/common/decorators/current-user.decorator';
+import type { CurrentUserPayload } from 'src/common/decorators/current-user.decorator';
 
 
 export abstract class BaseController<
@@ -38,7 +40,7 @@ export abstract class BaseController<
 
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  async delete(@Param('id') id: number) {
-    return this.commandService.delete(id);
+  async delete(@Param('id') id: number, @CurrentUser() currentUser: CurrentUserPayload | undefined) {
+    return this.commandService.delete(id, currentUser);
   }
 }

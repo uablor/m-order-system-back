@@ -7,6 +7,7 @@ import { OrderRepository } from '../../orders/repositories/order.repository';
 import { OrderItemRepository } from '../../orders/repositories/order-item.repository';
 import { MerchantRepository } from '../../merchants/repositories/merchant.repository';
 import { CreateArrivalDto } from '../dto/create-arrival.dto';
+import { ArrivalUpdateDto } from '../dto/arrival-update.dto';
 import { ArrivalOrmEntity } from '../entities/arrival.orm-entity';
 import { ArrivalItemOrmEntity } from '../entities/arrival-item.orm-entity';
 import { NotificationOrmEntity } from '../entities/notification.orm-entity';
@@ -241,6 +242,28 @@ export class ArrivalCommandService {
         })),
         message: 'Arrival recorded and notifications sent successfully',
       };
+    });
+  }
+
+  async update(id: number, dto: ArrivalUpdateDto): Promise<void> {
+    await this.transactionService.run(async (manager) => {
+      const existing = await this.arrivalRepository.findOneById(id, manager);
+      if (!existing) throw new NotFoundException('Arrival not found');
+      const updateData: Partial<ArrivalOrmEntity> = {};
+      if (dto.arrivedDate !== undefined) updateData.arrivedDate = new Date(dto.arrivedDate);
+      if (dto.arrivedTime !== undefined) updateData.arrivedTime = dto.arrivedTime;
+      if (dto.recordedBy !== undefined)
+        updateData.recordedByUser = dto.recordedBy != null ? ({ id: dto.recordedBy } as any) : null;
+      if (dto.notes !== undefined) updateData.notes = dto.notes ?? null;
+      await this.arrivalRepository.update(id, updateData, manager);
+    });
+  }
+
+  async delete(id: number): Promise<void> {
+    await this.transactionService.run(async (manager) => {
+      const existing = await this.arrivalRepository.findOneById(id, manager);
+      if (!existing) throw new NotFoundException('Arrival not found');
+      await this.arrivalRepository.delete(id, manager);
     });
   }
 }

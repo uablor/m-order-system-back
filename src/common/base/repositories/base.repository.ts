@@ -1,4 +1,4 @@
-import { DeepPartial, EntityManager, FindOptionsWhere, Repository } from 'typeorm';
+import { DeepPartial, EntityManager, FindOneOptions, FindOptionsWhere, Repository } from 'typeorm';
 import { EntityTarget } from 'typeorm/common/EntityTarget';
 import { IBaseRepository } from '../interfaces/repository.interface';
 
@@ -31,14 +31,14 @@ export abstract class BaseRepository<E extends { id?: number }> implements IBase
     return (result.affected ?? 0) > 0;
   }
 
-  async findOneById(id: number, manager?: EntityManager): Promise<E | null> {
+  async findOneById(id: number, manager?: EntityManager, options?: FindOneOptions<E>): Promise<E | null> {
     const repo = manager ? manager.getRepository(this.repository.target as EntityTarget<E>) : this.repository;
-    return repo.findOne({ where: { [this.getPrimaryColumn()]: id } as FindOptionsWhere<E> });
+    return repo.findOne({ where: { [this.getPrimaryColumn()]: id } as FindOptionsWhere<E>, ...options });
   }
 
-  async findOneBy(where: FindOptionsWhere<E>, manager?: EntityManager): Promise<E | null> {
+  async findOneBy(where: FindOptionsWhere<E>,  manager?: EntityManager, options?: FindOneOptions<E>,): Promise<E | null> {
     const repo = manager ? manager.getRepository(this.repository.target as EntityTarget<E>) : this.repository;
-    return repo.findOne({ where });
+    return repo.findOne({ where, ...options });
   }
 
   protected getPrimaryColumn(): string {
