@@ -3,7 +3,8 @@ import { ArrivalItemQueryRepository } from '../repositories/arrival-item.query-r
 import { ArrivalItemRepository } from '../repositories/arrival-item.repository';
 import { ArrivalItemListQueryDto } from '../dto/arrival-item-list-query.dto';
 import { ArrivalItemResponseDto } from '../dto/arrival-item-response.dto';
-import { PaginatedResult } from '../../../common/base/interfaces/paginted.interface';
+import type { ResponseInterface, ResponseWithPaginationInterface } from '../../../common/base/interfaces/response.interface';
+import { createPaginatedResponse, createSingleResponse } from '../../../common/base/helpers/response.helper';
 import { ArrivalItemOrmEntity } from '../entities/arrival-item.orm-entity';
 
 @Injectable()
@@ -22,23 +23,23 @@ export class ArrivalItemQueryService {
     return this.toResponse(entity);
   }
 
-  async getByIdOrFail(id: number): Promise<ArrivalItemResponseDto> {
+  async getByIdOrFail(id: number): Promise<ResponseInterface<ArrivalItemResponseDto>> {
     const dto = await this.getById(id);
     if (!dto) throw new NotFoundException('Arrival item not found');
-    return dto;
+    return createSingleResponse(dto);
   }
 
-  async getList(query: ArrivalItemListQueryDto): Promise<PaginatedResult<ArrivalItemResponseDto>> {
+  async getList(query: ArrivalItemListQueryDto): Promise<ResponseWithPaginationInterface<ArrivalItemResponseDto>> {
     const result = await this.arrivalItemQueryRepository.findWithPagination({
       page: query.page,
       limit: query.limit,
       arrivalId: query.arrivalId,
       orderItemId: query.orderItemId,
     });
-    return {
-      results: result.results.map((e) => this.toResponse(e)),
-      pagination: result.pagination,
-    };
+    return createPaginatedResponse(
+      result.results.map((e) => this.toResponse(e)),
+      result.pagination,
+    );
   }
 
   private toResponse(entity: ArrivalItemOrmEntity): ArrivalItemResponseDto {

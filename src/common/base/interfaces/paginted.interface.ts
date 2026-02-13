@@ -21,7 +21,11 @@ export interface PaginationQuery {
     hasPreviousPage: boolean;
   }
   
+  /** Same shape as ResponseWithPaginationInterface<E>; use for paginated list. */
   export interface PaginatedResult<E> {
+    success: boolean;
+    Code: number;
+    message: string;
     results: E[];
     pagination: PaginationResponse;
   }

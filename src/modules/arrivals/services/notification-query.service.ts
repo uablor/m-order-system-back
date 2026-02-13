@@ -3,7 +3,8 @@ import { NotificationQueryRepository } from '../repositories/notification.query-
 import { NotificationRepository } from '../repositories/notification.repository';
 import { NotificationListQueryDto } from '../dto/notification-list-query.dto';
 import { NotificationResponseDto } from '../dto/notification-response.dto';
-import { PaginatedResult } from '../../../common/base/interfaces/paginted.interface';
+import type { ResponseInterface, ResponseWithPaginationInterface } from '../../../common/base/interfaces/response.interface';
+import { createPaginatedResponse, createSingleResponse } from '../../../common/base/helpers/response.helper';
 import { NotificationOrmEntity } from '../entities/notification.orm-entity';
 
 @Injectable()
@@ -22,13 +23,13 @@ export class NotificationQueryService {
     return this.toResponse(entity);
   }
 
-  async getByIdOrFail(id: number): Promise<NotificationResponseDto> {
+  async getByIdOrFail(id: number): Promise<ResponseInterface<NotificationResponseDto>> {
     const dto = await this.getById(id);
     if (!dto) throw new NotFoundException('Notification not found');
-    return dto;
+    return createSingleResponse(dto);
   }
 
-  async getList(query: NotificationListQueryDto): Promise<PaginatedResult<NotificationResponseDto>> {
+  async getList(query: NotificationListQueryDto): Promise<ResponseWithPaginationInterface<NotificationResponseDto>> {
     const result = await this.notificationQueryRepository.findWithPagination({
       page: query.page,
       limit: query.limit,
@@ -37,10 +38,10 @@ export class NotificationQueryService {
       notificationType: query.notificationType,
       status: query.status,
     });
-    return {
-      results: result.results.map((e) => this.toResponse(e)),
-      pagination: result.pagination,
-    };
+    return createPaginatedResponse(
+      result.results.map((e) => this.toResponse(e)),
+      result.pagination,
+    );
   }
 
   private toResponse(entity: NotificationOrmEntity): NotificationResponseDto {

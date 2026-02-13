@@ -2,7 +2,8 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { RoleQueryRepository } from '../repositories/role.query-repository';
 import { RoleListQueryDto } from '../dto/role-list-query.dto';
 import { RoleResponseDto } from '../dto/role-response.dto';
-import { PaginatedResult } from '../../../common/base/interfaces/paginted.interface';
+import type { ResponseInterface, ResponseWithPaginationInterface } from '../../../common/base/interfaces/response.interface';
+import { createPaginatedResponse, createSingleResponse } from '../../../common/base/helpers/response.helper';
 
 @Injectable()
 export class RoleQueryService {
@@ -16,21 +17,21 @@ export class RoleQueryService {
     return this.toResponse(entity);
   }
 
-  async getByIdOrFail(id: number): Promise<RoleResponseDto> {
+  async getByIdOrFail(id: number): Promise<ResponseInterface<RoleResponseDto>> {
     const dto = await this.getById(id);
     if (!dto) throw new NotFoundException('Role not found');
-    return dto;
+    return createSingleResponse(dto);
   }
 
-  async getList(query: RoleListQueryDto): Promise<PaginatedResult<RoleResponseDto>> {
+  async getList(query: RoleListQueryDto): Promise<ResponseWithPaginationInterface<RoleResponseDto>> {
     const result = await this.roleQueryRepository.findWithPagination({
       page: query.page,
       limit: query.limit,
     });
-    return {
-      results: result.results.map((e) => this.toResponse(e)),
-      pagination: result.pagination,
-    };
+    return createPaginatedResponse(
+      result.results.map((e) => this.toResponse(e)),
+      result.pagination,
+    );
   }
 
   private toResponse(entity: import('../entities/role.orm-entity').RoleOrmEntity): RoleResponseDto {

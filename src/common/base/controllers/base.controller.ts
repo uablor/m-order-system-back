@@ -1,10 +1,11 @@
-import { Body, Delete, Get, HttpCode, HttpStatus, Param, Patch, Post, Query } from '@nestjs/common';
+import { Body, Delete, Get, HttpCode, HttpStatus, Param, ParseIntPipe, Patch, Post, Query } from '@nestjs/common';
+import { NotFoundException } from '@nestjs/common';
 import { PaginationQueryDto } from '../interfaces/paginted.interface';
 import { BaseCommandService } from '../services/base-command.service';
 import { BaseQueryService } from '../services/base-query.service';
+import { createSingleResponse } from '../helpers/response.helper';
 import { CurrentUser } from 'src/common/decorators/current-user.decorator';
 import type { CurrentUserPayload } from 'src/common/decorators/current-user.decorator';
-
 
 export abstract class BaseController<
   TCreateDto,
@@ -24,8 +25,10 @@ export abstract class BaseController<
   }
 
   @Get(':id')
-  async getById(@Param('id') id: number) {
-    return this.queryService.getById(id);
+  async getById(@Param('id', ParseIntPipe) id: number) {
+    const dto = await this.queryService.getById(id);
+    if (!dto) throw new NotFoundException('Resource not found');
+    return createSingleResponse(dto);
   }
 
   @Get()

@@ -41,6 +41,6 @@ export class CustomerOrderQueryRepository extends BaseQueryRepository<CustomerOr
       hasNextPage: page < totalPages,
       hasPreviousPage: page > 1,
     };
-    return { results: data, pagination };
+    return { success: true, Code: 200, message: 'Customer orders fetched successfully', results: data, pagination };
   }
 }

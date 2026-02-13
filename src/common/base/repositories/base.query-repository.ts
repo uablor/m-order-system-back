@@ -45,6 +45,9 @@ export abstract class BaseQueryRepository<E extends ObjectLiteral> {
     };
 
     return {
+      success: true,
+      Code: 200,
+      message: 'Data fetched successfully',
       results: data as E[],
       pagination,
     };

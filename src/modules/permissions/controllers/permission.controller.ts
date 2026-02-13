@@ -68,7 +68,7 @@ export class PermissionController extends BaseController<
   @ApiNotFoundBase()
   @ApiUnauthorizedBase()
   async getById(@Param('id', ParseIntPipe) id: number) {
-    return this.queryService.getById(id);
+    return super.getById(id);
   }
 
   @Get()

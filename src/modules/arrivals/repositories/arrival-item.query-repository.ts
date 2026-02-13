@@ -41,6 +41,6 @@ export class ArrivalItemQueryRepository extends BaseQueryRepository<ArrivalItemO
       hasNextPage: page < totalPages,
       hasPreviousPage: page > 1,
     };
-    return { results: data, pagination };
+    return { success: true, Code: 200, message: 'Arrival items fetched successfully', results: data, pagination };
   }
 }

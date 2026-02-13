@@ -3,7 +3,8 @@ import { UserQueryRepository } from '../repositories/user.query-repository';
 import { UserListQueryDto } from '../dto/user-list-query.dto';
 import { UserResponseDto } from '../dto/user-response.dto';
 import { UserOrmEntity } from '../entities/user.orm-entity';
-import { PaginatedResult } from '../../../common/base/interfaces/paginted.interface';
+import type { ResponseInterface, ResponseWithPaginationInterface } from '../../../common/base/interfaces/response.interface';
+import { createPaginatedResponse, createSingleResponse } from '../../../common/base/helpers/response.helper';
 
 @Injectable()
 export class UserQueryService {
@@ -18,13 +19,13 @@ export class UserQueryService {
     return this.toResponse(entity);
   }
 
-  async getByIdOrFail(id: number): Promise<UserResponseDto> {
+  async getByIdOrFail(id: number): Promise<ResponseInterface<UserResponseDto>> {
     const dto = await this.getById(id);
     if (!dto) throw new NotFoundException('User not found');
-    return dto;
+    return createSingleResponse(dto);
   }
 
-  async getList(query: UserListQueryDto): Promise<PaginatedResult<UserResponseDto>> {
+  async getList(query: UserListQueryDto): Promise<ResponseWithPaginationInterface<UserResponseDto>> {
     const result = await this.userQueryRepository.findWithPagination({
       page: query.page,
       limit: query.limit,
@@ -40,10 +41,7 @@ export class UserQueryService {
         return full ? this.toResponse(full) : this.toResponse(e);
       }),
     );
-    return {
-      results: withRole,
-      pagination: result.pagination,
-    };
+    return createPaginatedResponse(withRole, result.pagination);
   }
 
   private toResponse(entity: UserOrmEntity): UserResponseDto {

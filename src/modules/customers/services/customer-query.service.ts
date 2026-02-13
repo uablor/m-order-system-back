@@ -2,7 +2,8 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { CustomerQueryRepository } from '../repositories/customer.query-repository';
 import { CustomerListQueryDto } from '../dto/customer-list-query.dto';
 import { CustomerResponseDto } from '../dto/customer-response.dto';
-import { PaginatedResult } from '../../../common/base/interfaces/paginted.interface';
+import type { ResponseInterface, ResponseWithPaginationInterface } from '../../../common/base/interfaces/response.interface';
+import { createPaginatedResponse, createSingleResponse } from '../../../common/base/helpers/response.helper';
 
 @Injectable()
 export class CustomerQueryService {
@@ -14,22 +15,22 @@ export class CustomerQueryService {
     return this.toResponse(entity);
   }
 
-  async getByIdOrFail(id: number): Promise<CustomerResponseDto> {
+  async getByIdOrFail(id: number): Promise<ResponseInterface<CustomerResponseDto>> {
     const dto = await this.getById(id);
     if (!dto) throw new NotFoundException('Customer not found');
-    return dto;
+    return createSingleResponse(dto);
   }
 
-  async getList(query: CustomerListQueryDto): Promise<PaginatedResult<CustomerResponseDto>> {
+  async getList(query: CustomerListQueryDto): Promise<ResponseWithPaginationInterface<CustomerResponseDto>> {
     const result = await this.customerQueryRepository.findWithPagination({
       page: query.page,
       limit: query.limit,
       merchantId: query.merchantId,
     });
-    return {
-      results: result.results.map((e) => this.toResponse(e)),
-      pagination: result.pagination,
-    };
+    return createPaginatedResponse(
+      result.results.map((e) => this.toResponse(e)),
+      result.pagination,
+    );
   }
 
   private toResponse(entity: import('../entities/customer.orm-entity').CustomerOrmEntity): CustomerResponseDto {

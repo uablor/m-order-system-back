@@ -82,7 +82,7 @@ export class UserController extends BaseController<
   @ApiBadRequestBase()
   @ApiBearerAuth('BearerAuth')
   async getById(@Param('id', ParseIntPipe) id: number) {
-    return this.queryService.getById(id);
+    return super.getById(id);
   }
 
   @Get()

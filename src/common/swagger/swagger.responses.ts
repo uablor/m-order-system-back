@@ -1,17 +1,20 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 /**
- * Standard API response wrapper used across all endpoints.
+ * Standard API response wrapper (matches ResponseInterface).
  */
 export class ApiResponseDto<T = unknown> {
   @ApiProperty({ example: true, description: 'Whether the request succeeded' })
   success: boolean;
 
-  @ApiProperty({ example: 'Operation completed', description: 'Human-readable message' })
+  @ApiProperty({ example: 200, description: 'Response code' })
+  Code: number;
+
+  @ApiProperty({ example: 'Success', description: 'Human-readable message' })
   message: string;
 
-  @ApiPropertyOptional({ description: 'Response payload' })
-  data?: T;
+  @ApiPropertyOptional({ description: 'Response payload (list or single item)' })
+  results?: T[];
 }
 
 /**
@@ -38,13 +41,16 @@ export class ApiPaginationResultDto {
 }
 
 /**
- * Paginated list response: results + pagination (matches PaginatedResult).
+ * Paginated list response (matches ResponseWithPaginationInterface).
  */
 export class ApiPaginatedResponseDto<T = unknown> {
   @ApiProperty({ example: true })
   success: boolean;
 
-  @ApiProperty({ example: 'List retrieved' })
+  @ApiProperty({ example: 200 })
+  Code: number;
+
+  @ApiProperty({ example: 'Success' })
   message: string;
 
   @ApiProperty({ type: ApiPaginationResultDto })

@@ -3,7 +3,8 @@ import { OrderQueryRepository } from '../repositories/order.query-repository';
 import { OrderRepository } from '../repositories/order.repository';
 import { OrderListQueryDto } from '../dto/order-list-query.dto';
 import { OrderResponseDto } from '../dto/order-response.dto';
-import { PaginatedResult } from '../../../common/base/interfaces/paginted.interface';
+import type { ResponseInterface, ResponseWithPaginationInterface } from '../../../common/base/interfaces/response.interface';
+import { createPaginatedResponse, createSingleResponse } from '../../../common/base/helpers/response.helper';
 
 @Injectable()
 export class OrderQueryService {
@@ -23,10 +24,10 @@ export class OrderQueryService {
     return this.toResponse(entity);
   }
 
-  async getByIdOrFail(id: number): Promise<OrderResponseDto> {
+  async getByIdOrFail(id: number): Promise<ResponseInterface<OrderResponseDto>> {
     const dto = await this.getById(id);
     if (!dto) throw new NotFoundException('Order not found');
-    return dto;
+    return createSingleResponse(dto);
   }
 
   async getByIdWithItems(id: number): Promise<OrderResponseDto | null> {
@@ -45,16 +46,16 @@ export class OrderQueryService {
     return this.toResponse(entity);
   }
 
-  async getList(query: OrderListQueryDto): Promise<PaginatedResult<OrderResponseDto>> {
+  async getList(query: OrderListQueryDto): Promise<ResponseWithPaginationInterface<OrderResponseDto>> {
     const result = await this.orderQueryRepository.findWithPagination({
       page: query.page,
       limit: query.limit,
       merchantId: query.merchantId,
     });
-    return {
-      results: result.results.map((e) => this.toResponse(e)),
-      pagination: result.pagination,
-    };
+    return createPaginatedResponse(
+      result.results.map((e) => this.toResponse(e)),
+      result.pagination,
+    );
   }
 
   private toResponse(entity: import('../entities/order.orm-entity').OrderOrmEntity): OrderResponseDto {

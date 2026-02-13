@@ -3,7 +3,8 @@ import { CustomerOrderItemQueryRepository } from '../repositories/customer-order
 import { CustomerOrderItemRepository } from '../repositories/customer-order-item.repository';
 import { CustomerOrderItemListQueryDto } from '../dto/customer-order-item-list-query.dto';
 import { CustomerOrderItemResponseDto } from '../dto/customer-order-item-response.dto';
-import { PaginatedResult } from '../../../common/base/interfaces/paginted.interface';
+import type { ResponseInterface, ResponseWithPaginationInterface } from '../../../common/base/interfaces/response.interface';
+import { createPaginatedResponse, createSingleResponse } from '../../../common/base/helpers/response.helper';
 
 @Injectable()
 export class CustomerOrderItemQueryService {
@@ -21,23 +22,23 @@ export class CustomerOrderItemQueryService {
     return this.toResponse(entity);
   }
 
-  async getByIdOrFail(id: number): Promise<CustomerOrderItemResponseDto> {
+  async getByIdOrFail(id: number): Promise<ResponseInterface<CustomerOrderItemResponseDto>> {
     const dto = await this.getById(id);
     if (!dto) throw new NotFoundException('Customer order item not found');
-    return dto;
+    return createSingleResponse(dto);
   }
 
-  async getList(query: CustomerOrderItemListQueryDto): Promise<PaginatedResult<CustomerOrderItemResponseDto>> {
+  async getList(query: CustomerOrderItemListQueryDto): Promise<ResponseWithPaginationInterface<CustomerOrderItemResponseDto>> {
     const result = await this.customerOrderItemQueryRepository.findWithPagination({
       page: query.page,
       limit: query.limit,
       customerOrderId: query.customerOrderId,
       orderItemId: query.orderItemId,
     });
-    return {
-      results: result.results.map((e) => this.toResponse(e)),
-      pagination: result.pagination,
-    };
+    return createPaginatedResponse(
+      result.results.map((e) => this.toResponse(e)),
+      result.pagination,
+    );
   }
 
   private toResponse(entity: import('../entities/customer-order-item.orm-entity').CustomerOrderItemOrmEntity): CustomerOrderItemResponseDto {

@@ -50,6 +50,6 @@ export class NotificationQueryRepository extends BaseQueryRepository<Notificatio
       hasNextPage: page < totalPages,
       hasPreviousPage: page > 1,
     };
-    return { results: data, pagination };
+    return { success: true, Code: 200, message: 'Notifications fetched successfully', results: data, pagination };
   }
 }
