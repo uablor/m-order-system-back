@@ -1,0 +1,71 @@
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { TransactionService } from '../../../common/transaction/transaction.service';
+import { MerchantRepository } from '../repositories/merchant.repository';
+import { MerchantCreateDto } from '../dto/merchant-create.dto';
+import { MerchantUpdateDto } from '../dto/merchant-update.dto';
+import { MerchantOrmEntity } from '../entities/merchant.orm-entity';
+
+@Injectable()
+export class MerchantCommandService {
+  constructor(
+    private readonly merchantRepository: MerchantRepository,
+    private readonly transactionService: TransactionService,
+  ) {}
+
+  async create(
+    ownerUserId: number,
+    dto: MerchantCreateDto,
+  ): Promise<{ id: number }> {
+    return this.transactionService.run(async (manager) => {
+      const entity = await this.merchantRepository.create(
+        {
+          ownerUserId,
+          shopName: dto.shopName,
+          shopLogoUrl: dto.shopLogoUrl ?? null,
+          shopAddress: dto.shopAddress ?? null,
+          contactPhone: dto.contactPhone ?? null,
+          contactEmail: dto.contactEmail ?? null,
+          contactFacebook: dto.contactFacebook ?? null,
+          contactLine: dto.contactLine ?? null,
+          contactWhatsapp: dto.contactWhatsapp ?? null,
+          defaultCurrency: dto.defaultCurrency ?? 'THB',
+          isActive: dto.isActive ?? true,
+        } as Partial<MerchantOrmEntity>,
+        manager,
+      );
+      return { id: entity.id };
+    });
+  }
+
+  async update(id: number, dto: MerchantUpdateDto): Promise<void> {
+    await this.transactionService.run(async (manager) => {
+      const existing = await this.merchantRepository.findOneById(id, manager);
+      if (!existing) {
+        throw new NotFoundException('Merchant not found');
+      }
+      const updateData: Partial<MerchantOrmEntity> = {
+        ...(dto.shopName !== undefined && { shopName: dto.shopName }),
+        ...(dto.shopLogoUrl !== undefined && { shopLogoUrl: dto.shopLogoUrl }),
+        ...(dto.shopAddress !== undefined && { shopAddress: dto.shopAddress }),
+        ...(dto.contactPhone !== undefined && { contactPhone: dto.contactPhone }),
+        ...(dto.contactEmail !== undefined && { contactEmail: dto.contactEmail }),
+        ...(dto.contactFacebook !== undefined && { contactFacebook: dto.contactFacebook }),
+        ...(dto.contactLine !== undefined && { contactLine: dto.contactLine }),
+        ...(dto.contactWhatsapp !== undefined && { contactWhatsapp: dto.contactWhatsapp }),
+        ...(dto.defaultCurrency !== undefined && { defaultCurrency: dto.defaultCurrency }),
+        ...(dto.isActive !== undefined && { isActive: dto.isActive }),
+      };
+      await this.merchantRepository.update(id, updateData, manager);
+    });
+  }
+
+  async delete(id: number): Promise<void> {
+    await this.transactionService.run(async (manager) => {
+      const found = await this.merchantRepository.findOneById(id, manager);
+      if (!found) {
+        throw new NotFoundException('Merchant not found');
+      }
+      await this.merchantRepository.delete(id, manager);
+    });
+  }
+}

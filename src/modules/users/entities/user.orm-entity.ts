@@ -1,11 +1,8 @@
 import {
   Column,
-  CreateDateColumn,
   Entity,
   ManyToOne,
   JoinColumn,
-  PrimaryColumn,
-  UpdateDateColumn,
 } from 'typeorm';
 import { RoleOrmEntity } from '../../roles/entities/role.orm-entity';
 import { BaseOrmEntity } from '../../../common/base/enities/base.orm-entities';

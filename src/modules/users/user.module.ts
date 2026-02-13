@@ -8,9 +8,10 @@ import { UserQueryService } from './services/user-query.service';
 import { UserController } from './controllers/user.controller';
 import { TransactionService } from '../../common/transaction/transaction.service';
 import { RoleModule } from '../roles/role.module';
+import { MerchantModule } from '../merchants/merchant.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([UserOrmEntity]), RoleModule],
+  imports: [TypeOrmModule.forFeature([UserOrmEntity]), RoleModule, MerchantModule],
   controllers: [UserController],
   providers: [
     UserRepository,

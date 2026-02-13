@@ -17,6 +17,7 @@ import { UserCommandService } from '../services/user-command.service';
 import { UserQueryService } from '../services/user-query.service';
 import { UserCreateDto } from '../dto/user-create.dto';
 import { UserUpdateDto } from '../dto/user-update.dto';
+import { UserMerchantCreateDto } from '../dto/user-merchant-create.dto';
 import { UserListQueryDto } from '../dto/user-list-query.dto';
 import { UserResponseDto } from '../dto/user-response.dto';
 import { CurrentUser } from '../../../common/decorators/current-user.decorator';
@@ -57,6 +58,18 @@ export class UserController extends BaseController<
   @ApiBearerAuth('BearerAuth')
   async create(@Body() dto: UserCreateDto) {
     return this.commandService.create(dto);
+  }
+
+  @Post('user-merchant')
+  @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({ summary: 'Create user and merchant (registration flow)' })
+  @ApiCreatedResponseBase()
+  @ApiBadRequestBase()
+  @ApiUnauthorizedBase()
+  @ApiForbiddenBase()
+  @ApiBearerAuth('BearerAuth')
+  async createUserWithMerchant(@Body() dto: UserMerchantCreateDto) {
+    return this.commandService.createUserWithMerchant(dto);
   }
 
   @Get(':id')

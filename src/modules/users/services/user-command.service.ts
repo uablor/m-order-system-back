@@ -3,15 +3,19 @@ import { hashPassword } from '../../../common/utils/password.util';
 import { TransactionService } from '../../../common/transaction/transaction.service';
 import { UserRepository } from '../repositories/user.repository';
 import { RoleRepository } from '../../roles/repositories/role.repository';
+import { MerchantRepository } from '../../merchants/repositories/merchant.repository';
 import { UserCreateDto } from '../dto/user-create.dto';
 import { UserUpdateDto } from '../dto/user-update.dto';
+import { UserMerchantCreateDto } from '../dto/user-merchant-create.dto';
 import { UserOrmEntity } from '../entities/user.orm-entity';
+import { MerchantOrmEntity } from '../../merchants/entities/merchant.orm-entity';
 
 @Injectable()
 export class UserCommandService {
   constructor(
     private readonly userRepository: UserRepository,
     private readonly roleRepository: RoleRepository,
+    private readonly merchantRepository: MerchantRepository,
     private readonly transactionService: TransactionService,
   ) {}
 
@@ -34,11 +38,58 @@ export class UserCommandService {
           email: dto.email,
           passwordHash,
           fullName: dto.fullName,
+          roleId: role.id,
+          role: role,
           isActive: dto.isActive ?? true,
         } as Partial<UserOrmEntity>,
         manager,
       );
       return { id: entity.id };
+    });
+  }
+
+  async createUserWithMerchant(dto: UserMerchantCreateDto): Promise<{ userId: number; merchantId: number }> {
+    return this.transactionService.run(async (manager) => {
+      const existing = await this.userRepository.findOneBy(
+        { email: dto.email },
+        manager,
+      );
+      if (existing) {
+        throw new ConflictException('User with this email already exists');
+      }
+      const role = await this.roleRepository.findOneById(Number(dto.roleId), manager);
+      if (!role) {
+        throw new NotFoundException('Role not found');
+      }
+      const passwordHash = await hashPassword(dto.password);
+      const userEntity = await this.userRepository.create(
+        {
+          email: dto.email,
+          passwordHash,
+          fullName: dto.fullName,
+          roleId: role.id,
+          role,
+          isActive: dto.isActive ?? true,
+        } as Partial<UserOrmEntity>,
+        manager,
+      );
+      const merchantEntity = await this.merchantRepository.create(
+        {
+          ownerUserId: userEntity.id,
+          shopName: dto.shopName,
+          shopLogoUrl: dto.shopLogoUrl ?? null,
+          shopAddress: dto.shopAddress ?? null,
+          contactPhone: dto.contactPhone ?? null,
+          contactEmail: dto.contactEmail ?? null,
+          contactFacebook: dto.contactFacebook ?? null,
+          contactLine: dto.contactLine ?? null,
+          contactWhatsapp: dto.contactWhatsapp ?? null,
+          defaultCurrency: dto.defaultCurrency ?? 'THB',
+          isActive: true,
+        } as Partial<MerchantOrmEntity>,
+        manager,
+      );
+      return { userId: userEntity.id, merchantId: merchantEntity.id };
     });
   }
 
