@@ -29,11 +29,13 @@ export class MerchantQueryService {
     query: MerchantListQueryDto,
     ownerUserId?: number,
   ): Promise<ResponseWithPaginationInterface<MerchantResponseDto>> {
+    console.log(ownerUserId)
     const result = await this.merchantQueryRepository.findWithPagination({
       page: query.page,
       limit: query.limit,
       ownerUserId,
     });
+    console.log("result", result)
     return createPaginatedResponse(
       result.results.map((e) => this.toResponse(e)),
       result.pagination,
