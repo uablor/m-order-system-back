@@ -8,7 +8,9 @@ export abstract class BaseRepository<E extends { id?: number }> implements IBase
   constructor(protected readonly repository: Repository<E>) {}
 
   getRepo(manager?: EntityManager): Repository<E> {
-    return (manager ?? this.repository.manager) as unknown as Repository<E>;
+    return manager
+    ? manager.getRepository(this.repository.target as EntityTarget<E>)
+    : this.repository;
   }
 
   async create(data: DeepPartial<E>, manager?: EntityManager): Promise<E> {

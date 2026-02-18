@@ -1,5 +1,62 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { UserResponseDto } from 'src/modules/users/dto/user-response.dto';
+import { OrderItemResponseDto } from './order-item-response.dto';
 
+// 👇 DTO สำหรับ CustomerOrderItem
+export class CustomerOrderItemResponseDto {
+  @ApiProperty()
+  id: number;
+
+  @ApiProperty()
+  orderItemId: number;
+
+  @ApiProperty()
+  quantity: number;
+
+  @ApiProperty()
+  sellingTotalLak: string;
+
+  @ApiProperty()
+  profitLak: string;
+
+  @ApiProperty()
+  createdAt: Date;
+
+  @ApiProperty()
+  updatedAt: Date;
+}
+
+// 👇 DTO สำหรับ CustomerOrder
+export class CustomerOrderResponseDto {
+  @ApiProperty()
+  id: number;
+
+  @ApiProperty()
+  customerId: number;
+
+  @ApiProperty()
+  totalSellingAmountLak: string;
+
+  @ApiProperty()
+  totalPaid: string;
+
+  @ApiProperty()
+  remainingAmount: string;
+
+  @ApiProperty()
+  paymentStatus: string;
+
+  @ApiProperty({ type: [CustomerOrderItemResponseDto] })
+  items: CustomerOrderItemResponseDto[];
+
+  @ApiProperty()
+  createdAt: Date;
+
+  @ApiProperty()
+  updatedAt: Date;
+}
+
+// 👇 DTO สำหรับ Order หลัก
 export class OrderResponseDto {
   @ApiProperty()
   id: number;
@@ -8,7 +65,7 @@ export class OrderResponseDto {
   merchantId: number;
 
   @ApiPropertyOptional({ nullable: true })
-  createdBy: number | null;
+  createdByUser: UserResponseDto | null;
 
   @ApiProperty()
   orderCode: string;
@@ -66,6 +123,12 @@ export class OrderResponseDto {
 
   @ApiProperty()
   paymentStatus: string;
+
+  @ApiPropertyOptional({ type: [OrderItemResponseDto] })
+  orderItems: OrderItemResponseDto[];
+
+  @ApiPropertyOptional({ type: [CustomerOrderResponseDto] })
+  customerOrders: CustomerOrderResponseDto[];
 
   @ApiProperty()
   createdAt: Date;

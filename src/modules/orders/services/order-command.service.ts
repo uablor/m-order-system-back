@@ -210,6 +210,8 @@ export class OrderCommandService {
         const itemEntity = await this.orderItemRepository.create(
           {
             order,
+            orderId: order.id,
+            orderItemIndex: i,
             productName: it.productName,
             variant: it.variant ?? null,
             quantity: it.quantity,

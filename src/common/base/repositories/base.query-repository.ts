@@ -23,6 +23,7 @@ export abstract class BaseQueryRepository<E extends ObjectLiteral> {
   async findWithPagination(
     options: PaginationOptions<E>,
     manager?: EntityManager,
+    relations?: FindManyOptions<E>['relations'],
   ): Promise<PaginatedResult<E>> {
     const repo = manager
       ? manager.getRepository(this.repository.target as EntityTarget<E>)
@@ -36,6 +37,7 @@ export abstract class BaseQueryRepository<E extends ObjectLiteral> {
       order: options.order as FindManyOptions<E>['order'],
       skip,
       take: limit,
+      relations,
     });
 
     const totalPages = Math.ceil(total / limit);
