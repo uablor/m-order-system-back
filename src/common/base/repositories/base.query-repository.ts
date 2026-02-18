@@ -5,15 +5,19 @@ import {
   Repository,
 } from 'typeorm';
 import { EntityTarget } from 'typeorm/common/EntityTarget';
-import { PaginatedResult, PaginationOptions, PaginationResponse } from '../interfaces/paginted.interface';
-
-
+import {
+  PaginatedResult,
+  PaginationOptions,
+  PaginationResponse,
+} from '../interfaces/paginted.interface';
 
 export abstract class BaseQueryRepository<E extends ObjectLiteral> {
   constructor(public readonly repository: Repository<E>) {}
 
   protected getRepo(manager?: EntityManager): Repository<E> {
-    return (manager ?? this.repository.manager) as unknown as Repository<E>;
+    return manager
+      ? manager.getRepository(this.repository.target as EntityTarget<E>)
+      : this.repository;
   }
 
   async findWithPagination(
