@@ -16,6 +16,7 @@ import { CustomerCreateDto } from '../dto/customer-create.dto';
 import { CustomerUpdateDto } from '../dto/customer-update.dto';
 import { CustomerListQueryDto } from '../dto/customer-list-query.dto';
 import { CustomerResponseDto } from '../dto/customer-response.dto';
+import { NoCache } from '../../../common/decorators/no-cache.decorator';
 import {
   ApiOkResponseBase,
   ApiCreatedResponseBase,
@@ -49,6 +50,7 @@ export class CustomerController {
   @ApiOkResponseBase(CustomerResponseDto)
   @ApiNotFoundBase()
   @ApiUnauthorizedBase()
+  @NoCache()
   async getById(@Param('id', ParseIntPipe) id: number) {
     return this.queryService.getByIdOrFail(id);
   }
@@ -58,6 +60,7 @@ export class CustomerController {
   @ApiBearerAuth('BearerAuth')
   @ApiOkResponseBase()
   @ApiUnauthorizedBase()
+  @NoCache()
   async getList(@Query() query: CustomerListQueryDto) {
     return this.queryService.getList(query);
   }

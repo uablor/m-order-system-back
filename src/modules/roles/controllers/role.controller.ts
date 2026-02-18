@@ -10,6 +10,7 @@ import { RoleResponseDto } from '../dto/role-response.dto';
 import { Roles } from '../../../common/decorators/roles.decorator';
 import { RolesGuard } from '../../../common/policies/roles.guard';
 import { ADMIN_ROLE } from '../../../common/policies/role.policy';
+import { NoCache } from '../../../common/decorators/no-cache.decorator';
 import {
   ApiOkResponseBase,
   ApiCreatedResponseBase,
@@ -52,6 +53,7 @@ export class RoleController extends BaseController<
   @ApiOkResponseBase(RoleResponseDto)
   @ApiNotFoundBase()
   @ApiUnauthorizedBase()
+  @NoCache()
   async getById(@Param('id', ParseIntPipe) id: number) {
     return super.getById(id);
   }
@@ -61,6 +63,7 @@ export class RoleController extends BaseController<
   @ApiBearerAuth('BearerAuth')
   @ApiOkResponseBase()
   @ApiUnauthorizedBase()
+  @NoCache()
   async getList(@Query() query: RoleListQueryDto) {
     return this.queryService.getList(query);
   }

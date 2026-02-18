@@ -22,17 +22,47 @@ export class CustomerQueryRepository extends BaseQueryRepository<CustomerOrmEnti
   }
 
   async findWithPagination(
-    options: { page?: number; limit?: number; merchantId?: number },
+    options: { page?: number; limit?: number; merchantId?: number; search?: string },
     manager?: import('typeorm').EntityManager,
   ): Promise<PaginatedResult<CustomerOrmEntity>> {
     const repo = this.getRepo(manager);
     const page = Math.max(1, options.page ?? 1);
     const limit = Math.min(100, Math.max(1, options.limit ?? 10));
     const skip = (page - 1) * limit;
-    const where: FindOptionsWhere<CustomerOrmEntity> = {};
-    if (options.merchantId != null) {
-      where.merchant = { id: options.merchantId };
+    const search = options.search?.trim();
+
+    // ถ้ามี search -> ใช้ query builder เพื่อรองรับ OR (name/phone/token)
+    if (search) {
+      const qb = repo.createQueryBuilder('customer')
+        .leftJoinAndSelect('customer.merchant', 'merchant')
+        .orderBy('customer.createdAt', 'DESC')
+        .skip(skip)
+        .take(limit);
+
+      if (options.merchantId != null) {
+        qb.andWhere('merchant.id = :merchantId', { merchantId: options.merchantId });
+      }
+
+      qb.andWhere(
+        '(customer.customerName LIKE :s OR customer.contactPhone LIKE :s OR customer.uniqueToken LIKE :s)',
+        { s: `%${search}%` },
+      );
+
+      const [data, total] = await qb.getManyAndCount();
+      const totalPages = Math.ceil(total / limit);
+      const pagination: PaginationResponse = {
+        total,
+        page,
+        limit,
+        totalPages,
+        hasNextPage: page < totalPages,
+        hasPreviousPage: page > 1,
+      };
+      return { success: true, Code: 200, message: 'Customers fetched successfully', results: data, pagination };
     }
+
+    const where: FindOptionsWhere<CustomerOrmEntity> = {};
+    if (options.merchantId != null) where.merchant = { id: options.merchantId };
     const [data, total] = await repo.findAndCount({
       where: Object.keys(where).length ? where : undefined,
       relations: ['merchant'],

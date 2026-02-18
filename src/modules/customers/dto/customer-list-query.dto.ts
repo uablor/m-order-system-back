@@ -1,4 +1,4 @@
-import { IsOptional, IsInt, Min, Max } from 'class-validator';
+import { IsOptional, IsInt, IsString, MaxLength, Min, Max } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 
@@ -23,4 +23,10 @@ export class CustomerListQueryDto {
   @Type(() => Number)
   @IsInt()
   merchantId?: number;
+
+  @ApiPropertyOptional({ description: 'Search by name / phone / token' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(255)
+  search?: string;
 }

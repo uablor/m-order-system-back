@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Like, Repository } from 'typeorm';
 import { BaseQueryRepository } from '../../../common/base/repositories/base.query-repository';
 import { MerchantOrmEntity } from '../entities/merchant.orm-entity';
 import { PaginatedResult } from '../../../common/base/interfaces/paginted.interface';
@@ -15,14 +15,24 @@ export class MerchantQueryRepository extends BaseQueryRepository<MerchantOrmEnti
   }
 
   async findWithPagination(
-    options: { page?: number; limit?: number; ownerUserId?: number },
+    options: { page?: number; limit?: number; ownerUserId?: number; search?: string },
     manager?: import('typeorm').EntityManager,
   ): Promise<PaginatedResult<MerchantOrmEntity>> {
+    const where: any = {};
+
+    if (options.ownerUserId != null) {
+      where.ownerUserId = options.ownerUserId;
+    }
+
+    if (options.search?.trim()) {
+      where.shopName = Like(`%${options.search.trim()}%`);
+    }
+
     return super.findWithPagination(
       {
         page: options.page,
         limit: options.limit,
-        where: options.ownerUserId != null ? { ownerUserId: options.ownerUserId } : undefined,
+        where: Object.keys(where).length > 0 ? where : undefined,
         order: { createdAt: 'DESC' as const },
       },
       manager,

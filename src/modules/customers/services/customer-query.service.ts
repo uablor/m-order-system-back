@@ -26,6 +26,7 @@ export class CustomerQueryService {
       page: query.page,
       limit: query.limit,
       merchantId: query.merchantId,
+      search: query.search,
     });
     return createPaginatedResponse(
       result.results.map((e) => this.toResponse(e)),

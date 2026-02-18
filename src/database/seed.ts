@@ -5,6 +5,8 @@ import { RoleRepository } from '../modules/roles/repositories/role.repository';
 import { PermissionQueryRepository } from '../modules/permissions/repositories/permission.query-repository';
 import { RolePermissionRepository } from '../modules/role-permissions/repositories/role-permission.repository';
 import { UserRepository } from '../modules/users/repositories/user.repository';
+import { MerchantRepository } from '../modules/merchants/repositories/merchant.repository';
+import { CustomerRepository } from '../modules/customers/repositories/customer.repository';
 import { TransactionService } from '../common/transaction/transaction.service';
 import { runRoleSeeder, SUPERADMIN_ROLE_NAME } from './seeds/role.seeder';
 import {
@@ -13,6 +15,15 @@ import {
   MERCHANT_PERMISSION_PREFIXES,
 } from './seeds/role-permission.seeder';
 import { runUserSeeder, SUPERADMIN_EMAIL } from './seeds/user.seeder';
+import {
+  DEMO_ADMIN_EMAIL,
+  DEMO_ADMIN_PASSWORD,
+  DEMO_MERCHANT1_EMAIL,
+  DEMO_MERCHANT1_PASSWORD,
+  DEMO_MERCHANT2_EMAIL,
+  DEMO_MERCHANT2_PASSWORD,
+  runDemoDataSeeder,
+} from './seeds/demo-data.seeder';
 
 async function seed(): Promise<void> {
   const app = await NestFactory.createApplicationContext(AppModule, {
@@ -67,10 +78,21 @@ async function seed(): Promise<void> {
     const userRepository = app.get(UserRepository);
     await runUserSeeder(userRepository, roles.superadmin.id);
 
+    // 5. Demo data for testing (admin + merchants + customers)
+    const merchantRepository = app.get(MerchantRepository);
+    const customerRepository = app.get(CustomerRepository);
+    await runDemoDataSeeder(userRepository, merchantRepository, customerRepository, roles);
+
     console.log(
-      'Seed completed: roles (superadmin, admin, admin_merchant, employee_merchant) with permissions, user "%s" as %s.',
+      'Seed completed:\n- roles (superadmin, admin, admin_merchant, employee_merchant) with permissions\n- user "%s" as %s\n- demo admin "%s" (password: %s)\n- demo merchant owners: "%s" (password: %s), "%s" (password: %s)\n- demo customers created for 2 merchants',
       SUPERADMIN_EMAIL,
       SUPERADMIN_ROLE_NAME,
+      DEMO_ADMIN_EMAIL,
+      DEMO_ADMIN_PASSWORD,
+      DEMO_MERCHANT1_EMAIL,
+      DEMO_MERCHANT1_PASSWORD,
+      DEMO_MERCHANT2_EMAIL,
+      DEMO_MERCHANT2_PASSWORD,
     );
   } catch (err) {
     console.error('Seed failed:', err);

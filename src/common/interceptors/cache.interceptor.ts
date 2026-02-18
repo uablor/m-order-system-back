@@ -13,6 +13,7 @@ import type { Cache } from 'cache-manager';
 import { Observable, of } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import { CACHE_KEY_METADATA, CACHE_TTL_METADATA } from '@nestjs/cache-manager';
+import { NO_CACHE_METADATA_KEY } from '../decorators/no-cache.decorator';
 
 const isNil = (val: unknown): val is null | undefined => val == null;
 const isFunction = (val: unknown): val is (...args: unknown[]) => unknown =>
@@ -94,6 +95,11 @@ export class CacheInterceptor implements NestInterceptor {
   protected trackBy(context: ExecutionContext): string | undefined {
     const httpAdapter = this.httpAdapterHost?.httpAdapter;
     const isHttpApp = httpAdapter && typeof httpAdapter.getRequestMethod === 'function';
+    const noCache =
+      this.reflector.get<boolean | undefined>(NO_CACHE_METADATA_KEY, context.getHandler()) ??
+      this.reflector.get<boolean | undefined>(NO_CACHE_METADATA_KEY, context.getClass());
+    if (noCache) return undefined;
+
     const cacheKey =
       this.reflector.get<string | ((ctx: ExecutionContext) => string) | undefined>(
         CACHE_KEY_METADATA,

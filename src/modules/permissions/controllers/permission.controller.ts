@@ -11,6 +11,7 @@ import { PermissionResponseDto } from '../dto/permission-response.dto';
 import { Roles } from '../../../common/decorators/roles.decorator';
 import { RolesGuard } from '../../../common/policies/roles.guard';
 import { ADMIN_ROLE } from '../../../common/policies/role.policy';
+import { NoCache } from '../../../common/decorators/no-cache.decorator';
 import {
   ApiOkResponseBase,
   ApiCreatedResponseBase,
@@ -67,6 +68,7 @@ export class PermissionController extends BaseController<
   @ApiOkResponseBase(PermissionResponseDto)
   @ApiNotFoundBase()
   @ApiUnauthorizedBase()
+  @NoCache()
   async getById(@Param('id', ParseIntPipe) id: number) {
     return super.getById(id);
   }
@@ -76,6 +78,7 @@ export class PermissionController extends BaseController<
   @ApiBearerAuth('BearerAuth')
   @ApiOkResponseBase()
   @ApiUnauthorizedBase()
+  @NoCache()
   async getList(@Query() query: PermissionListQueryDto) {
     return this.queryService.getList(query);
   }

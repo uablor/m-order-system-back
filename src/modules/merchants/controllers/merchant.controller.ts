@@ -8,6 +8,7 @@ import { MerchantListQueryDto } from '../dto/merchant-list-query.dto';
 import { MerchantResponseDto } from '../dto/merchant-response.dto';
 import { CurrentUser } from '../../../common/decorators/current-user.decorator';
 import type { CurrentUserPayload } from '../../../common/decorators/current-user.decorator';
+import { NoCache } from '../../../common/decorators/no-cache.decorator';
 import {
   ApiOkResponseBase,
   ApiCreatedResponseBase,
@@ -44,6 +45,7 @@ export class MerchantController {
   @ApiOkResponseBase(MerchantResponseDto)
   @ApiNotFoundBase()
   @ApiUnauthorizedBase()
+  @NoCache()
   async getById(@Param('id', ParseIntPipe) id: number) {
     return this.queryService.getByIdOrFail(id);
   }
@@ -53,6 +55,7 @@ export class MerchantController {
   @ApiBearerAuth('BearerAuth')
   @ApiOkResponseBase()
   @ApiUnauthorizedBase()
+  @NoCache()
   async getList(
     @Query() query: MerchantListQueryDto,
     @CurrentUser() currentUser: CurrentUserPayload,
