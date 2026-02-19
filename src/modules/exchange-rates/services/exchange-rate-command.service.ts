@@ -35,8 +35,6 @@ export class ExchangeRateCommandService {
       await this.exchangeRateRepository.getRepo(manager).update(
         { 
           merchant: { id: currentUser.merchantId! },
-          baseCurrency: dto.baseCurrency,
-          targetCurrency: dto.targetCurrency,
           rateType: dto.rateType,
           isActive: true,
         },
@@ -86,8 +84,6 @@ export class ExchangeRateCommandService {
         await this.exchangeRateRepository.getRepo(manager).update(
           {
             merchant: { id: currentUser.merchantId! },
-            baseCurrency: item.baseCurrency,
-            targetCurrency: item.targetCurrency,
             rateType: item.rateType,
             isActive: true,
           },
