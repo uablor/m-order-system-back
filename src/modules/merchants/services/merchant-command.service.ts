@@ -37,7 +37,7 @@ export class MerchantCommandService {
     });
   }
 
-  async update(id: number, dto: MerchantUpdateDto): Promise<void> {
+  async update(id: number, dto: MerchantUpdateDto ): Promise<void> {
     await this.transactionService.run(async (manager) => {
       const existing = await this.merchantRepository.findOneById(id, manager);
       if (!existing) {

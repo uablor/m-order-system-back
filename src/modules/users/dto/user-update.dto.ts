@@ -7,13 +7,6 @@ export class UserUpdateDto {
   @IsEmail()
   email?: string;
 
-  @ApiPropertyOptional({ example: 'password123', minLength: 6 })
-  @IsOptional()
-  @IsString()
-  @MinLength(6, { message: 'Password must be at least 6 characters' })
-  @MaxLength(100)
-  password?: string;
-
   @ApiPropertyOptional({ example: 'John Doe' })
   @IsOptional()
   @IsString()

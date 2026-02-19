@@ -33,9 +33,9 @@ export class ArrivalController {
   @ApiNotFoundBase()
   async create(
     @Body() dto: CreateArrivalDto,
-    @CurrentUser() currentUser?: CurrentUserPayload,
+    @CurrentUser() currentUser: CurrentUserPayload,
   ) {
-    return this.arrivalCommandService.create(dto, currentUser?.userId ?? null);
+    return this.arrivalCommandService.create(dto, currentUser);
   }
 
   @Get()

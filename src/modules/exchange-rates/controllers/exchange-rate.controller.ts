@@ -76,8 +76,20 @@ export class ExchangeRateController {
   @ApiBearerAuth('BearerAuth')
   @ApiOkResponseBase()
   @ApiUnauthorizedBase()
-  async getList(@Query() query: ExchangeRateListQueryDto) {
+  async adminGetList(@Query() query: ExchangeRateListQueryDto) {
     return this.queryService.getList(query);
+  }
+
+  @Get('/by-merchant')
+  @ApiOperation({ summary: 'List exchange rates by merchant' })
+  @ApiBearerAuth('BearerAuth')
+  @ApiOkResponseBase()
+  @ApiUnauthorizedBase()
+  async getListBy(
+    @Query() query: ExchangeRateListQueryDto,
+    @CurrentUser() currentUser: CurrentUserPayload,
+  ) {
+    return this.queryService.getList(query, currentUser);
   }
 
   @Get(':id')
@@ -104,6 +116,23 @@ export class ExchangeRateController {
     @Body() dto: ExchangeRateUpdateDto,
   ) {
     return this.commandService.update(id, dto);
+  }
+
+
+    @Patch(':id/by-merchant')
+  @ApiOperation({ summary: 'Update exchange rate by merchant' })
+  @ApiBearerAuth('BearerAuth')
+  @ApiParam({ name: 'id', description: 'Exchange rate ID' })
+  @ApiOkResponseBase()
+  @ApiBadRequestBase()
+  @ApiNotFoundBase()
+  @ApiUnauthorizedBase()
+  async updateBy(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: ExchangeRateUpdateDto,
+    @CurrentUser() currentUser: CurrentUserPayload,
+  ) {
+    return this.commandService.update(id, dto, currentUser);
   }
 
   @Delete(':id')

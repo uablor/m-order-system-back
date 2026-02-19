@@ -3,12 +3,22 @@ import { UserQueryRepository } from '../repositories/user.query-repository';
 import { UserListQueryDto } from '../dto/user-list-query.dto';
 import { UserResponseDto } from '../dto/user-response.dto';
 import { UserOrmEntity } from '../entities/user.orm-entity';
-import type { ResponseInterface, ResponseWithPaginationInterface } from '../../../common/base/interfaces/response.interface';
-import { createPaginatedResponse, createSingleResponse } from '../../../common/base/helpers/response.helper';
+import type {
+  ResponseInterface,
+  ResponseWithPaginationInterface,
+} from '../../../common/base/interfaces/response.interface';
+import {
+  createPaginatedResponse,
+  createSingleResponse,
+} from '../../../common/base/helpers/response.helper';
+import { TransactionService } from 'src/common/transaction/transaction.service';
 
 @Injectable()
 export class UserQueryService {
-  constructor(private readonly userQueryRepository: UserQueryRepository) {}
+  constructor(
+    private readonly userQueryRepository: UserQueryRepository,
+    private readonly transactionService: TransactionService,
+  ) {}
 
   async getById(id: number): Promise<UserResponseDto | null> {
     const entity = await this.userQueryRepository.repository.findOne({
@@ -25,23 +35,27 @@ export class UserQueryService {
     return createSingleResponse(dto);
   }
 
-  async getList(query: UserListQueryDto): Promise<ResponseWithPaginationInterface<UserResponseDto>> {
-    const result = await this.userQueryRepository.findWithPagination({
-      page: query.page,
-      limit: query.limit,
-      isActive: query.isActive,
-      search: query.search,
+  async getList(
+    query: UserListQueryDto,
+    merchantId?: number,
+  ): Promise<ResponseWithPaginationInterface<UserResponseDto>> {
+    return this.transactionService.run(async (manager) => {
+      const result = await this.userQueryRepository.findWithPagination(
+        {
+          merchantId,
+          page: query.page,
+          limit: query.limit,
+          isActive: query.isActive,
+          search: query.search,
+          searchField: query.searchField,
+          sort: query.sort,
+          startDate: query.startDate,
+          endDate: query.endDate,
+        },
+        manager,
+      );
+      return createPaginatedResponse(result.results, result.pagination);
     });
-    const withRole = await Promise.all(
-      result.results.map(async (e) => {
-        const full = await this.userQueryRepository.repository.findOne({
-          where: { id: e.id },
-          relations: ['role'],
-        });
-        return full ? this.toResponse(full) : this.toResponse(e);
-      }),
-    );
-    return createPaginatedResponse(withRole, result.pagination);
   }
 
   private toResponse(entity: UserOrmEntity): UserResponseDto {

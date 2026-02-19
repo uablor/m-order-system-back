@@ -1,6 +1,22 @@
-import { Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, Query, UseGuards } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiParam, ApiBearerAuth } from '@nestjs/swagger';
-import { BaseController } from '../../../common/base/controllers/base.controller';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  ParseIntPipe,
+  Patch,
+  Post,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiParam,
+  ApiBearerAuth,
+} from '@nestjs/swagger';
+// import { BaseController } from '../../../common/base/controllers/base.controller';
 import { RoleCommandService } from '../services/role-command.service';
 import { RoleQueryService } from '../services/role-query.service';
 import { RoleCreateDto } from '../dto/role-create.dto';
@@ -21,18 +37,23 @@ import {
 @ApiTags('Roles')
 @Controller('roles')
 @UseGuards(RolesGuard)
-export class RoleController extends BaseController<
-  RoleCreateDto,
-  RoleUpdateDto,
-  import('../dto/role-response.dto').RoleResponseDto,
-  RoleListQueryDto
-> {
+// export class RoleController extends BaseController<
+//   RoleCreateDto,
+//   RoleUpdateDto,
+//   import('../dto/role-response.dto').RoleResponseDto,
+//   RoleListQueryDto
+// > {
+//   constructor(
+//     protected readonly commandService: RoleCommandService,
+//     protected readonly queryService: RoleQueryService,
+//   ) {
+//     super(commandService, queryService);
+//   }
+export class RoleController {
   constructor(
     protected readonly commandService: RoleCommandService,
     protected readonly queryService: RoleQueryService,
-  ) {
-    super(commandService, queryService);
-  }
+  ) {}
 
   @Post()
   @Roles(ADMIN_ROLE)
@@ -53,7 +74,7 @@ export class RoleController extends BaseController<
   @ApiNotFoundBase()
   @ApiUnauthorizedBase()
   async getById(@Param('id', ParseIntPipe) id: number) {
-    return super.getById(id);
+    return this.queryService.getById(id);
   }
 
   @Get()
@@ -73,7 +94,10 @@ export class RoleController extends BaseController<
   @ApiBadRequestBase()
   @ApiNotFoundBase()
   @ApiUnauthorizedBase()
-  async update(@Param('id', ParseIntPipe) id: number, @Body() dto: RoleUpdateDto) {
+  async update(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: RoleUpdateDto,
+  ) {
     return this.commandService.update(id, dto);
   }
 

@@ -1,11 +1,7 @@
 import { IsOptional, IsInt, Min, Max, IsIn, IsString } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiPropertyOptional } from '@nestjs/swagger';
-
-export enum SortDirection {
-    ASC = 'ASC',
-    DESC = 'DESC'
-}
+import { SortDirection } from '../enums/base.query.enum';
 
 export class BaseQueryDto {
   @ApiPropertyOptional({ default: 1, minimum: 1 })
@@ -28,14 +24,18 @@ export class BaseQueryDto {
   @IsString()
   search?: string;
 
-  @ApiPropertyOptional({ description: 'Field or comma-separated fields to apply the search to' })
+  @ApiPropertyOptional({
+    description: 'Field or comma-separated fields to apply the search to',
+  })
   @IsOptional()
   @IsString()
   searchField?: string;
 
-  @ApiPropertyOptional({ description: 'Sort order, e.g. "field:ASC" or "field:DESC"' })
+  @ApiPropertyOptional({
+    enum: SortDirection,
+    description: 'Sort direction for results',
+  })
+  @IsOptional()
   @IsString()
-  sort: SortDirection = SortDirection.DESC;
-
-  
+  sort?: SortDirection;
 }

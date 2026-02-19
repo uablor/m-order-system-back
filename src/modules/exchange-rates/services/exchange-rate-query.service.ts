@@ -3,14 +3,23 @@ import { ExchangeRateQueryRepository } from '../repositories/exchange-rate.query
 import { ExchangeRateRepository } from '../repositories/exchange-rate.repository';
 import { ExchangeRateListQueryDto } from '../dto/exchange-rate-list-query.dto';
 import { ExchangeRateResponseDto } from '../dto/exchange-rate-response.dto';
-import type { ResponseInterface, ResponseWithPaginationInterface } from '../../../common/base/interfaces/response.interface';
-import { createPaginatedResponse, createSingleResponse } from '../../../common/base/helpers/response.helper';
+import type {
+  ResponseInterface,
+  ResponseWithPaginationInterface,
+} from '../../../common/base/interfaces/response.interface';
+import {
+  createPaginatedResponse,
+  createSingleResponse,
+} from '../../../common/base/helpers/response.helper';
 import { ExchangeRateOrmEntity } from '../entities/exchange-rate.orm-entity';
+import { TransactionService } from 'src/common/transaction/transaction.service';
+import { CurrentUserPayload } from 'src/common/decorators/current-user.decorator';
 
 @Injectable()
 export class ExchangeRateQueryService {
   constructor(
     private readonly exchangeRateQueryRepository: ExchangeRateQueryRepository,
+    private readonly transactionService: TransactionService,
   ) {}
 
   async getById(id: number): Promise<ExchangeRateResponseDto | null> {
@@ -22,26 +31,38 @@ export class ExchangeRateQueryService {
     return this.toResponse(entity);
   }
 
-  async getByIdOrFail(id: number): Promise<ResponseInterface<ExchangeRateResponseDto>> {
+  async getByIdOrFail(
+    id: number,
+  ): Promise<ResponseInterface<ExchangeRateResponseDto>> {
     const dto = await this.getById(id);
     if (!dto) throw new NotFoundException('Exchange rate not found');
     return createSingleResponse(dto);
   }
 
-  async getList(query: ExchangeRateListQueryDto): Promise<ResponseWithPaginationInterface<ExchangeRateResponseDto>> {
-    const result = await this.exchangeRateQueryRepository.findWithPagination({
-      page: query.page,
-      limit: query.limit,
-      merchantId: query.merchantId,
-      rateType: query.rateType,
-      baseCurrency: query.baseCurrency,
-      targetCurrency: query.targetCurrency,
-      isActive: query.isActive,
+  async getList(
+    query: ExchangeRateListQueryDto,
+    currentUser?: CurrentUserPayload,
+  ): Promise<ResponseWithPaginationInterface<ExchangeRateResponseDto>> {
+    return this.transactionService.run(async (manager) => {
+      const result = await this.exchangeRateQueryRepository.findWithPagination(
+        {
+          page: query.page,
+          limit: query.limit,
+          merchantId: currentUser?.merchantId
+            ? currentUser.merchantId
+            : query.merchantId,
+          rateType: query.rateType,
+          baseCurrency: query.baseCurrency,
+          targetCurrency: query.targetCurrency,
+          isActive: query.isActive,
+        },
+        manager,
+      );
+      return createPaginatedResponse(
+        result.results.map((e) => this.toResponse(e)),
+        result.pagination,
+      );
     });
-    return createPaginatedResponse(
-      result.results.map((e) => this.toResponse(e)),
-      result.pagination,
-    );
   }
 
   private toResponse(entity: ExchangeRateOrmEntity): ExchangeRateResponseDto {

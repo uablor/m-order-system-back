@@ -1,12 +1,22 @@
-import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ForbiddenException,
+  Inject,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { TransactionService } from '../../../common/transaction/transaction.service';
 import { ExchangeRateRepository } from '../repositories/exchange-rate.repository';
 import { MerchantRepository } from '../../merchants/repositories/merchant.repository';
-import { ExchangeRateCreateDto, ExchangeRateCreateManyDto } from '../dto/exchange-rate-create.dto';
+import {
+  ExchangeRateCreateDto,
+  ExchangeRateCreateManyDto,
+} from '../dto/exchange-rate-create.dto';
 import { ExchangeRateUpdateDto } from '../dto/exchange-rate-update.dto';
 import { ExchangeRateOrmEntity } from '../entities/exchange-rate.orm-entity';
 import { CurrentUserPayload } from 'src/common/decorators/current-user.decorator';
 import { UserOrmEntity } from 'src/modules/users/entities/user.orm-entity';
+import { CACHE_MANAGER, Cache } from '@nestjs/cache-manager';
+import e from 'express';
 
 @Injectable()
 export class ExchangeRateCommandService {
@@ -14,6 +24,7 @@ export class ExchangeRateCommandService {
     private readonly transactionService: TransactionService,
     private readonly exchangeRateRepository: ExchangeRateRepository,
     private readonly merchantRepository: MerchantRepository,
+    @Inject(CACHE_MANAGER) private cacheManager: Cache,
   ) {}
 
   async create(
@@ -29,18 +40,18 @@ export class ExchangeRateCommandService {
         manager,
       );
       if (!merchant) throw new NotFoundException('Merchant not found');
-  
+
       const rateDate = new Date();
-  
+
       await this.exchangeRateRepository.getRepo(manager).update(
-        { 
+        {
           merchant: { id: currentUser.merchantId! },
           rateType: dto.rateType,
           isActive: true,
         },
         { isActive: false },
       );
-  
+
       const entity = await this.exchangeRateRepository.create(
         {
           merchant,
@@ -54,7 +65,7 @@ export class ExchangeRateCommandService {
         } as Partial<ExchangeRateOrmEntity>,
         manager,
       );
-  
+      await this.clearExchangeRateCache();
       return { id: entity.id };
     });
   }
@@ -66,20 +77,19 @@ export class ExchangeRateCommandService {
     if (!currentUser?.merchantId) {
       throw new ForbiddenException('Merchant context required for this action');
     }
-  
+
     return this.transactionService.run(async (manager) => {
       const merchant = await this.merchantRepository.findOneById(
         currentUser.merchantId!,
         manager,
       );
-  
+
       if (!merchant) throw new NotFoundException('Merchant not found');
-  
+
       const rateDate = new Date();
       const ids: number[] = [];
-  
+
       for (const item of dto.items) {
-  
         // ปิดเรทเก่าที่ active อยู่
         await this.exchangeRateRepository.getRepo(manager).update(
           {
@@ -89,7 +99,7 @@ export class ExchangeRateCommandService {
           },
           { isActive: false },
         );
-  
+
         // สร้างเรทใหม่
         const entity = await this.exchangeRateRepository.create(
           {
@@ -104,23 +114,33 @@ export class ExchangeRateCommandService {
           } as Partial<ExchangeRateOrmEntity>,
           manager,
         );
-  
+
         ids.push(entity.id);
       }
-  
+      await this.clearExchangeRateCache();
       return { ids };
     });
   }
-  
 
-  async update(id: number, dto: ExchangeRateUpdateDto): Promise<void> {
+  async update(
+    id: number,
+    dto: ExchangeRateUpdateDto,
+    currentUser?: CurrentUserPayload,
+  ): Promise<void> {
     await this.transactionService.run(async (manager) => {
-      const existing = await this.exchangeRateRepository.findOneById(
-        id,
-        manager,
-      );
-      if (!existing) throw new NotFoundException('Exchange rate not found');
-
+      if (currentUser) {
+        const existing = await this.exchangeRateRepository.findOneById(
+          id,
+          manager,
+        );
+        if (!existing) throw new NotFoundException('Exchange rate not found');
+      } else {
+        const existing = await this.exchangeRateRepository.findOneById(
+          id,
+          manager,
+        );
+        if (!existing) throw new NotFoundException('Exchange rate not found');
+      }
       const updateData: Partial<ExchangeRateOrmEntity> = {};
       if (dto.baseCurrency !== undefined)
         updateData.baseCurrency = dto.baseCurrency;
@@ -131,7 +151,7 @@ export class ExchangeRateCommandService {
       if (dto.rateDate !== undefined)
         updateData.rateDate = new Date(dto.rateDate);
       if (dto.isActive !== undefined) updateData.isActive = dto.isActive;
-
+      await this.clearExchangeRateCache();
       await this.exchangeRateRepository.update(id, updateData, manager);
     });
   }
@@ -143,7 +163,20 @@ export class ExchangeRateCommandService {
         manager,
       );
       if (!existing) throw new NotFoundException('Exchange rate not found');
+      await this.clearExchangeRateCache();
       await this.exchangeRateRepository.delete(id, manager);
     });
+  }
+
+  private async clearExchangeRateCache() {
+    const store: any = (this.cacheManager as any).store;
+
+    if (store?.keys) {
+      const keys: string[] = await store.keys();
+
+      const exchangeKeys = keys.filter((k) => k.includes('/exchange-rate'));
+
+      await Promise.all(exchangeKeys.map((k) => this.cacheManager.del(k)));
+    }
   }
 }

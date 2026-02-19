@@ -1,5 +1,20 @@
-import { Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, Query } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiParam, ApiBearerAuth } from '@nestjs/swagger';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  ParseIntPipe,
+  Patch,
+  Post,
+  Query,
+} from '@nestjs/common';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiParam,
+  ApiBearerAuth,
+} from '@nestjs/swagger';
 import { MerchantCommandService } from '../services/merchant-command.service';
 import { MerchantQueryService } from '../services/merchant-query.service';
 import { MerchantCreateDto } from '../dto/merchant-create.dto';
@@ -30,7 +45,7 @@ export class MerchantController {
   @ApiCreatedResponseBase()
   @ApiBadRequestBase()
   @ApiUnauthorizedBase()
-  async create(
+  async adminCreate(
     @Body() dto: MerchantCreateDto,
     @CurrentUser() currentUser: CurrentUserPayload,
   ) {
@@ -49,15 +64,25 @@ export class MerchantController {
   }
 
   @Get()
-  @ApiOperation({ summary: 'List merchants with pagination (filtered by current user)' })
+  @ApiOperation({
+    summary: 'List merchants with pagination (filtered by current user)',
+  })
   @ApiBearerAuth('BearerAuth')
   @ApiOkResponseBase()
   @ApiUnauthorizedBase()
-  async getList(
-    @Query() query: MerchantListQueryDto,
-    @CurrentUser() currentUser: CurrentUserPayload,
-  ) {
-    return this.queryService.getList(query, currentUser.userId);
+  async adminGetList(@Query() query: MerchantListQueryDto) {
+    return this.queryService.getList(query);
+  }
+
+  @Get('merchant-detail')
+  @ApiOperation({
+    summary: 'Get merchant detail for current user',
+  })
+  @ApiBearerAuth('BearerAuth')
+  @ApiOkResponseBase()
+  @ApiUnauthorizedBase()
+  async getMerchantDetail(@CurrentUser() currentUser: CurrentUserPayload) {
+    return this.queryService.findMerchantDetail(currentUser.userId);
   }
 
   @Patch(':id')
@@ -68,8 +93,25 @@ export class MerchantController {
   @ApiBadRequestBase()
   @ApiNotFoundBase()
   @ApiUnauthorizedBase()
-  async update(@Param('id', ParseIntPipe) id: number, @Body() dto: MerchantUpdateDto) {
+  async adminUpdate(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: MerchantUpdateDto,
+  ) {
     return this.commandService.update(id, dto);
+  }
+
+  @Patch('my-merchant')
+  @ApiOperation({ summary: 'Update merchant' })
+  @ApiBearerAuth('BearerAuth')
+  @ApiOkResponseBase()
+  @ApiBadRequestBase()
+  @ApiNotFoundBase()
+  @ApiUnauthorizedBase()
+  async merchantUpdate(
+    @Body() dto: MerchantUpdateDto,
+    @CurrentUser() currentUser: CurrentUserPayload,
+  ) {
+    return this.commandService.update(currentUser.merchantId!, dto);
   }
 
   @Delete(':id')
@@ -78,7 +120,7 @@ export class MerchantController {
   @ApiParam({ name: 'id', description: 'Merchant ID' })
   @ApiNotFoundBase()
   @ApiUnauthorizedBase()
-  async delete(@Param('id', ParseIntPipe) id: number) {
+  async adminDelete(@Param('id', ParseIntPipe) id: number) {
     return this.commandService.delete(id);
   }
 }

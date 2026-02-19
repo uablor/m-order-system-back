@@ -16,13 +16,12 @@ export class PermissionQueryRepository extends BaseQueryRepository<PermissionOrm
 
   async findWithPagination(
     options: { page?: number; limit?: number },
-    manager?: import('typeorm').EntityManager,
+    manager: import('typeorm').EntityManager,
   ): Promise<PaginatedResult<PermissionOrmEntity>> {
     return super.findWithPagination(
       {
         page: options.page,
         limit: options.limit,
-        order: { permissionCode: 'ASC' as const },
       },
       manager,
     );
