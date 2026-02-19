@@ -1,6 +1,6 @@
 import { Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, Query, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiParam, ApiBearerAuth } from '@nestjs/swagger';
-import { BaseController } from '../../../common/base/controllers/base.controller';
+// import { BaseController } from '../../../common/base/controllers/base.controller';
 import { PermissionCommandService } from '../services/permission-command.service';
 import { PermissionQueryService } from '../services/permission-query.service';
 import { PermissionGeneratorService } from '../services/permission-generator.service';
@@ -22,18 +22,12 @@ import {
 
 @ApiTags('Permissions')
 @Controller('permissions')
-export class PermissionController extends BaseController<
-  PermissionCreateDto,
-  PermissionUpdateDto,
-  import('../dto/permission-response.dto').PermissionResponseDto,
-  PermissionListQueryDto
-> {
+export class PermissionController {
   constructor(
     protected readonly commandService: PermissionCommandService,
     protected readonly queryService: PermissionQueryService,
     private readonly generatorService: PermissionGeneratorService,
   ) {
-    super(commandService, queryService);
   }
 
   @Post('generate')
@@ -70,7 +64,7 @@ export class PermissionController extends BaseController<
   @ApiUnauthorizedBase()
   @NoCache()
   async getById(@Param('id', ParseIntPipe) id: number) {
-    return super.getById(id);
+    return this.queryService.getById(id);
   }
 
   @Get()

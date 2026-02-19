@@ -3,14 +3,22 @@ import { MerchantQueryRepository } from '../repositories/merchant.query-reposito
 import { MerchantRepository } from '../repositories/merchant.repository';
 import { MerchantListQueryDto } from '../dto/merchant-list-query.dto';
 import { MerchantResponseDto } from '../dto/merchant-response.dto';
-import type { ResponseInterface, ResponseWithPaginationInterface } from '../../../common/base/interfaces/response.interface';
-import { createPaginatedResponse, createSingleResponse } from '../../../common/base/helpers/response.helper';
+import type {
+  ResponseInterface,
+  ResponseWithPaginationInterface,
+} from '../../../common/base/interfaces/response.interface';
+import {
+  createPaginatedResponse,
+  createSingleResponse,
+} from '../../../common/base/helpers/response.helper';
+import { TransactionService } from 'src/common/transaction/transaction.service';
 
 @Injectable()
 export class MerchantQueryService {
   constructor(
     private readonly merchantRepository: MerchantRepository,
     private readonly merchantQueryRepository: MerchantQueryRepository,
+    private readonly transactionService: TransactionService,
   ) {}
 
   async getById(id: number): Promise<MerchantResponseDto | null> {
@@ -19,7 +27,9 @@ export class MerchantQueryService {
     return this.toResponse(entity);
   }
 
-  async getByIdOrFail(id: number): Promise<ResponseInterface<MerchantResponseDto>> {
+  async getByIdOrFail(
+    id: number,
+  ): Promise<ResponseInterface<MerchantResponseDto>> {
     const dto = await this.getById(id);
     if (!dto) throw new NotFoundException('Merchant not found');
     return createSingleResponse(dto);
@@ -27,21 +37,39 @@ export class MerchantQueryService {
 
   async getList(
     query: MerchantListQueryDto,
-    ownerUserId?: number,
   ): Promise<ResponseWithPaginationInterface<MerchantResponseDto>> {
-    const result = await this.merchantQueryRepository.findWithPagination({
-      page: query.page,
-      limit: query.limit,
-      ownerUserId,
-      search: query.search,
+    return this.transactionService.run(async (manager) => {
+      const result = await this.merchantQueryRepository.findWithPagination(
+        {
+          page: query.page,
+          limit: query.limit,
+          search: query.search,
+        },
+        manager,
+      );
+      return createPaginatedResponse(
+        result.results.map((e) => this.toResponse(e)),
+        result.pagination,
+      );
     });
-    return createPaginatedResponse(
-      result.results.map((e) => this.toResponse(e)),
-      result.pagination,
-    );
   }
 
-  private toResponse(entity: import('../entities/merchant.orm-entity').MerchantOrmEntity): MerchantResponseDto {
+  async findMerchantDetail(
+    userId: number,
+  ): Promise<ResponseInterface<MerchantResponseDto>> {
+    return this.transactionService.run(async (manager) => {
+      const entity = await this.merchantQueryRepository.findMerchantDetail(
+        userId,
+        manager,
+      );
+      if (!entity) throw new NotFoundException('Merchant not found');
+      return createSingleResponse(this.toResponse(entity));
+    });
+  }
+
+  private toResponse(
+    entity: import('../entities/merchant.orm-entity').MerchantOrmEntity,
+  ): MerchantResponseDto {
     return {
       id: entity.id,
       ownerUserId: entity.ownerUserId,

@@ -20,7 +20,7 @@ import { ExchangeRateModule } from './modules/exchange-rates/exchange-rate.modul
 import { LoggerModule } from './common/logger/logger.module';
 import { JwtAuthGuard } from './modules/auth/guards/jwt-auth.guard';
 import { AllExceptionsFilter } from './common/filters/http-exception.filter';
-import { CacheInterceptor } from './common/interceptors/cache.interceptor';
+// import { CacheInterceptor } from './common/interceptors/cache.interceptor';
 
 @Module({
   imports: [
@@ -107,10 +107,10 @@ import { CacheInterceptor } from './common/interceptors/cache.interceptor';
       provide: APP_GUARD,
       useClass: JwtAuthGuard,
     },
-    {
-      provide: APP_INTERCEPTOR,
-      useClass: CacheInterceptor,
-    },
+    // {
+    //   provide: APP_INTERCEPTOR,
+    //   useClass: CacheInterceptor,
+    // },
     {
       provide: APP_FILTER,
       useClass: AllExceptionsFilter,

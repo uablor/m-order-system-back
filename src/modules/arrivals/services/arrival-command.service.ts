@@ -1,4 +1,8 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { TransactionService } from '../../../common/transaction/transaction.service';
 import { ArrivalRepository } from '../repositories/arrival.repository';
 import { ArrivalItemRepository } from '../repositories/arrival-item.repository';
@@ -13,10 +17,14 @@ import { ArrivalItemOrmEntity } from '../entities/arrival-item.orm-entity';
 import { NotificationOrmEntity } from '../entities/notification.orm-entity';
 import { OrderItemOrmEntity } from '../../orders/entities/order-item.orm-entity';
 import type { PreferredContactMethod } from '../../customers/entities/customer.orm-entity';
+import { CurrentUserPayload } from 'src/common/decorators/current-user.decorator';
+import { formatTime } from 'src/common/utils/dayjs.util';
 
 type NotificationChannel = 'FB' | 'LINE' | 'WHATSAPP';
 
-function preferredToChannel(pref: PreferredContactMethod | null): NotificationChannel | null {
+function preferredToChannel(
+  pref: PreferredContactMethod | null,
+): NotificationChannel | null {
   if (!pref) return null;
   if (pref === 'FACEBOOK') return 'FB';
   if (pref === 'LINE') return 'LINE';
@@ -25,7 +33,12 @@ function preferredToChannel(pref: PreferredContactMethod | null): NotificationCh
 }
 
 function getRecipientContact(
-  customer: { contactFacebook?: string | null; contactLine?: string | null; contactWhatsapp?: string | null; preferredContactMethod?: PreferredContactMethod | null },
+  customer: {
+    contactFacebook?: string | null;
+    contactLine?: string | null;
+    contactWhatsapp?: string | null;
+    preferredContactMethod?: PreferredContactMethod | null;
+  },
   channel: NotificationChannel,
 ): string {
   switch (channel) {
@@ -54,7 +67,7 @@ export class ArrivalCommandService {
 
   async create(
     dto: CreateArrivalDto,
-    recordedByUserId: number | null,
+    currentUser: CurrentUserPayload,
   ): Promise<{
     success: true;
     arrival: object;
@@ -64,18 +77,27 @@ export class ArrivalCommandService {
     return this.transactionService.run(async (manager) => {
       const order = await this.orderRepository.getRepo(manager).findOne({
         where: { id: dto.orderId },
-        relations: ['merchant', 'customerOrders', 'customerOrders.customer', 'orderItems'],
+        relations: [
+          'merchant',
+          'customerOrders',
+          'customerOrders.customer',
+          'orderItems',
+        ],
       });
       if (!order) throw new NotFoundException('Order not found');
 
-      const merchant = await this.merchantRepository.findOneById(dto.merchantId, manager);
+      const merchant = await this.merchantRepository.findOneById(
+        currentUser.merchantId!,
+        manager,
+      );
       if (!merchant) throw new NotFoundException('Merchant not found');
-      if (order.merchant?.id !== dto.merchantId) {
+      if (order.merchant?.id !== merchant.id) {
         throw new BadRequestException('Order does not belong to this merchant');
       }
 
-      const arrivedDate = new Date(dto.arrivedDate);
-      const recordedBy = dto.recordedBy ?? recordedByUserId;
+      const arrivedDate = new Date();
+      const arrivedTime = formatTime(arrivedDate);
+      const recordedBy = currentUser.userId;
 
       // Validate arrived_quantity <= order_item.quantity and resolve order items
       const orderItemMap = new Map<number, OrderItemOrmEntity>();
@@ -85,7 +107,9 @@ export class ArrivalCommandService {
       for (const item of dto.arrivalItems) {
         const orderItem = orderItemMap.get(item.orderItemId);
         if (!orderItem) {
-          throw new BadRequestException(`Order item ${item.orderItemId} not found in this order`);
+          throw new BadRequestException(
+            `Order item ${item.orderItemId} not found in this order`,
+          );
         }
         if (item.arrivedQuantity > orderItem.quantity) {
           throw new BadRequestException(
@@ -100,8 +124,9 @@ export class ArrivalCommandService {
           order,
           merchant,
           arrivedDate,
-          arrivedTime: dto.arrivedTime,
-          recordedByUser: recordedBy != null ? ({ id: recordedBy } as any) : null,
+          arrivedTime: arrivedTime,
+          recordedByUser:
+            recordedBy != null ? ({ id: recordedBy } as any) : null,
           notes: dto.notes ?? null,
         } as Partial<ArrivalOrmEntity>,
         manager,
@@ -114,8 +139,10 @@ export class ArrivalCommandService {
       for (const itemDto of dto.arrivalItems) {
         const orderItem = orderItemMap.get(itemDto.orderItemId)!;
         const condition = itemDto.condition ?? 'OK';
-        if (condition === 'DAMAGED') damagedOrLost.push(`${orderItem.productName}: DAMAGED`);
-        if (condition === 'LOST') damagedOrLost.push(`${orderItem.productName}: LOST`);
+        if (condition === 'DAMAGED')
+          damagedOrLost.push(`${orderItem.productName}: DAMAGED`);
+        if (condition === 'LOST')
+          damagedOrLost.push(`${orderItem.productName}: LOST`);
 
         const arrivalItem = await this.arrivalItemRepository.create(
           {
@@ -129,7 +156,8 @@ export class ArrivalCommandService {
         );
         arrivalItems.push(arrivalItem);
 
-        const newRemaining = orderItem.quantityRemaining + itemDto.arrivedQuantity;
+        const newRemaining =
+          orderItem.quantityRemaining + itemDto.arrivedQuantity;
         await this.orderItemRepository.update(
           orderItem.id,
           { quantityRemaining: newRemaining } as Partial<OrderItemOrmEntity>,
@@ -155,8 +183,12 @@ export class ArrivalCommandService {
         if (!customer || seenCustomerIds.has(customer.id)) continue;
         seenCustomerIds.add(customer.id);
 
-        const channel = preferredToChannel(customer.preferredContactMethod ?? null);
-        const recipientContact = channel ? getRecipientContact(customer, channel) : '';
+        const channel = preferredToChannel(
+          customer.preferredContactMethod ?? null,
+        );
+        const recipientContact = channel
+          ? getRecipientContact(customer, channel)
+          : '';
 
         let status: 'SENT' | 'FAILED' = 'SENT';
         let errorMessage: string | null = null;
@@ -213,21 +245,31 @@ export class ArrivalCommandService {
       }
 
       // 5) Update order arrival_status and arrived_at, notified_at
-      const arrivedAt = new Date(`${dto.arrivedDate}T${dto.arrivedTime}`);
       await this.orderRepository.update(
         order.id,
         {
           arrivalStatus: 'ARRIVED',
-          arrivedAt,
-          notifiedAt: notifications.some((n) => n.status === 'SENT') ? new Date() : null,
-        } as Partial<import('../../orders/entities/order.orm-entity').OrderOrmEntity>,
+          arrivedAt: arrivedDate,
+          notifiedAt: notifications.some((n) => n.status === 'SENT')
+            ? new Date()
+            : null,
+        } as Partial<
+          import('../../orders/entities/order.orm-entity').OrderOrmEntity
+        >,
         manager,
       );
 
-      const arrivalReloaded = await this.arrivalRepository.getRepo(manager).findOne({
-        where: { id: arrival.id },
-        relations: ['arrivalItems', 'arrivalItems.orderItem', 'order', 'merchant'],
-      });
+      const arrivalReloaded = await this.arrivalRepository
+        .getRepo(manager)
+        .findOne({
+          where: { id: arrival.id },
+          relations: [
+            'arrivalItems',
+            'arrivalItems.orderItem',
+            'order',
+            'merchant',
+          ],
+        });
 
       return {
         success: true,
@@ -250,10 +292,13 @@ export class ArrivalCommandService {
       const existing = await this.arrivalRepository.findOneById(id, manager);
       if (!existing) throw new NotFoundException('Arrival not found');
       const updateData: Partial<ArrivalOrmEntity> = {};
-      if (dto.arrivedDate !== undefined) updateData.arrivedDate = new Date(dto.arrivedDate);
-      if (dto.arrivedTime !== undefined) updateData.arrivedTime = dto.arrivedTime;
+      if (dto.arrivedDate !== undefined)
+        updateData.arrivedDate = new Date(dto.arrivedDate);
+      if (dto.arrivedTime !== undefined)
+        updateData.arrivedTime = dto.arrivedTime;
       if (dto.recordedBy !== undefined)
-        updateData.recordedByUser = dto.recordedBy != null ? ({ id: dto.recordedBy } as any) : null;
+        updateData.recordedByUser =
+          dto.recordedBy != null ? ({ id: dto.recordedBy } as any) : null;
       if (dto.notes !== undefined) updateData.notes = dto.notes ?? null;
       await this.arrivalRepository.update(id, updateData, manager);
     });

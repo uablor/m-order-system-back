@@ -4,13 +4,8 @@ import { FindOptionsWhere, ILike, Repository } from 'typeorm';
 import { BaseQueryRepository } from '../../../common/base/repositories/base.query-repository';
 import { UserOrmEntity } from '../entities/user.orm-entity';
 import { PaginatedResult } from '../../../common/base/interfaces/paginted.interface';
-
-export interface UserListOptions {
-  page?: number;
-  limit?: number;
-  isActive?: boolean;
-  search?: string;
-}
+import { UserListQueryOptions } from '../dto/user-list-query.dto';
+import { fetchWithPagination } from 'src/common/utils/pagination.util';
 
 @Injectable()
 export class UserQueryRepository extends BaseQueryRepository<UserOrmEntity> {
@@ -21,25 +16,44 @@ export class UserQueryRepository extends BaseQueryRepository<UserOrmEntity> {
     super(repository);
   }
 
-  async findWithPagination(
-    options: UserListOptions,
-    manager?: import('typeorm').EntityManager,
+  override async findWithPagination(
+    options: UserListQueryOptions,
+    manager: import('typeorm').EntityManager,
   ): Promise<PaginatedResult<UserOrmEntity>> {
-    const where: FindOptionsWhere<UserOrmEntity> = {};
-    if (options.isActive !== undefined) {
-      where.isActive = options.isActive;
+    const repo = this.getRepo(manager);
+    const qb = repo.createQueryBuilder('entity');
+    if (options.isActive) {
+      qb.andWhere('entity.isActive = :isActive', {
+        isActive: options.isActive,
+      });
     }
-    if (options.search) {
-      where.email = ILike(`%${options.search}%`);
+
+    if (options.startDate) {
+      qb.andWhere('entity.createdAt >= :startDate', {
+        startDate: options.startDate,
+      });
     }
-    return super.findWithPagination(
-      {
-        page: options.page,
-        limit: options.limit,
-        where: Object.keys(where).length ? where : undefined,
-        order: { createdAt: 'DESC' as const },
-      },
-      manager,
-    );
+
+    if (options.endDate) {
+      qb.andWhere('entity.createdAt <= :endDate', { endDate: options.endDate });
+    }
+
+    if (options.merchantId) {
+      qb.andWhere('entity.merchantId = :merchantId', {
+        merchantId: options.merchantId,
+      });
+    }
+
+    return fetchWithPagination<UserOrmEntity>({
+      qb,
+
+      sort: options.sort,
+      search: options.search
+        ? { kw: options.search, field: options.searchField || 'name' }
+        : undefined,
+      page: options.page ?? 1,
+      limit: options.limit ?? 10,
+      manager: repo.manager,
+    });
   }
 }

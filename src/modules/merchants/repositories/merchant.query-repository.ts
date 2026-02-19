@@ -1,9 +1,14 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Like, Repository } from 'typeorm';
+import { Repository } from 'typeorm';
 import { BaseQueryRepository } from '../../../common/base/repositories/base.query-repository';
 import { MerchantOrmEntity } from '../entities/merchant.orm-entity';
 import { PaginatedResult } from '../../../common/base/interfaces/paginted.interface';
+import {
+  MerchantListOptionsQueryDto,
+  MerchantListQueryDto,
+} from '../dto/merchant-list-query.dto';
+import { fetchWithPagination } from 'src/common/utils/pagination.util';
 
 @Injectable()
 export class MerchantQueryRepository extends BaseQueryRepository<MerchantOrmEntity> {
@@ -15,27 +20,38 @@ export class MerchantQueryRepository extends BaseQueryRepository<MerchantOrmEnti
   }
 
   async findWithPagination(
-    options: { page?: number; limit?: number; ownerUserId?: number; search?: string },
-    manager?: import('typeorm').EntityManager,
+    options: MerchantListOptionsQueryDto,
+    manager: import('typeorm').EntityManager,
   ): Promise<PaginatedResult<MerchantOrmEntity>> {
-    const where: any = {};
+    const repo = this.getRepo(manager);
+    const qb = repo.createQueryBuilder('entity');
 
     if (options.ownerUserId != null) {
-      where.ownerUserId = options.ownerUserId;
+      qb.andWhere('entity.ownerUserId = :ownerUserId', {
+        ownerUserId: options.ownerUserId,
+      });
     }
 
-    if (options.search?.trim()) {
-      where.shopName = Like(`%${options.search.trim()}%`);
-    }
+    return fetchWithPagination<MerchantOrmEntity>({
+      qb,
+      sort: options.sort,
+      search: options.search?.trim()
+        ? { kw: options.search.trim(), field: options.searchField || 'shopName' }
+        : undefined,
+      page: options.page ?? 1,
+      limit: options.limit ?? 10,
+      manager: repo.manager,
+    });
+  }
 
-    return super.findWithPagination(
-      {
-        page: options.page,
-        limit: options.limit,
-        where: Object.keys(where).length > 0 ? where : undefined,
-        order: { createdAt: 'DESC' as const },
-      },
-      manager,
-    );
+  async findMerchantDetail(
+    ownerUserId: number,
+    manager: import('typeorm').EntityManager,
+  ): Promise<MerchantOrmEntity | null> {
+    const repo = this.getRepo(manager);
+    const qb = repo.createQueryBuilder('entity');
+    qb.where('entity.ownerUserId = :ownerUserId', { ownerUserId });
+    qb.leftJoinAndSelect('entity.ownerUser', 'ownerUser');
+    return qb.getOne();
   }
 }

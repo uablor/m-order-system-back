@@ -24,6 +24,8 @@ import {
   SUPERADMIN_ROLE_NAME,
 } from 'src/database/seeds/role.seeder';
 import { CurrentUserPayload } from 'src/common/decorators/current-user.decorator';
+import { ChangePasswordDto } from '../dto/change-password.dto';
+import { AcitveDto } from 'src/common/base/dtos/active.dto';
 
 @Injectable()
 export class UserCommandService {
@@ -132,7 +134,7 @@ export class UserCommandService {
     });
   }
 
-  async update(id: number, dto: UserUpdateDto): Promise<void> {
+  async update(id: number, dto: UserUpdateDto, currentUser?: CurrentUserPayload): Promise<void> {
     await this.transactionService.run(async (manager) => {
       const existing = await this.userRepository.findOneById(id, manager, {
         relations: ['role'],
@@ -160,14 +162,11 @@ export class UserCommandService {
         ...(dto.roleId !== undefined && { roleId: dto.roleId }),
         ...(dto.isActive !== undefined && { isActive: dto.isActive }),
       };
-      if (dto.password !== undefined && dto.password.length > 0) {
-        updateData.passwordHash = await hashPassword(dto.password);
-      }
       await this.userRepository.update(id, updateData, manager);
     });
   }
 
-  async delete(id: number, currentUser: CurrentUserPayload): Promise<void> {
+  async delete(id: number): Promise<void> {
     await this.transactionService.run(async (manager) => {
       const found = await this.userRepository.findOneById(id, manager, {
         relations: ['role'],
@@ -175,71 +174,21 @@ export class UserCommandService {
       if (!found) {
         throw new NotFoundException('User not found');
       }
-      if (
-        found.role?.roleName === SUPERADMIN_ROLE_NAME &&
-        currentUser.roleName !== SUPERADMIN_ROLE_NAME
-      ) {
-        throw new ForbiddenException(
-          'You are not authorized to delete this user',
-        );
-      }
-      if (
-        found.role?.roleName === ADMIN_ROLE_NAME &&
-        currentUser.roleName !== ADMIN_ROLE_NAME
-      ) {
-        throw new ForbiddenException(
-          'You are not authorized to delete this user',
-        );
-      }
-      if (
-        found.role?.roleName === ADMIN_MERCHANT_ROLE_NAME &&
-        currentUser.roleName !== ADMIN_MERCHANT_ROLE_NAME
-      ) {
-        throw new ForbiddenException(
-          'You are not authorized to delete this user',
-        );
-      }
-      if (
-        found.role?.roleName === EMPLOYEE_MERCHANT_ROLE_NAME &&
-        currentUser.roleName !== EMPLOYEE_MERCHANT_ROLE_NAME
-      ) {
-        throw new ForbiddenException(
-          'You are not authorized to delete this user',
-        );
+      if (found.role) {
+        throw new ConflictException('Cannot delete user with role');
       }
       await this.userRepository.delete(id, manager);
     });
   }
 
-  async setActive(id: number, isActive: boolean): Promise<void> {
-    await this.update(id, { isActive } as UserUpdateDto);
+  async setActive(id: number, dto : AcitveDto): Promise<void> {
+    await this.update(id, { isActive: dto.isActive } as UserUpdateDto);
   }
 
-  async changePasswordMerchant(
-    password: string,
-    currentUser: CurrentUserPayload,
-  ): Promise<void> {
-    await this.transactionService.run(async (manager) => {
-      const found = await this.userRepository.findOneById(
-        currentUser.userId,
-        manager,
-        {
-          relations: ['role'],
-        },
-      );
-      if (!found) {
-        throw new NotFoundException('User not found');
-      }
-      found.passwordHash = await hashPassword(password);
-      await this.userRepository.update(currentUser.userId, found, manager);
-    });
-  }
-
-  async changePasswordAdmin(
-    password: string,
-    currentPassword: string,
-    id: number,
-    currentUser: CurrentUserPayload,
+  async changePassword(
+      id: number,
+    dto : ChangePasswordDto,
+  
   ): Promise<void> {
     await this.transactionService.run(async (manager) => {
       const found = await this.userRepository.findOneById(id, manager, {
@@ -247,14 +196,10 @@ export class UserCommandService {
       });
       if (!found) throw new NotFoundException('User not found');
 
-      const match = await comparePassword(currentPassword, found.passwordHash);
+      const match = await comparePassword(dto.currentPassword, found.passwordHash);
       if (!match) throw new ForbiddenException('Invalid current password');
 
-      if (found.role?.roleName !== SUPERADMIN_ROLE_NAME && currentUser.roleName !== ADMIN_ROLE_NAME)
-        throw new ForbiddenException(
-          'You are not authorized to change password for this user',
-        );
-      found.passwordHash = await hashPassword(password);
+      found.passwordHash = await hashPassword(dto.password);
       await this.userRepository.update(id, found, manager);
     });
   }

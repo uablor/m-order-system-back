@@ -8,8 +8,8 @@ import { EntityTarget } from 'typeorm/common/EntityTarget';
 import {
   PaginatedResult,
   PaginationOptions,
-  PaginationResponse,
 } from '../interfaces/paginted.interface';
+import { fetchWithPagination } from 'src/common/utils/pagination.util';
 
 export abstract class BaseQueryRepository<E extends ObjectLiteral> {
   constructor(public readonly repository: Repository<E>) {}
@@ -22,41 +22,28 @@ export abstract class BaseQueryRepository<E extends ObjectLiteral> {
 
   async findWithPagination(
     options: PaginationOptions<E>,
-    manager?: EntityManager,
-    relations?: FindManyOptions<E>['relations'],
+    manager: EntityManager,
+    relations?: string[],
   ): Promise<PaginatedResult<E>> {
-    const repo = manager
-      ? manager.getRepository(this.repository.target as EntityTarget<E>)
-      : this.repository;
-    const page = Math.max(1, options.page ?? 1);
-    const limit = Math.min(100, Math.max(1, options.limit ?? 10));
-    const skip = (page - 1) * limit;
+    const repo = this.getRepo(manager);
+    const qb = repo.createQueryBuilder('entity');
 
-    const [data, total] = await repo.findAndCount({
-      where: options.where,
-      order: options.order as FindManyOptions<E>['order'],
-      skip,
-      take: limit,
-      relations,
+    if (relations?.length) {
+      relations.forEach((relation) => {
+        qb.leftJoinAndSelect(`entity.${relation}`, relation);
+      });
+    }
+
+    return fetchWithPagination<E>({
+      qb,
+      sort: options.sort,
+      search: options.search
+        ? { kw: options.search, field: options.searchField || 'name' }
+        : undefined,
+      page: options.page ?? 1,
+      limit: options.limit ?? 10,
+      manager: repo.manager,
     });
-
-    const totalPages = Math.ceil(total / limit);
-    const pagination: PaginationResponse = {
-      total,
-      page,
-      limit,
-      totalPages,
-      hasNextPage: page < totalPages,
-      hasPreviousPage: page > 1,
-    };
-
-    return {
-      success: true,
-      Code: 200,
-      message: 'Data fetched successfully',
-      results: data as E[],
-      pagination,
-    };
   }
 
   async findMany(

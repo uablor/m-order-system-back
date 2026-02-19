@@ -16,13 +16,12 @@ export class RoleQueryRepository extends BaseQueryRepository<RoleOrmEntity> {
 
   async findWithPagination(
     options: { page?: number; limit?: number },
-    manager?: import('typeorm').EntityManager,
+    manager: import('typeorm').EntityManager,
   ): Promise<PaginatedResult<RoleOrmEntity>> {
     return super.findWithPagination(
       {
         page: options.page,
         limit: options.limit,
-        order: { roleName: 'ASC' as const },
       },
       manager,
     );

@@ -9,7 +9,12 @@ import {
   Post,
   Query,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiParam, ApiBearerAuth } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiParam,
+  ApiBearerAuth,
+} from '@nestjs/swagger';
 import { CustomerCommandService } from '../services/customer-command.service';
 import { CustomerQueryService } from '../services/customer-query.service';
 import { CustomerCreateDto } from '../dto/customer-create.dto';
@@ -24,7 +29,8 @@ import {
   ApiUnauthorizedBase,
   ApiNotFoundBase,
 } from '../../../common/swagger/swagger.decorators';
-
+import { CurrentUser } from 'src/common/decorators/current-user.decorator';
+import { type CurrentUserPayload } from 'src/common/decorators/current-user.decorator';
 @ApiTags('Customers')
 @Controller('customers')
 export class CustomerController {
@@ -56,13 +62,25 @@ export class CustomerController {
   }
 
   @Get()
-  @ApiOperation({ summary: 'List customers with pagination (optional merchantId filter)' })
+  @ApiOperation({
+    summary: 'List customers with pagination (optional merchantId filter)',
+  })
   @ApiBearerAuth('BearerAuth')
   @ApiOkResponseBase()
   @ApiUnauthorizedBase()
-  @NoCache()
-  async getList(@Query() query: CustomerListQueryDto) {
+  async adminGetList(@Query() query: CustomerListQueryDto) {
     return this.queryService.getList(query);
+  }
+
+  @Get('by-merchant')
+  @ApiOperation({
+    summary: 'List customers with pagination (optional merchantId filter)',
+  })
+  @ApiBearerAuth('BearerAuth')
+  @ApiOkResponseBase()
+  @ApiUnauthorizedBase()
+  async getListByMerchant(@Query() query: CustomerListQueryDto, @CurrentUser() currentUser: CurrentUserPayload) {
+    return this.queryService.getList(query, currentUser);
   }
 
   @Patch(':id')

@@ -1,24 +1,11 @@
-import { IsOptional, IsInt, Min, Max, IsIn } from 'class-validator';
+import { IsOptional, IsInt, Min, Max, IsIn, IsDate } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiPropertyOptional } from '@nestjs/swagger';
+import { BaseQueryDto } from 'src/common/base/dtos/base.query.dto';
 
 const RATE_TYPES = ['BUY', 'SELL'] as const;
 
-export class ExchangeRateListQueryDto {
-  @ApiPropertyOptional({ default: 1, minimum: 1 })
-  @IsOptional()
-  @Type(() => Number)
-  @IsInt()
-  @Min(1)
-  page?: number = 1;
-
-  @ApiPropertyOptional({ default: 10, minimum: 1, maximum: 100 })
-  @IsOptional()
-  @Type(() => Number)
-  @IsInt()
-  @Min(1)
-  @Max(100)
-  limit?: number = 10;
+export class ExchangeRateListQueryDto extends BaseQueryDto {
 
   @ApiPropertyOptional({ description: 'Filter by merchant ID' })
   @IsOptional()
@@ -43,4 +30,18 @@ export class ExchangeRateListQueryDto {
   @IsOptional()
   @Type(() => Boolean)
   isActive?: boolean;
+
+  @ApiPropertyOptional({ description: 'format YYYY-MM-DD' })
+  @IsOptional()
+  @Type(() => Date)
+  @IsDate()
+  startDate?: Date;
+
+  @ApiPropertyOptional({ description: 'format YYYY-MM-DD' })
+  @IsOptional()
+  @Type(() => Date)
+  @IsDate()
+  endDate?: Date;
 }
+
+export type ExchangeRateListQueryOptions = ExchangeRateListQueryDto;

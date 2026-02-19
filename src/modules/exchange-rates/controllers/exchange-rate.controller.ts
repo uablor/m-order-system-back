@@ -78,29 +78,38 @@ export class ExchangeRateController {
   @ApiBearerAuth('BearerAuth')
   @ApiOkResponseBase()
   @ApiUnauthorizedBase()
-  async getList(@Query() query: ExchangeRateListQueryDto) {
+  async adminGetList(@Query() query: ExchangeRateListQueryDto) {
     return this.queryService.getList(query);
   }
 
-  @Get('today')
+  @Get('/by-merchant')
+  @ApiOperation({ summary: 'List exchange rates by merchant' })
+  @ApiBearerAuth('BearerAuth')
+  @ApiOkResponseBase()
+  @ApiUnauthorizedBase()
+  async getListBy(
+    @Query() query: ExchangeRateListQueryDto,
+    @CurrentUser() currentUser: CurrentUserPayload,
+  ) {
+    return this.queryService.getList(query, currentUser);
+  }
+
+  @Get('/today')
   @ApiOperation({
     summary: "Get today's active BUY & SELL exchange rates",
     description:
-      'Returns up to 2 active exchange rates for **today** (`rate_date = current date`, `is_active = true`). ' +
-      'The merchant is identified automatically from the **Bearer token** — no `merchantId` query param needed. ' +
-      '`results` is an array of 0–2 items; use the `rateType` field (`"BUY"` or `"SELL"`) to distinguish them. ' +
-      'An empty `results` array means no rates have been configured for today.',
+      "Returns up to 2 active exchange rates for today. Merchant from Bearer token.",
   })
   @ApiBearerAuth('BearerAuth')
   @ApiOkResponse({
-    description: "Today's active exchange rates returned (standard response wrapper)",
+    description: "Today's active exchange rates",
     type: ExchangeRateTodayResponseDto,
   })
+  @ApiForbiddenResponse({
+    description: 'Token does not carry a merchant context',
+  })
   @ApiUnauthorizedBase()
-  @ApiForbiddenResponse({ description: 'Token does not carry a merchant context (non-merchant account)' })
-  async getTodayRates(
-    @CurrentUser() currentUser: CurrentUserPayload,
-  ) {
+  async getTodayRates(@CurrentUser() currentUser: CurrentUserPayload) {
     return this.queryService.getTodayRates(currentUser);
   }
 
@@ -128,6 +137,23 @@ export class ExchangeRateController {
     @Body() dto: ExchangeRateUpdateDto,
   ) {
     return this.commandService.update(id, dto);
+  }
+
+
+    @Patch(':id/by-merchant')
+  @ApiOperation({ summary: 'Update exchange rate by merchant' })
+  @ApiBearerAuth('BearerAuth')
+  @ApiParam({ name: 'id', description: 'Exchange rate ID' })
+  @ApiOkResponseBase()
+  @ApiBadRequestBase()
+  @ApiNotFoundBase()
+  @ApiUnauthorizedBase()
+  async updateBy(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: ExchangeRateUpdateDto,
+    @CurrentUser() currentUser: CurrentUserPayload,
+  ) {
+    return this.commandService.update(id, dto, currentUser);
   }
 
   @Delete(':id')

@@ -1,9 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { FindOptionsWhere, Repository } from 'typeorm';
+import { Repository } from 'typeorm';
 import { BaseQueryRepository } from '../../../common/base/repositories/base.query-repository';
 import { ExchangeRateOrmEntity } from '../entities/exchange-rate.orm-entity';
 import { PaginatedResult } from '../../../common/base/interfaces/paginted.interface';
+import { fetchWithPagination } from 'src/common/utils/pagination.util';
+import { ExchangeRateListQueryOptions } from '../dto/exchange-rate-list-query.dto';
 
 @Injectable()
 export class ExchangeRateQueryRepository extends BaseQueryRepository<ExchangeRateOrmEntity> {
@@ -15,40 +17,64 @@ export class ExchangeRateQueryRepository extends BaseQueryRepository<ExchangeRat
   }
 
   async findWithPagination(
-    options: {
-      page?: number;
-      limit?: number;
-      merchantId?: number;
-      rateType?: string;
-      baseCurrency?: string;
-      targetCurrency?: string;
-      isActive?: boolean;
-    },
-    manager?: import('typeorm').EntityManager,
+    options: ExchangeRateListQueryOptions,
+    manager: import('typeorm').EntityManager,
   ): Promise<PaginatedResult<ExchangeRateOrmEntity>> {
-    const where: FindOptionsWhere<ExchangeRateOrmEntity> = {};
-    if (options.merchantId != null) where.merchant = { id: options.merchantId };
-    if (options.rateType != null) where.rateType = options.rateType as 'BUY' | 'SELL';
-    if (options.baseCurrency != null) where.baseCurrency = options.baseCurrency;
-    if (options.targetCurrency != null) where.targetCurrency = options.targetCurrency;
-    if (options.isActive !== undefined) where.isActive = options.isActive;
+    const repo = this.getRepo(manager);
+    const qb = repo.createQueryBuilder('er');
 
-    return super.findWithPagination(
-      {
-        page: options.page,
-        limit: options.limit,
-        where: Object.keys(where).length ? where : undefined,
-        order: { rateDate: 'DESC' as const, id: 'DESC' as const },
-      },
-      manager,
-      ['merchant', 'createdByUser'],
-    );
+    if (options.merchantId) {
+      qb.innerJoin('er.merchant', 'm').andWhere('m.id = :merchantId', {
+        merchantId: options.merchantId,
+      });
+    }
+
+    if (options.rateType) {
+      qb.andWhere('er.rateType = :rateType', {
+        rateType: options.rateType,
+      });
+    }
+
+    if (options.baseCurrency) {
+      qb.andWhere('er.baseCurrency = :baseCurrency', {
+        baseCurrency: options.baseCurrency,
+      });
+    }
+
+    if (options.targetCurrency) {
+      qb.andWhere('er.targetCurrency = :targetCurrency', {
+        targetCurrency: options.targetCurrency,
+      });
+    }
+
+    if (options.isActive !== undefined) {
+      qb.andWhere('er.isActive = :isActive', { isActive: options.isActive });
+    }
+
+    if (options.startDate) {
+      qb.andWhere('er.rateDate >= :startDate', {
+        startDate: options.startDate,
+      });
+    }
+
+    if (options.endDate) {
+      qb.andWhere('er.rateDate <= :endDate', {
+        endDate: options.endDate,
+      });
+    }
+
+    return fetchWithPagination<ExchangeRateOrmEntity>({
+      qb,
+      sort: options.sort,
+      search: options.search
+        ? { kw: options.search, field: options.searchField || 'name' }
+        : undefined,
+      page: options.page ?? 1,
+      limit: options.limit ?? 10,
+      manager: repo.manager,
+    });
   }
 
-  /**
-   * Get today's active BUY and SELL rates for a given merchant.
-   * Returns up to 2 records (one per rateType) where rateDate = today and isActive = true.
-   */
   async findTodayRates(
     merchantId: number,
   ): Promise<{ buy: ExchangeRateOrmEntity | null; sell: ExchangeRateOrmEntity | null }> {
@@ -73,9 +99,6 @@ export class ExchangeRateQueryRepository extends BaseQueryRepository<ExchangeRat
     return { buy, sell };
   }
 
-  /**
-   * Get the latest exchange rate for merchant on or before rateDate for the given currency pair and type.
-   */
   async getRateForDate(
     merchantId: number,
     rateDate: Date,
