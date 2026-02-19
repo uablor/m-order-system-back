@@ -92,18 +92,16 @@ export class OrderCommandService {
       const updateData: Partial<OrderOrmEntity> = {};
       if (dto.orderCode !== undefined) updateData.orderCode = dto.orderCode;
       if (dto.orderDate !== undefined) updateData.orderDate = new Date(dto.orderDate);
-      if (dto.arrivedAt !== undefined) updateData.arrivedAt = dto.arrivedAt ? new Date(dto.arrivedAt) : null;
+    if (dto.arrivedAt !== undefined) updateData.arrivedAt = dto.arrivedAt ? new Date(dto.arrivedAt) : null;
       if (dto.notifiedAt !== undefined) updateData.notifiedAt = dto.notifiedAt ? new Date(dto.notifiedAt) : null;
       if (dto.totalShippingCostLak !== undefined) updateData.totalShippingCostLak = toDecimal2(dto.totalShippingCostLak);
-      if (dto.paymentStatus !== undefined) updateData.paymentStatus = dto.paymentStatus;
-      if (dto.depositAmount !== undefined) updateData.depositAmount = toDecimal2(dto.depositAmount);
+     if (dto.depositAmount !== undefined) updateData.depositAmount = toDecimal2(dto.depositAmount);
       if (dto.paidAmount !== undefined) {
         updateData.paidAmount = toDecimal2(dto.paidAmount);
         const totalSelling = Number(existing.totalSellingAmountLak);
         const paid = dto.paidAmount;
         updateData.remainingAmount = toDecimal2(Math.max(0, totalSelling - paid));
-        updateData.paymentStatus = calcPaymentStatus(totalSelling, paid);
-      }
+   }
       await this.orderRepository.update(id, updateData, manager);
     });
   }
