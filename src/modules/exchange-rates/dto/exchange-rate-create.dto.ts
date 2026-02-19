@@ -26,7 +26,10 @@ export class ExchangeRateCreateDto {
   @Min(0)
   rate: number;
 
-  @ApiProperty({ example: '2025-02-13', description: 'Date the rate applies' })
-  @IsString()
-  rateDate: string;
+  constructor(partial: Partial<ExchangeRateCreateDto>) {
+    this.baseCurrency = partial.baseCurrency ?? '';
+    this.targetCurrency = partial.targetCurrency ?? '';
+    this.rateType = partial.rateType ?? 'BUY';
+    this.rate = partial.rate ?? 0;
+  }
 }

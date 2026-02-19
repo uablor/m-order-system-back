@@ -17,7 +17,6 @@ import { UserUpdateDto } from '../dto/user-update.dto';
 import { UserMerchantCreateDto } from '../dto/user-merchant-create.dto';
 import { UserOrmEntity } from '../entities/user.orm-entity';
 import { MerchantOrmEntity } from '../../merchants/entities/merchant.orm-entity';
-import { RoleOrmEntity } from 'src/modules/roles/entities/role.orm-entity';
 import {
   ADMIN_MERCHANT_ROLE_NAME,
   ADMIN_ROLE_NAME,

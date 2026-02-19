@@ -18,6 +18,7 @@ export async function assignAllPermissionsToRole(
       { order: { id: 'ASC' } },
       m,
     );
+    console.log(`Found ${permissions.length} permission(s) in the system to assign to role ${roleId}.`);
     if (permissions.length === 0) {
       console.log('No permissions found. Run permissions:generate first.');
       return 0;

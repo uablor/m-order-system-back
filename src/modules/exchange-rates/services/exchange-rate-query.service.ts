@@ -10,7 +10,6 @@ import { ExchangeRateOrmEntity } from '../entities/exchange-rate.orm-entity';
 @Injectable()
 export class ExchangeRateQueryService {
   constructor(
-    private readonly exchangeRateRepository: ExchangeRateRepository,
     private readonly exchangeRateQueryRepository: ExchangeRateQueryRepository,
   ) {}
 

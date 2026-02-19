@@ -33,4 +33,18 @@ export class ExchangeRateResponseDto {
 
   @ApiProperty()
   updatedAt: Date;
+
+  constructor(partial: Partial<ExchangeRateResponseDto>) {
+    this.id = partial.id ?? 0;
+    this.merchantId = partial.merchantId ?? 0;
+    this.baseCurrency = partial.baseCurrency ?? '';
+    this.targetCurrency = partial.targetCurrency ?? '';
+    this.rateType = partial.rateType ?? 'BUY';
+    this.rate = partial.rate ?? '';
+    this.isActive = partial.isActive ?? false;
+    this.rateDate = partial.rateDate ?? '';
+    this.createdBy = partial.createdBy ?? null;
+    this.createdAt = partial.createdAt ?? new Date();
+    this.updatedAt = partial.updatedAt ?? new Date();
+  }
 }
