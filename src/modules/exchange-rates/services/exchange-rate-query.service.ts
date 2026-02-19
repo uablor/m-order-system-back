@@ -1,11 +1,12 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { ExchangeRateQueryRepository } from '../repositories/exchange-rate.query-repository';
 import { ExchangeRateRepository } from '../repositories/exchange-rate.repository';
 import { ExchangeRateListQueryDto } from '../dto/exchange-rate-list-query.dto';
 import { ExchangeRateResponseDto } from '../dto/exchange-rate-response.dto';
 import type { ResponseInterface, ResponseWithPaginationInterface } from '../../../common/base/interfaces/response.interface';
-import { createPaginatedResponse, createSingleResponse } from '../../../common/base/helpers/response.helper';
+import { createPaginatedResponse, createResponse, createSingleResponse } from '../../../common/base/helpers/response.helper';
 import { ExchangeRateOrmEntity } from '../entities/exchange-rate.orm-entity';
+import type { CurrentUserPayload } from '../../../common/decorators/current-user.decorator';
 
 @Injectable()
 export class ExchangeRateQueryService {
@@ -42,6 +43,29 @@ export class ExchangeRateQueryService {
       result.results.map((e) => this.toResponse(e)),
       result.pagination,
     );
+  }
+
+  /**
+   * Get today's active BUY and SELL rates for the authenticated merchant.
+   * merchantId is extracted from the JWT token — no query param needed.
+   * Returns standard ResponseInterface with results array (0–2 items).
+   */
+  async getTodayRates(
+    currentUser: CurrentUserPayload,
+  ): Promise<ResponseInterface<ExchangeRateResponseDto>> {
+    if (!currentUser?.merchantId) {
+      throw new ForbiddenException('Merchant context required');
+    }
+
+    const { buy, sell } = await this.exchangeRateQueryRepository.findTodayRates(
+      currentUser.merchantId,
+    );
+
+    const results: ExchangeRateResponseDto[] = [];
+    if (buy) results.push(this.toResponse(buy));
+    if (sell) results.push(this.toResponse(sell));
+
+    return createResponse(results, 'Success');
   }
 
   private toResponse(entity: ExchangeRateOrmEntity): ExchangeRateResponseDto {

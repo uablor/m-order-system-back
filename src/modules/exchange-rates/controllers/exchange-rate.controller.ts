@@ -2,7 +2,6 @@ import {
   Body,
   Controller,
   Delete,
-  ForbiddenException,
   Get,
   Param,
   ParseIntPipe,
@@ -15,6 +14,8 @@ import {
   ApiOperation,
   ApiParam,
   ApiBearerAuth,
+  ApiOkResponse,
+  ApiForbiddenResponse,
 } from '@nestjs/swagger';
 import { ExchangeRateCommandService } from '../services/exchange-rate-command.service';
 import { ExchangeRateQueryService } from '../services/exchange-rate-query.service';
@@ -25,6 +26,7 @@ import {
 import { ExchangeRateUpdateDto } from '../dto/exchange-rate-update.dto';
 import { ExchangeRateListQueryDto } from '../dto/exchange-rate-list-query.dto';
 import { ExchangeRateResponseDto } from '../dto/exchange-rate-response.dto';
+import { ExchangeRateTodayResponseDto } from '../dto/exchange-rate-today-response.dto';
 import { CurrentUser } from '../../../common/decorators/current-user.decorator';
 import type { CurrentUserPayload } from '../../../common/decorators/current-user.decorator';
 import {
@@ -78,6 +80,28 @@ export class ExchangeRateController {
   @ApiUnauthorizedBase()
   async getList(@Query() query: ExchangeRateListQueryDto) {
     return this.queryService.getList(query);
+  }
+
+  @Get('today')
+  @ApiOperation({
+    summary: "Get today's active BUY & SELL exchange rates",
+    description:
+      'Returns up to 2 active exchange rates for **today** (`rate_date = current date`, `is_active = true`). ' +
+      'The merchant is identified automatically from the **Bearer token** — no `merchantId` query param needed. ' +
+      '`results` is an array of 0–2 items; use the `rateType` field (`"BUY"` or `"SELL"`) to distinguish them. ' +
+      'An empty `results` array means no rates have been configured for today.',
+  })
+  @ApiBearerAuth('BearerAuth')
+  @ApiOkResponse({
+    description: "Today's active exchange rates returned (standard response wrapper)",
+    type: ExchangeRateTodayResponseDto,
+  })
+  @ApiUnauthorizedBase()
+  @ApiForbiddenResponse({ description: 'Token does not carry a merchant context (non-merchant account)' })
+  async getTodayRates(
+    @CurrentUser() currentUser: CurrentUserPayload,
+  ) {
+    return this.queryService.getTodayRates(currentUser);
   }
 
   @Get(':id')

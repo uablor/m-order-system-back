@@ -46,6 +46,34 @@ export class ExchangeRateQueryRepository extends BaseQueryRepository<ExchangeRat
   }
 
   /**
+   * Get today's active BUY and SELL rates for a given merchant.
+   * Returns up to 2 records (one per rateType) where rateDate = today and isActive = true.
+   */
+  async findTodayRates(
+    merchantId: number,
+  ): Promise<{ buy: ExchangeRateOrmEntity | null; sell: ExchangeRateOrmEntity | null }> {
+    const today = new Date();
+    const yyyy = today.getFullYear();
+    const mm = String(today.getMonth() + 1).padStart(2, '0');
+    const dd = String(today.getDate()).padStart(2, '0');
+    const todayStr = `${yyyy}-${mm}-${dd}`;
+
+    const rows = await this.repository
+      .createQueryBuilder('er')
+      .innerJoinAndSelect('er.merchant', 'm')
+      .leftJoinAndSelect('er.createdByUser', 'u')
+      .where('m.id = :merchantId', { merchantId })
+      .andWhere('DATE(er.rate_date) = :today', { today: todayStr })
+      .andWhere('er.is_active = :active', { active: true })
+      .orderBy('er.id', 'DESC')
+      .getMany();
+
+    const buy = rows.find((r) => r.rateType === 'BUY') ?? null;
+    const sell = rows.find((r) => r.rateType === 'SELL') ?? null;
+    return { buy, sell };
+  }
+
+  /**
    * Get the latest exchange rate for merchant on or before rateDate for the given currency pair and type.
    */
   async getRateForDate(
