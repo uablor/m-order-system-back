@@ -15,6 +15,17 @@ export class AuthUserDto {
 
   @ApiPropertyOptional()
   roleName?: string;
+
+  @ApiPropertyOptional({
+    description: 'Merchant ID if user is linked to a merchant',
+  })
+  merchantId?: number | null;
+
+  @ApiPropertyOptional({
+    type: [String],
+    description: 'Permission codes (e.g. arrival-items:delete)',
+  })
+  permissions?: string[];
 }
 
 export class AuthResponseDto {

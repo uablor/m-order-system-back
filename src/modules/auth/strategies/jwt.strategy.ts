@@ -10,6 +10,8 @@ export interface JwtPayload {
   email: string;
   roleId: number;
   roleName?: string;
+  merchantId?: number | null;
+  permissions?: string[];
   iat?: number;
   exp?: number;
 }
@@ -37,6 +39,8 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
       email: payload.email,
       roleId: payload.roleId,
       roleName: user.roleName ?? payload.roleName,
+      merchantId: payload.merchantId,
+      permissions: payload.permissions,
     };
   }
 }

@@ -2,7 +2,7 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from '../app.module';
 import { PermissionGeneratorService } from '../modules/permissions/services/permission-generator.service';
 import { RoleRepository } from '../modules/roles/repositories/role.repository';
-import { PermissionQueryRepository } from '../modules/permissions/repositories/permission.query-repository';
+import { PermissionRepository } from '../modules/permissions/repositories/permission.repository';
 import { RolePermissionRepository } from '../modules/role-permissions/repositories/role-permission.repository';
 import { UserRepository } from '../modules/users/repositories/user.repository';
 import { TransactionService } from '../common/transaction/transaction.service';
@@ -12,60 +12,69 @@ import {
   assignPermissionsToRoleByPrefixes,
   MERCHANT_PERMISSION_PREFIXES,
 } from './seeds/role-permission.seeder';
-import { runUserSeeder, SUPERADMIN_EMAIL } from './seeds/user.seeder';
+import { runUserSeeder, SUPERADMIN_DEFAULT_PASSWORD, SUPERADMIN_EMAIL } from './seeds/user.seeder';
+import { runPermissionSeeder } from './seeds/permission.seeder';
+import { EntityManager } from 'typeorm';
+import { PermissionQueryRepository } from 'src/modules/permissions/repositories/permission.query-repository';
 
 async function seed(): Promise<void> {
   const app = await NestFactory.createApplicationContext(AppModule, {
     logger: ['error', 'warn', 'log'],
   });
 
+  const transactionService = app.get(TransactionService);
+  const generator = app.get(PermissionGeneratorService);
+  const permissionRepository = app.get(PermissionRepository);
+  const roleRepository = app.get(RoleRepository);
+  const rolePermissionRepository = app.get(RolePermissionRepository);
+  const permissionQueryRepository = app.get(PermissionQueryRepository);
+  const userRepository = app.get(UserRepository);
+
   try {
-    // 1. Ensure all permissions exist (from controller methods)
-    const generator = app.get(PermissionGeneratorService);
-    await generator.generateFromControllers();
+    await transactionService.run(async (manager: EntityManager) => {
+      // 1️⃣ Generate permissions from controllers
+      await generator.generateFromControllers();
 
-    // 2. Create all roles if not exists (superadmin, admin, admin_merchant, employee_merchant)
-    const roleRepository = app.get(RoleRepository);
-    const roles = await runRoleSeeder(roleRepository);
-    if (!roles.superadmin) {
-      throw new Error('Failed to get or create superadmin role');
-    }
+      // 2️⃣ Seed manual permissions (superadmin/admin CRUD)
+      await runPermissionSeeder(permissionRepository, manager);
 
-    const rolePermissionRepository = app.get(RolePermissionRepository);
-    const permissionQueryRepository = app.get(PermissionQueryRepository);
-    const transactionService = app.get(TransactionService);
+      // 3️⃣ Create roles
+      const roles = await runRoleSeeder(roleRepository, manager);
+      if (!roles.superadmin) {
+        throw new Error('Failed to get or create superadmin role');
+      }
 
-    // 3. Assign permissions for each role
     await assignAllPermissionsToRole(
-      roles.superadmin.id,
-      rolePermissionRepository,
-      permissionQueryRepository,
-      transactionService,
-    );
-    await assignAllPermissionsToRole(
-      roles.admin.id,
-      rolePermissionRepository,
-      permissionQueryRepository,
-      transactionService,
-    );
-    await assignPermissionsToRoleByPrefixes(
-      roles.admin_merchant.id,
-      [...MERCHANT_PERMISSION_PREFIXES],
-      rolePermissionRepository,
-      permissionQueryRepository,
-      transactionService,
-    );
-    await assignPermissionsToRoleByPrefixes(
-      roles.employee_merchant.id,
-      [...MERCHANT_PERMISSION_PREFIXES],
-      rolePermissionRepository,
-      permissionQueryRepository,
-      transactionService,
-    );
+    roles.superadmin.id,
+    rolePermissionRepository,
+    permissionQueryRepository,
+    manager,
+  );
+  await assignAllPermissionsToRole(
+    roles.admin.id,
+    rolePermissionRepository,
+    permissionQueryRepository,
+    manager,
+  );
 
-    // 4. Create user superadmin@admin.com with superadmin role if not exists
-    const userRepository = app.get(UserRepository);
-    await runUserSeeder(userRepository, roles.superadmin.id);
+  // 5️⃣ Assign merchant-related permissions
+  await assignPermissionsToRoleByPrefixes(
+    roles.admin_merchant.id,
+    [...MERCHANT_PERMISSION_PREFIXES],
+    rolePermissionRepository,
+    permissionQueryRepository,
+    manager,
+  );
+  await assignPermissionsToRoleByPrefixes(
+    roles.employee_merchant.id,
+    [...MERCHANT_PERMISSION_PREFIXES],
+    rolePermissionRepository,
+    permissionQueryRepository,
+    manager,
+  );
+      // 6️⃣ Create superadmin user
+      await runUserSeeder(userRepository, roles.superadmin.id,SUPERADMIN_DEFAULT_PASSWORD,  manager);
+    });
 
     console.log(
       'Seed completed: roles (superadmin, admin, admin_merchant, employee_merchant) with permissions, user "%s" as %s.',

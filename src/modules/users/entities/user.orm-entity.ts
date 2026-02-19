@@ -6,6 +6,7 @@ import {
 } from 'typeorm';
 import { RoleOrmEntity } from '../../roles/entities/role.orm-entity';
 import { BaseOrmEntity } from '../../../common/base/enities/base.orm-entities';
+import { MerchantOrmEntity } from 'src/modules/merchants/entities/merchant.orm-entity';
 
 @Entity('users')
 export class UserOrmEntity extends BaseOrmEntity {
@@ -24,6 +25,13 @@ export class UserOrmEntity extends BaseOrmEntity {
   @ManyToOne(() => RoleOrmEntity, { onDelete: 'RESTRICT' })
   @JoinColumn({ name: 'role_id' })
   role: RoleOrmEntity;
+
+  @Column({ name: 'merchant_id', type: 'number', nullable: true })
+  merchantId?: number | null;
+
+  @ManyToOne(() => MerchantOrmEntity, { onDelete: 'CASCADE', nullable: true })
+  @JoinColumn({ name: 'merchant_id' })
+  merchant?: MerchantOrmEntity | null;
 
   @Column({ name: 'is_active', default: true })
   isActive: boolean;

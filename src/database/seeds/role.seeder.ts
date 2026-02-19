@@ -1,5 +1,6 @@
 import { RoleRepository } from '../../modules/roles/repositories/role.repository';
 import { RoleOrmEntity } from '../../modules/roles/entities/role.orm-entity';
+import { EntityManager } from 'typeorm';
 
 export const SUPERADMIN_ROLE_NAME = 'superadmin';
 export const ADMIN_ROLE_NAME = 'admin';
@@ -20,7 +21,7 @@ export interface SeededRoles {
   employee_merchant: RoleOrmEntity;
 }
 
-export async function runRoleSeeder(roleRepository: RoleRepository): Promise<SeededRoles> {
+export async function runRoleSeeder(roleRepository: RoleRepository, manager?: EntityManager): Promise<SeededRoles> {
   const result: Partial<SeededRoles> = {};
 
   for (const { roleName, description } of ROLES_TO_SEED) {

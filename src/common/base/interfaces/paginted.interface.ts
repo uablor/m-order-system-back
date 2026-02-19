@@ -10,7 +10,6 @@ export interface PaginationQuery {
     limit?: number;
     where?: FindOptionsWhere<E>;
     order?: FindManyOptions<E>['order'];
-    relations?: FindManyOptions<E>['relations'];
   }
   
   export interface PaginationResponse {
