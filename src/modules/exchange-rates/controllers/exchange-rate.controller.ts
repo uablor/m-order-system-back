@@ -44,9 +44,8 @@ export class ExchangeRateController {
   @ApiNotFoundBase()
   async create(
     @Body() dto: ExchangeRateCreateDto,
-    @CurrentUser() currentUser?: CurrentUserPayload,
+    @CurrentUser() currentUser: CurrentUserPayload,
   ) {
-    if (!currentUser) throw new ForbiddenException('Authentication required');
     return this.commandService.create(dto, currentUser);
   }
 

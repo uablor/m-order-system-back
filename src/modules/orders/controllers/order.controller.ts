@@ -33,9 +33,10 @@ export class OrderController {
   @ApiUnauthorizedBase()
   async createFull(
     @Body() dto: CreateFullOrderDto,
-    @CurrentUser() currentUser?: CurrentUserPayload,
+    @CurrentUser() currentUser: CurrentUserPayload,
+  
   ) {
-    return this.orderCommandService.createFull(dto, currentUser?.userId ?? null);
+    return this.orderCommandService.createFull(dto, currentUser);
   }
 
   @Post()
