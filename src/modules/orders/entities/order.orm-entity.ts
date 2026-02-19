@@ -4,9 +4,7 @@ import { MerchantOrmEntity } from '../../merchants/entities/merchant.orm-entity'
 import { UserOrmEntity } from '../../users/entities/user.orm-entity';
 import { OrderItemOrmEntity } from './order-item.orm-entity';
 import { CustomerOrderOrmEntity } from './customer-order.orm-entity';
-import { ArrivalStatusEnum } from '../enum/enum.entities';
-
-export type PaymentStatus = 'UNPAID' | 'PARTIAL' | 'PAID';
+import { ArrivalStatusEnum, PaymentStatusEnum } from '../enum/enum.entities';
 
 @Entity('orders')
 export class OrderOrmEntity extends BaseOrmEntity {
@@ -73,7 +71,7 @@ export class OrderOrmEntity extends BaseOrmEntity {
   remainingAmount: string;
 
   @Column({ name: 'payment_status', type: 'varchar', length: 20, default: 'UNPAID' })
-  paymentStatus: PaymentStatus;
+  paymentStatus: PaymentStatusEnum;
 
   @OneToMany(() => OrderItemOrmEntity, (item) => item.order)
   orderItems: OrderItemOrmEntity[];
