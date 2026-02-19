@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { FindOptionsWhere, Repository } from 'typeorm';
+import { FindManyOptions, FindOptionsWhere, Repository } from 'typeorm';
 import { BaseQueryRepository } from '../../../common/base/repositories/base.query-repository';
 import { OrderOrmEntity } from '../entities/order.orm-entity';
 import { PaginatedResult, PaginationResponse } from '../../../common/base/interfaces/paginted.interface';
@@ -17,6 +17,7 @@ export class OrderQueryRepository extends BaseQueryRepository<OrderOrmEntity> {
   async findWithPagination(
     options: { page?: number; limit?: number; merchantId?: number },
     manager?: import('typeorm').EntityManager,
+    relations?: FindManyOptions<OrderOrmEntity>['relations'],
   ): Promise<PaginatedResult<OrderOrmEntity>> {
     const repo = this.getRepo(manager);
     const page = Math.max(1, options.page ?? 1);
@@ -28,7 +29,7 @@ export class OrderQueryRepository extends BaseQueryRepository<OrderOrmEntity> {
     }
     const [data, total] = await repo.findAndCount({
       where: Object.keys(where).length ? where : undefined,
-      relations: ['merchant', 'createdByUser'],
+      relations: relations ?? ['merchant', 'createdByUser', 'orderItems', 'customerOrders', 'customerOrders.customerOrderItems', 'customerOrders.customer'],
       order: { createdAt: 'DESC' as const },
       skip,
       take: limit,

@@ -1,79 +1,98 @@
 import { RolePermissionRepository } from '../../modules/role-permissions/repositories/role-permission.repository';
 import { PermissionQueryRepository } from '../../modules/permissions/repositories/permission.query-repository';
 import { TransactionService } from '../../common/transaction/transaction.service';
+import { EntityManager } from 'typeorm';
 
 /**
  * Assigns ALL permissions in the system to the given role.
+ * If a manager is passed, it will use it. Otherwise, it opens a new transaction.
  */
 export async function assignAllPermissionsToRole(
   roleId: number,
   rolePermissionRepository: RolePermissionRepository,
   permissionQueryRepository: PermissionQueryRepository,
-  transactionService: TransactionService,
+  manager: EntityManager,
 ): Promise<number> {
-  const permissions = await permissionQueryRepository.findMany({
-    order: { id: 'ASC' as const },
-  });
-  if (permissions.length === 0) {
-    console.log('No permissions found. Run permissions:generate first.');
-    return 0;
-  }
+  const doAssign = async (m: EntityManager) => {
+    const permissions = await permissionQueryRepository.findMany(
+      { order: { id: 'ASC' } },
+      m,
+    );
+    if (permissions.length === 0) {
+      console.log('No permissions found. Run permissions:generate first.');
+      return 0;
+    }
 
-  let assigned = 0;
-  await transactionService.run(async (manager) => {
+    let assigned = 0;
     for (const permission of permissions) {
-      const exists = await rolePermissionRepository.exists(roleId, permission.id, manager);
+      const exists = await rolePermissionRepository.exists(
+        roleId,
+        permission.id,
+        m,
+      );
       if (!exists) {
-        await rolePermissionRepository.add(roleId, permission.id, manager);
+        await rolePermissionRepository.add(roleId, permission.id, m);
         assigned++;
       }
     }
-  });
+    console.log(
+      `Assigned ${assigned} permission(s) to role ${roleId} (${permissions.length} total in system).`,
+    );
+    return assigned;
+  };
 
-  console.log(`Assigned ${assigned} permission(s) to role ${roleId} (${permissions.length} total in system).`);
-  return assigned;
+  return doAssign(manager); // ใช้ transaction ภายนอก
 }
 
 /**
  * Assigns only permissions whose permissionCode starts with one of the given prefixes.
- * Example: prefixes ['orders:', 'arrivals:'] assigns orders:create, orders:getList, arrivals:create, etc.
  */
 export async function assignPermissionsToRoleByPrefixes(
   roleId: number,
   prefixes: string[],
   rolePermissionRepository: RolePermissionRepository,
   permissionQueryRepository: PermissionQueryRepository,
-  transactionService: TransactionService,
+  manager: EntityManager,
 ): Promise<number> {
-  const allPermissions = await permissionQueryRepository.findMany({
-    order: { id: 'ASC' as const },
-  });
-  const toAssign = allPermissions.filter((p) =>
-    prefixes.some((prefix) => p.permissionCode.startsWith(prefix)),
-  );
-  if (toAssign.length === 0) {
-    console.log(`No permissions match prefixes [${prefixes.join(', ')}] for role ${roleId}.`);
-    return 0;
-  }
+  const doAssign = async (m: EntityManager) => {
+    const allPermissions = await permissionQueryRepository.findMany(
+      { order: { id: 'ASC' } },
+      m,
+    );
+    const toAssign = allPermissions.filter((p) =>
+      prefixes.some((prefix) => p.permissionCode.startsWith(prefix)),
+    );
 
-  let assigned = 0;
-  await transactionService.run(async (manager) => {
+    if (toAssign.length === 0) {
+      console.log(
+        `No permissions match prefixes [${prefixes.join(', ')}] for role ${roleId}.`,
+      );
+      return 0;
+    }
+
+    let assigned = 0;
     for (const permission of toAssign) {
-      const exists = await rolePermissionRepository.exists(roleId, permission.id, manager);
+      const exists = await rolePermissionRepository.exists(
+        roleId,
+        permission.id,
+        m,
+      );
       if (!exists) {
-        await rolePermissionRepository.add(roleId, permission.id, manager);
+        await rolePermissionRepository.add(roleId, permission.id, m);
         assigned++;
       }
     }
-  });
 
-  console.log(
-    `Assigned ${assigned} permission(s) to role ${roleId} by prefixes [${prefixes.join(', ')}] (${toAssign.length} matched).`,
-  );
-  return assigned;
+    console.log(
+      `Assigned ${assigned} permission(s) to role ${roleId} by prefixes [${prefixes.join(', ')}] (${toAssign.length} matched).`,
+    );
+    return assigned;
+  };
+
+  return doAssign(manager);
 }
 
-/** Prefixes for merchant-scoped permissions (orders, arrivals, customers, etc.). */
+/** Prefixes for merchant-scoped permissions */
 export const MERCHANT_PERMISSION_PREFIXES = [
   'orders:',
   'order-items:',
@@ -94,12 +113,12 @@ export async function runRolePermissionSeeder(
   roleId: number,
   rolePermissionRepository: RolePermissionRepository,
   permissionQueryRepository: PermissionQueryRepository,
-  transactionService: TransactionService,
+  manager: EntityManager,
 ): Promise<number> {
   return assignAllPermissionsToRole(
     roleId,
     rolePermissionRepository,
     permissionQueryRepository,
-    transactionService,
+    manager,
   );
 }

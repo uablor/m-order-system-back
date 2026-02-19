@@ -1,18 +1,52 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { FindOptionsWhere, Repository } from 'typeorm';
+import { BaseQueryRepository } from '../../../common/base/repositories/base.query-repository';
 import { ExchangeRateOrmEntity } from '../entities/exchange-rate.orm-entity';
+import { PaginatedResult } from '../../../common/base/interfaces/paginted.interface';
 
 @Injectable()
-export class ExchangeRateQueryRepository {
+export class ExchangeRateQueryRepository extends BaseQueryRepository<ExchangeRateOrmEntity> {
   constructor(
     @InjectRepository(ExchangeRateOrmEntity)
-    public readonly repository: Repository<ExchangeRateOrmEntity>,
-  ) {}
+    repository: Repository<ExchangeRateOrmEntity>,
+  ) {
+    super(repository);
+  }
+
+  async findWithPagination(
+    options: {
+      page?: number;
+      limit?: number;
+      merchantId?: number;
+      rateType?: string;
+      baseCurrency?: string;
+      targetCurrency?: string;
+      isActive?: boolean;
+    },
+    manager?: import('typeorm').EntityManager,
+  ): Promise<PaginatedResult<ExchangeRateOrmEntity>> {
+    const where: FindOptionsWhere<ExchangeRateOrmEntity> = {};
+    if (options.merchantId != null) where.merchant = { id: options.merchantId };
+    if (options.rateType != null) where.rateType = options.rateType as 'BUY' | 'SELL';
+    if (options.baseCurrency != null) where.baseCurrency = options.baseCurrency;
+    if (options.targetCurrency != null) where.targetCurrency = options.targetCurrency;
+    if (options.isActive !== undefined) where.isActive = options.isActive;
+
+    return super.findWithPagination(
+      {
+        page: options.page,
+        limit: options.limit,
+        where: Object.keys(where).length ? where : undefined,
+        order: { rateDate: 'DESC' as const, id: 'DESC' as const },
+      },
+      manager,
+      ['merchant', 'createdByUser'],
+    );
+  }
 
   /**
    * Get the latest exchange rate for merchant on or before rateDate for the given currency pair and type.
-   * Used to convert foreign currency to LAK.
    */
   async getRateForDate(
     merchantId: number,

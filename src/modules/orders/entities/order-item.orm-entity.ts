@@ -11,6 +11,9 @@ export class OrderItemOrmEntity extends BaseOrmEntity {
   @JoinColumn({ name: 'order_id' })
   order: OrderOrmEntity;
 
+  @Column({ name: 'order_item_index', type: 'int', nullable: true })
+  orderItemIndex: number | null;
+
   @Column({ name: 'product_name', type: 'varchar', length: 255 })
   productName: string;
 

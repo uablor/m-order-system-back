@@ -1,0 +1,122 @@
+import { MigrationInterface, QueryRunner } from "typeorm";
+
+export class UpdateSchema1771476620826 implements MigrationInterface {
+    name = 'UpdateSchema1771476620826'
+
+    public async up(queryRunner: QueryRunner): Promise<void> {
+        await queryRunner.query(`ALTER TABLE \`merchants\` DROP FOREIGN KEY \`FK_merchants_owner_user\``);
+        await queryRunner.query(`ALTER TABLE \`customers\` DROP FOREIGN KEY \`FK_customers_merchant\``);
+        await queryRunner.query(`ALTER TABLE \`customer_orders\` DROP FOREIGN KEY \`FK_customer_orders_customer\``);
+        await queryRunner.query(`ALTER TABLE \`customer_orders\` DROP FOREIGN KEY \`FK_customer_orders_order\``);
+        await queryRunner.query(`ALTER TABLE \`customer_order_items\` DROP FOREIGN KEY \`FK_customer_order_items_customer_order\``);
+        await queryRunner.query(`ALTER TABLE \`customer_order_items\` DROP FOREIGN KEY \`FK_customer_order_items_order_item\``);
+        await queryRunner.query(`ALTER TABLE \`order_items\` DROP FOREIGN KEY \`FK_order_items_order\``);
+        await queryRunner.query(`ALTER TABLE \`orders\` DROP FOREIGN KEY \`FK_orders_created_by\``);
+        await queryRunner.query(`ALTER TABLE \`orders\` DROP FOREIGN KEY \`FK_orders_merchant\``);
+        await queryRunner.query(`ALTER TABLE \`exchange_rates\` DROP FOREIGN KEY \`FK_exchange_rates_created_by\``);
+        await queryRunner.query(`ALTER TABLE \`exchange_rates\` DROP FOREIGN KEY \`FK_exchange_rates_merchant\``);
+        await queryRunner.query(`ALTER TABLE \`notifications\` DROP FOREIGN KEY \`FK_notifications_customer\``);
+        await queryRunner.query(`ALTER TABLE \`notifications\` DROP FOREIGN KEY \`FK_notifications_merchant\``);
+        await queryRunner.query(`ALTER TABLE \`arrival_items\` DROP FOREIGN KEY \`FK_arrival_items_arrival\``);
+        await queryRunner.query(`ALTER TABLE \`arrival_items\` DROP FOREIGN KEY \`FK_arrival_items_order_item\``);
+        await queryRunner.query(`ALTER TABLE \`arrivals\` DROP FOREIGN KEY \`FK_arrivals_merchant\``);
+        await queryRunner.query(`ALTER TABLE \`arrivals\` DROP FOREIGN KEY \`FK_arrivals_order\``);
+        await queryRunner.query(`ALTER TABLE \`arrivals\` DROP FOREIGN KEY \`FK_arrivals_recorded_by\``);
+        await queryRunner.query(`DROP INDEX \`IDX_customers_unique_token\` ON \`customers\``);
+        await queryRunner.query(`ALTER TABLE \`users\` ADD \`merchant_id\` int NULL`);
+        await queryRunner.query(`ALTER TABLE \`order_items\` ADD \`order_item_index\` int NULL`);
+        await queryRunner.query(`ALTER TABLE \`customers\` ADD UNIQUE INDEX \`IDX_832720c2a9f4c557936311f39d\` (\`unique_token\`)`);
+        await queryRunner.query(`ALTER TABLE \`customers\` CHANGE \`merchant_id\` \`merchant_id\` int NULL`);
+        await queryRunner.query(`ALTER TABLE \`customer_orders\` CHANGE \`order_id\` \`order_id\` int NULL`);
+        await queryRunner.query(`ALTER TABLE \`customer_orders\` CHANGE \`customer_id\` \`customer_id\` int NULL`);
+        await queryRunner.query(`ALTER TABLE \`customer_order_items\` CHANGE \`customer_order_id\` \`customer_order_id\` int NULL`);
+        await queryRunner.query(`ALTER TABLE \`customer_order_items\` CHANGE \`order_item_id\` \`order_item_id\` int NULL`);
+        await queryRunner.query(`ALTER TABLE \`order_items\` CHANGE \`order_id\` \`order_id\` int NULL`);
+        await queryRunner.query(`ALTER TABLE \`orders\` CHANGE \`merchant_id\` \`merchant_id\` int NULL`);
+        await queryRunner.query(`ALTER TABLE \`exchange_rates\` CHANGE \`merchant_id\` \`merchant_id\` int NULL`);
+        await queryRunner.query(`ALTER TABLE \`notifications\` CHANGE \`merchant_id\` \`merchant_id\` int NULL`);
+        await queryRunner.query(`ALTER TABLE \`notifications\` CHANGE \`customer_id\` \`customer_id\` int NULL`);
+        await queryRunner.query(`ALTER TABLE \`arrival_items\` CHANGE \`arrival_id\` \`arrival_id\` int NULL`);
+        await queryRunner.query(`ALTER TABLE \`arrival_items\` CHANGE \`order_item_id\` \`order_item_id\` int NULL`);
+        await queryRunner.query(`ALTER TABLE \`arrivals\` CHANGE \`order_id\` \`order_id\` int NULL`);
+        await queryRunner.query(`ALTER TABLE \`arrivals\` CHANGE \`merchant_id\` \`merchant_id\` int NULL`);
+        await queryRunner.query(`ALTER TABLE \`merchants\` ADD CONSTRAINT \`FK_601b7984c109a454f72d1f1029f\` FOREIGN KEY (\`owner_user_id\`) REFERENCES \`users\`(\`id\`) ON DELETE RESTRICT ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE \`users\` ADD CONSTRAINT \`FK_fe996f039efa99e46d75761aad0\` FOREIGN KEY (\`merchant_id\`) REFERENCES \`merchants\`(\`id\`) ON DELETE CASCADE ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE \`customers\` ADD CONSTRAINT \`FK_c73a42116fe791faa952b71e9dd\` FOREIGN KEY (\`merchant_id\`) REFERENCES \`merchants\`(\`id\`) ON DELETE CASCADE ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE \`customer_orders\` ADD CONSTRAINT \`FK_4665b4d203357f4cd8d74e54b1c\` FOREIGN KEY (\`order_id\`) REFERENCES \`orders\`(\`id\`) ON DELETE CASCADE ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE \`customer_orders\` ADD CONSTRAINT \`FK_d7fd44c68cff957a9168272c745\` FOREIGN KEY (\`customer_id\`) REFERENCES \`customers\`(\`id\`) ON DELETE CASCADE ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE \`customer_order_items\` ADD CONSTRAINT \`FK_b9e59e7b59ba5c0c5ab21c851f8\` FOREIGN KEY (\`customer_order_id\`) REFERENCES \`customer_orders\`(\`id\`) ON DELETE CASCADE ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE \`customer_order_items\` ADD CONSTRAINT \`FK_a1e7e4ecb1bc8fa380194bea4db\` FOREIGN KEY (\`order_item_id\`) REFERENCES \`order_items\`(\`id\`) ON DELETE CASCADE ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE \`order_items\` ADD CONSTRAINT \`FK_145532db85752b29c57d2b7b1f1\` FOREIGN KEY (\`order_id\`) REFERENCES \`orders\`(\`id\`) ON DELETE CASCADE ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE \`orders\` ADD CONSTRAINT \`FK_2474866c8f8e9196ff227a7cbbd\` FOREIGN KEY (\`merchant_id\`) REFERENCES \`merchants\`(\`id\`) ON DELETE CASCADE ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE \`orders\` ADD CONSTRAINT \`FK_574a2f0932043d4e4baf188ee05\` FOREIGN KEY (\`created_by\`) REFERENCES \`users\`(\`id\`) ON DELETE SET NULL ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE \`exchange_rates\` ADD CONSTRAINT \`FK_a510c6205de79e1fdecd1ce59ef\` FOREIGN KEY (\`merchant_id\`) REFERENCES \`merchants\`(\`id\`) ON DELETE CASCADE ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE \`exchange_rates\` ADD CONSTRAINT \`FK_6fb516c4659b87c8a766bc950fa\` FOREIGN KEY (\`created_by\`) REFERENCES \`users\`(\`id\`) ON DELETE SET NULL ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE \`notifications\` ADD CONSTRAINT \`FK_bc9b909dcfd2c2b41ac18798cd6\` FOREIGN KEY (\`merchant_id\`) REFERENCES \`merchants\`(\`id\`) ON DELETE CASCADE ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE \`notifications\` ADD CONSTRAINT \`FK_b55350bc786b052e8523f313b9a\` FOREIGN KEY (\`customer_id\`) REFERENCES \`customers\`(\`id\`) ON DELETE CASCADE ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE \`arrival_items\` ADD CONSTRAINT \`FK_a8dbbf82dd0c706e67c8ec7da86\` FOREIGN KEY (\`arrival_id\`) REFERENCES \`arrivals\`(\`id\`) ON DELETE CASCADE ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE \`arrival_items\` ADD CONSTRAINT \`FK_12f222b5c376f4f681a620d77f1\` FOREIGN KEY (\`order_item_id\`) REFERENCES \`order_items\`(\`id\`) ON DELETE CASCADE ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE \`arrivals\` ADD CONSTRAINT \`FK_4d2d001670a67f1626fdaf4e66a\` FOREIGN KEY (\`order_id\`) REFERENCES \`orders\`(\`id\`) ON DELETE CASCADE ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE \`arrivals\` ADD CONSTRAINT \`FK_9633581f63a15159cd19a2036c0\` FOREIGN KEY (\`merchant_id\`) REFERENCES \`merchants\`(\`id\`) ON DELETE CASCADE ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE \`arrivals\` ADD CONSTRAINT \`FK_64d53127da7eef1565fb166aed8\` FOREIGN KEY (\`recorded_by\`) REFERENCES \`users\`(\`id\`) ON DELETE SET NULL ON UPDATE NO ACTION`);
+    }
+
+    public async down(queryRunner: QueryRunner): Promise<void> {
+        await queryRunner.query(`ALTER TABLE \`arrivals\` DROP FOREIGN KEY \`FK_64d53127da7eef1565fb166aed8\``);
+        await queryRunner.query(`ALTER TABLE \`arrivals\` DROP FOREIGN KEY \`FK_9633581f63a15159cd19a2036c0\``);
+        await queryRunner.query(`ALTER TABLE \`arrivals\` DROP FOREIGN KEY \`FK_4d2d001670a67f1626fdaf4e66a\``);
+        await queryRunner.query(`ALTER TABLE \`arrival_items\` DROP FOREIGN KEY \`FK_12f222b5c376f4f681a620d77f1\``);
+        await queryRunner.query(`ALTER TABLE \`arrival_items\` DROP FOREIGN KEY \`FK_a8dbbf82dd0c706e67c8ec7da86\``);
+        await queryRunner.query(`ALTER TABLE \`notifications\` DROP FOREIGN KEY \`FK_b55350bc786b052e8523f313b9a\``);
+        await queryRunner.query(`ALTER TABLE \`notifications\` DROP FOREIGN KEY \`FK_bc9b909dcfd2c2b41ac18798cd6\``);
+        await queryRunner.query(`ALTER TABLE \`exchange_rates\` DROP FOREIGN KEY \`FK_6fb516c4659b87c8a766bc950fa\``);
+        await queryRunner.query(`ALTER TABLE \`exchange_rates\` DROP FOREIGN KEY \`FK_a510c6205de79e1fdecd1ce59ef\``);
+        await queryRunner.query(`ALTER TABLE \`orders\` DROP FOREIGN KEY \`FK_574a2f0932043d4e4baf188ee05\``);
+        await queryRunner.query(`ALTER TABLE \`orders\` DROP FOREIGN KEY \`FK_2474866c8f8e9196ff227a7cbbd\``);
+        await queryRunner.query(`ALTER TABLE \`order_items\` DROP FOREIGN KEY \`FK_145532db85752b29c57d2b7b1f1\``);
+        await queryRunner.query(`ALTER TABLE \`customer_order_items\` DROP FOREIGN KEY \`FK_a1e7e4ecb1bc8fa380194bea4db\``);
+        await queryRunner.query(`ALTER TABLE \`customer_order_items\` DROP FOREIGN KEY \`FK_b9e59e7b59ba5c0c5ab21c851f8\``);
+        await queryRunner.query(`ALTER TABLE \`customer_orders\` DROP FOREIGN KEY \`FK_d7fd44c68cff957a9168272c745\``);
+        await queryRunner.query(`ALTER TABLE \`customer_orders\` DROP FOREIGN KEY \`FK_4665b4d203357f4cd8d74e54b1c\``);
+        await queryRunner.query(`ALTER TABLE \`customers\` DROP FOREIGN KEY \`FK_c73a42116fe791faa952b71e9dd\``);
+        await queryRunner.query(`ALTER TABLE \`users\` DROP FOREIGN KEY \`FK_fe996f039efa99e46d75761aad0\``);
+        await queryRunner.query(`ALTER TABLE \`merchants\` DROP FOREIGN KEY \`FK_601b7984c109a454f72d1f1029f\``);
+        await queryRunner.query(`ALTER TABLE \`arrivals\` CHANGE \`merchant_id\` \`merchant_id\` int NOT NULL`);
+        await queryRunner.query(`ALTER TABLE \`arrivals\` CHANGE \`order_id\` \`order_id\` int NOT NULL`);
+        await queryRunner.query(`ALTER TABLE \`arrival_items\` CHANGE \`order_item_id\` \`order_item_id\` int NOT NULL`);
+        await queryRunner.query(`ALTER TABLE \`arrival_items\` CHANGE \`arrival_id\` \`arrival_id\` int NOT NULL`);
+        await queryRunner.query(`ALTER TABLE \`notifications\` CHANGE \`customer_id\` \`customer_id\` int NOT NULL`);
+        await queryRunner.query(`ALTER TABLE \`notifications\` CHANGE \`merchant_id\` \`merchant_id\` int NOT NULL`);
+        await queryRunner.query(`ALTER TABLE \`exchange_rates\` CHANGE \`merchant_id\` \`merchant_id\` int NOT NULL`);
+        await queryRunner.query(`ALTER TABLE \`orders\` CHANGE \`merchant_id\` \`merchant_id\` int NOT NULL`);
+        await queryRunner.query(`ALTER TABLE \`order_items\` CHANGE \`order_id\` \`order_id\` int NOT NULL`);
+        await queryRunner.query(`ALTER TABLE \`customer_order_items\` CHANGE \`order_item_id\` \`order_item_id\` int NOT NULL`);
+        await queryRunner.query(`ALTER TABLE \`customer_order_items\` CHANGE \`customer_order_id\` \`customer_order_id\` int NOT NULL`);
+        await queryRunner.query(`ALTER TABLE \`customer_orders\` CHANGE \`customer_id\` \`customer_id\` int NOT NULL`);
+        await queryRunner.query(`ALTER TABLE \`customer_orders\` CHANGE \`order_id\` \`order_id\` int NOT NULL`);
+        await queryRunner.query(`ALTER TABLE \`customers\` CHANGE \`merchant_id\` \`merchant_id\` int NOT NULL`);
+        await queryRunner.query(`ALTER TABLE \`customers\` DROP INDEX \`IDX_832720c2a9f4c557936311f39d\``);
+        await queryRunner.query(`ALTER TABLE \`order_items\` DROP COLUMN \`order_item_index\``);
+        await queryRunner.query(`ALTER TABLE \`users\` DROP COLUMN \`merchant_id\``);
+        await queryRunner.query(`CREATE UNIQUE INDEX \`IDX_customers_unique_token\` ON \`customers\` (\`unique_token\`)`);
+        await queryRunner.query(`ALTER TABLE \`arrivals\` ADD CONSTRAINT \`FK_arrivals_recorded_by\` FOREIGN KEY (\`recorded_by\`) REFERENCES \`users\`(\`id\`) ON DELETE SET NULL ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE \`arrivals\` ADD CONSTRAINT \`FK_arrivals_order\` FOREIGN KEY (\`order_id\`) REFERENCES \`orders\`(\`id\`) ON DELETE CASCADE ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE \`arrivals\` ADD CONSTRAINT \`FK_arrivals_merchant\` FOREIGN KEY (\`merchant_id\`) REFERENCES \`merchants\`(\`id\`) ON DELETE CASCADE ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE \`arrival_items\` ADD CONSTRAINT \`FK_arrival_items_order_item\` FOREIGN KEY (\`order_item_id\`) REFERENCES \`order_items\`(\`id\`) ON DELETE CASCADE ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE \`arrival_items\` ADD CONSTRAINT \`FK_arrival_items_arrival\` FOREIGN KEY (\`arrival_id\`) REFERENCES \`arrivals\`(\`id\`) ON DELETE CASCADE ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE \`notifications\` ADD CONSTRAINT \`FK_notifications_merchant\` FOREIGN KEY (\`merchant_id\`) REFERENCES \`merchants\`(\`id\`) ON DELETE CASCADE ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE \`notifications\` ADD CONSTRAINT \`FK_notifications_customer\` FOREIGN KEY (\`customer_id\`) REFERENCES \`customers\`(\`id\`) ON DELETE CASCADE ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE \`exchange_rates\` ADD CONSTRAINT \`FK_exchange_rates_merchant\` FOREIGN KEY (\`merchant_id\`) REFERENCES \`merchants\`(\`id\`) ON DELETE CASCADE ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE \`exchange_rates\` ADD CONSTRAINT \`FK_exchange_rates_created_by\` FOREIGN KEY (\`created_by\`) REFERENCES \`users\`(\`id\`) ON DELETE SET NULL ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE \`orders\` ADD CONSTRAINT \`FK_orders_merchant\` FOREIGN KEY (\`merchant_id\`) REFERENCES \`merchants\`(\`id\`) ON DELETE CASCADE ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE \`orders\` ADD CONSTRAINT \`FK_orders_created_by\` FOREIGN KEY (\`created_by\`) REFERENCES \`users\`(\`id\`) ON DELETE SET NULL ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE \`order_items\` ADD CONSTRAINT \`FK_order_items_order\` FOREIGN KEY (\`order_id\`) REFERENCES \`orders\`(\`id\`) ON DELETE CASCADE ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE \`customer_order_items\` ADD CONSTRAINT \`FK_customer_order_items_order_item\` FOREIGN KEY (\`order_item_id\`) REFERENCES \`order_items\`(\`id\`) ON DELETE CASCADE ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE \`customer_order_items\` ADD CONSTRAINT \`FK_customer_order_items_customer_order\` FOREIGN KEY (\`customer_order_id\`) REFERENCES \`customer_orders\`(\`id\`) ON DELETE CASCADE ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE \`customer_orders\` ADD CONSTRAINT \`FK_customer_orders_order\` FOREIGN KEY (\`order_id\`) REFERENCES \`orders\`(\`id\`) ON DELETE CASCADE ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE \`customer_orders\` ADD CONSTRAINT \`FK_customer_orders_customer\` FOREIGN KEY (\`customer_id\`) REFERENCES \`customers\`(\`id\`) ON DELETE CASCADE ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE \`customers\` ADD CONSTRAINT \`FK_customers_merchant\` FOREIGN KEY (\`merchant_id\`) REFERENCES \`merchants\`(\`id\`) ON DELETE CASCADE ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE \`merchants\` ADD CONSTRAINT \`FK_merchants_owner_user\` FOREIGN KEY (\`owner_user_id\`) REFERENCES \`users\`(\`id\`) ON DELETE RESTRICT ON UPDATE NO ACTION`);
+    }
+
+}

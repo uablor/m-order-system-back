@@ -3,6 +3,7 @@ import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { UserModule } from '../users/user.module';
+import { RolePermissionModule } from '../role-permissions/role-permission.module';
 import { AuthController } from './controllers/auth.controller';
 import { AuthCommandService } from './services/auth-command.service';
 import { AuthQueryService } from './services/auth-query.service';
@@ -13,6 +14,7 @@ const SEVEN_DAYS_SEC = 7 * 24 * 60 * 60;
 @Module({
   imports: [
     UserModule,
+    RolePermissionModule,
     PassportModule.register({ defaultStrategy: 'jwt' }),
     JwtModule.registerAsync({
       imports: [ConfigModule],

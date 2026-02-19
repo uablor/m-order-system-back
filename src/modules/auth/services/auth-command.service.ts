@@ -2,6 +2,7 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { comparePassword } from '../../../common/utils/password.util';
 import { UserQueryRepository } from '../../users/repositories/user.query-repository';
+import { RolePermissionQueryService } from '../../role-permissions/services/role-permission-query.service';
 import { LoginDto } from '../dto/login.dto';
 import type { CurrentUserPayload } from '../../../common/decorators/current-user.decorator';
 import type { AuthResponseDto } from '../dto/auth-response.dto';
@@ -10,13 +11,14 @@ import type { AuthResponseDto } from '../dto/auth-response.dto';
 export class AuthCommandService {
   constructor(
     private readonly userQueryRepository: UserQueryRepository,
+    private readonly rolePermissionQueryService: RolePermissionQueryService,
     private readonly jwtService: JwtService,
   ) {}
 
   async login(dto: LoginDto): Promise<AuthResponseDto> {
     const entity = await this.userQueryRepository.repository.findOne({
       where: { email: dto.email },
-      relations: ['role'],
+      relations: ['role', 'merchant'],
     });
     if (!entity) {
       throw new UnauthorizedException('Invalid email or password');
@@ -28,11 +30,18 @@ export class AuthCommandService {
     if (!match) {
       throw new UnauthorizedException('Invalid email or password');
     }
+
+    const merchantId = entity.merchantId ?? entity.merchant?.id ?? null;
+    const permResp = await this.rolePermissionQueryService.getPermissionsByRoleId(entity.roleId);
+    const permissionCodes = permResp.results?.map((p) => p.permissionCode) ?? [];
+
     const payload: CurrentUserPayload = {
       userId: entity.id,
       email: entity.email,
       roleId: entity.roleId,
       roleName: entity.role?.roleName,
+      merchantId: merchantId ?? undefined,
+      permissions: permissionCodes,
     };
     const access_token = this.jwtService.sign(payload);
     return {
@@ -45,6 +54,7 @@ export class AuthCommandService {
         fullName: entity.fullName,
         roleId: entity.roleId,
         roleName: entity.role?.roleName,
+        merchantId: merchantId ?? undefined,
       },
     };
   }
