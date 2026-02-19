@@ -7,7 +7,6 @@ import { ExchangeRateUpdateDto } from '../dto/exchange-rate-update.dto';
 import { ExchangeRateOrmEntity } from '../entities/exchange-rate.orm-entity';
 import { CurrentUserPayload } from 'src/common/decorators/current-user.decorator';
 import { UserOrmEntity } from 'src/modules/users/entities/user.orm-entity';
-import { FindOptionsWhere, LessThanOrEqual } from 'typeorm';
 
 @Injectable()
 export class ExchangeRateCommandService {
@@ -31,7 +30,7 @@ export class ExchangeRateCommandService {
       );
       if (!merchant) throw new NotFoundException('Merchant not found');
   
-      const rateDate = new Date(dto.rateDate);
+      const rateDate = new Date();
   
       await this.exchangeRateRepository.getRepo(manager).update(
         { 

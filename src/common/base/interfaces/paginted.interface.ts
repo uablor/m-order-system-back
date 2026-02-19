@@ -1,4 +1,4 @@
-import { FindManyOptions, FindOptionsWhere, ObjectLiteral } from "typeorm";
+import { FindManyOptions, FindOptionsWhere, ObjectLiteral, SortDirection } from "typeorm";
 
 export interface PaginationQuery {
     page?: number;
@@ -10,6 +10,10 @@ export interface PaginationQuery {
     limit?: number;
     where?: FindOptionsWhere<E>;
     order?: FindManyOptions<E>['order'];
+    relations?: FindManyOptions<E>['relations'];
+    search?: string;
+    searchField?: string;
+    sort?: SortDirection;
   }
   
   export interface PaginationResponse {
