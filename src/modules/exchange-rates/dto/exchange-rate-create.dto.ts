@@ -25,11 +25,4 @@ export class ExchangeRateCreateDto {
   @IsNumber()
   @Min(0)
   rate: number;
-
-  constructor(partial: Partial<ExchangeRateCreateDto>) {
-    this.baseCurrency = partial.baseCurrency ?? '';
-    this.targetCurrency = partial.targetCurrency ?? '';
-    this.rateType = partial.rateType ?? 'BUY';
-    this.rate = partial.rate ?? 0;
-  }
 }

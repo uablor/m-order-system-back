@@ -15,6 +15,8 @@ import { OrderItemOrmEntity } from '../entities/order-item.orm-entity';
 import { CustomerOrderOrmEntity } from '../entities/customer-order.orm-entity';
 import { CustomerOrderItemOrmEntity } from '../entities/customer-order-item.orm-entity';
 import { ExchangeRateOrmEntity } from '../../exchange-rates/entities/exchange-rate.orm-entity';
+import { CurrentUserPayload } from 'src/common/decorators/current-user.decorator';
+import { ArrivalStatusEnum } from '../enum/enum.entities';
 
 const ZERO = '0';
 const LAK = 'LAK';
@@ -90,7 +92,6 @@ export class OrderCommandService {
       const updateData: Partial<OrderOrmEntity> = {};
       if (dto.orderCode !== undefined) updateData.orderCode = dto.orderCode;
       if (dto.orderDate !== undefined) updateData.orderDate = new Date(dto.orderDate);
-      if (dto.arrivalStatus !== undefined) updateData.arrivalStatus = dto.arrivalStatus;
       if (dto.arrivedAt !== undefined) updateData.arrivedAt = dto.arrivedAt ? new Date(dto.arrivedAt) : null;
       if (dto.notifiedAt !== undefined) updateData.notifiedAt = dto.notifiedAt ? new Date(dto.notifiedAt) : null;
       if (dto.totalShippingCostLak !== undefined) updateData.totalShippingCostLak = toDecimal2(dto.totalShippingCostLak);
@@ -117,13 +118,13 @@ export class OrderCommandService {
 
   async createFull(
     dto: CreateFullOrderDto,
-    createdByUserId: number | null,
+    currentUser: CurrentUserPayload
   ): Promise<{ success: true; order: object; message: string }> {
     return this.transactionService.run(async (manager) => {
-      const merchant = await this.merchantRepository.findOneById(dto.merchantId, manager);
+      const merchant = await this.merchantRepository.findOneById(currentUser.merchantId!, manager);
       if (!merchant) throw new NotFoundException('Merchant not found');
 
-      const orderDate = new Date(dto.orderDate);
+      const orderDate = new Date();
       const shippingLak = dto.totalShippingCostLak ?? 0;
 
       const repo = (m: EntityManager) => m.getRepository(ExchangeRateOrmEntity);
@@ -133,7 +134,7 @@ export class OrderCommandService {
         const er = await repo(m)
           .createQueryBuilder('er')
           .innerJoin('er.merchant', 'merchant')
-          .where('merchant.id = :merchantId', { merchantId: dto.merchantId })
+          .where('merchant.id = :merchantId', { merchantId: currentUser.merchantId! })
           .andWhere('er.rateDate <= :rateDate', { rateDate: orderDate })
           .andWhere('er.baseCurrency = :base', { base: baseCurrency })
           .andWhere('er.targetCurrency = :target', { target: LAK })
@@ -148,7 +149,7 @@ export class OrderCommandService {
         const er = await repo(m)
           .createQueryBuilder('er')
           .innerJoin('er.merchant', 'merchant')
-          .where('merchant.id = :merchantId', { merchantId: dto.merchantId })
+          .where('merchant.id = :merchantId', { merchantId: currentUser.merchantId! })
           .andWhere('er.rateDate <= :rateDate', { rateDate: orderDate })
           .andWhere('er.baseCurrency = :base', { base: baseCurrency })
           .andWhere('er.targetCurrency = :target', { target: LAK })
@@ -163,10 +164,10 @@ export class OrderCommandService {
       const order = await this.orderRepository.create(
         {
           merchant,
-          createdByUser: createdByUserId ? { id: createdByUserId } as any : null,
+          createdByUser: currentUser ? { id: currentUser.userId } : null,
           orderCode: dto.orderCode,
           orderDate,
-          arrivalStatus: 'NOT_ARRIVED',
+          arrivalStatus: ArrivalStatusEnum.NOT_ARRIVED,
           totalPurchaseCostLak: ZERO,
           totalShippingCostLak: toDecimal2(shippingLak),
           totalCostBeforeDiscountLak: ZERO,
@@ -284,7 +285,7 @@ export class OrderCommandService {
           });
         }
 
-        const totalPaid = coDto.totalPaid ?? 0;
+        const totalPaid = 0;
         const remaining = totalSellingAmountLak - totalPaid;
         const paymentStatus = calcPaymentStatus(totalSellingAmountLak, totalPaid);
 

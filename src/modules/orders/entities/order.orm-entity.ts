@@ -4,8 +4,8 @@ import { MerchantOrmEntity } from '../../merchants/entities/merchant.orm-entity'
 import { UserOrmEntity } from '../../users/entities/user.orm-entity';
 import { OrderItemOrmEntity } from './order-item.orm-entity';
 import { CustomerOrderOrmEntity } from './customer-order.orm-entity';
+import { ArrivalStatusEnum } from '../enum/enum.entities';
 
-export type ArrivalStatus = 'NOT_ARRIVED' | 'ARRIVED';
 export type PaymentStatus = 'UNPAID' | 'PARTIAL' | 'PAID';
 
 @Entity('orders')
@@ -24,8 +24,8 @@ export class OrderOrmEntity extends BaseOrmEntity {
   @Column({ name: 'order_date', type: 'date' })
   orderDate: Date;
 
-  @Column({ name: 'arrival_status', type: 'varchar', length: 20, default: 'NOT_ARRIVED' })
-  arrivalStatus: ArrivalStatus;
+  @Column({ name: 'arrival_status', type: 'varchar', length: 20, default: ArrivalStatusEnum.NOT_ARRIVED })
+  arrivalStatus: ArrivalStatusEnum;
 
   @Column({ name: 'arrived_at', type: 'datetime', nullable: true })
   arrivedAt: Date | null;

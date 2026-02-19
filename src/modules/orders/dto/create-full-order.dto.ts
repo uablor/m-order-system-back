@@ -5,7 +5,6 @@ import {
   IsArray,
   ValidateNested,
   Min,
-  IsDateString,
   IsIn,
   MaxLength,
 } from 'class-validator';
@@ -13,6 +12,11 @@ import { Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class CreateFullOrderItemDto {
+  @ApiProperty({ description: 'Index of order item in the items array (0-based)' })
+  @IsNumber()
+  @Min(0)
+  Index: number = 0;
+
   @ApiProperty()
   @IsString()
   @MaxLength(255)
@@ -54,6 +58,18 @@ export class CreateFullOrderItemDto {
   @IsNumber()
   @Min(0)
   sellingPriceForeign: number;
+
+
+  constructor(partial: Partial<CreateFullOrderItemDto>) {
+    this.productName = partial.productName ?? '';
+    this.variant = partial.variant ?? '';
+    this.quantity = partial.quantity ?? 1;
+    this.purchaseCurrency = partial.purchaseCurrency ?? '';
+    this.purchasePrice = partial.purchasePrice ?? 0;
+    this.discountType = partial.discountType ?? 'FIX';
+    this.discountValue = partial.discountValue ?? 0;
+    this.sellingPriceForeign = partial.sellingPriceForeign ?? 0;
+  }
 }
 
 export class CreateFullCustomerOrderItemDto {
@@ -72,6 +88,12 @@ export class CreateFullCustomerOrderItemDto {
   @IsNumber()
   @Min(0)
   sellingPriceForeign?: number;
+
+  constructor(partial: Partial<CreateFullCustomerOrderItemDto>) {
+    this.orderItemIndex = partial.orderItemIndex ?? 0;
+    this.quantity = partial.quantity ?? 1;
+    this.sellingPriceForeign = partial.sellingPriceForeign ?? 0;
+  }
 }
 
 export class CreateFullCustomerOrderDto {
@@ -79,32 +101,23 @@ export class CreateFullCustomerOrderDto {
   @IsNumber()
   customerId: number;
 
-  @ApiPropertyOptional({ description: 'Amount already paid', default: 0 })
-  @IsOptional()
-  @IsNumber()
-  @Min(0)
-  totalPaid?: number;
-
   @ApiProperty({ type: [CreateFullCustomerOrderItemDto] })
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => CreateFullCustomerOrderItemDto)
   items: CreateFullCustomerOrderItemDto[];
+  constructor(partial: Partial<CreateFullCustomerOrderDto>) {
+    this.customerId = partial.customerId ?? 0;
+    this.items = partial.items?.map(item => new CreateFullCustomerOrderItemDto(item)) ?? [];
+  }
 }
 
 export class CreateFullOrderDto {
-  @ApiProperty()
-  @IsNumber()
-  merchantId: number;
 
   @ApiProperty()
   @IsString()
   @MaxLength(100)
   orderCode: string;
-
-  @ApiProperty({ example: '2025-02-11' })
-  @IsDateString()
-  orderDate: string;
 
   @ApiPropertyOptional({ description: 'Total shipping cost in LAK', default: 0 })
   @IsOptional()
@@ -123,4 +136,11 @@ export class CreateFullOrderDto {
   @ValidateNested({ each: true })
   @Type(() => CreateFullCustomerOrderDto)
   customerOrders: CreateFullCustomerOrderDto[];
+
+  constructor(partial: Partial<CreateFullOrderDto>) {
+    this.orderCode = partial.orderCode ?? '';
+    this.totalShippingCostLak = partial.totalShippingCostLak ?? 0;
+    this.items = partial.items?.map(item => new CreateFullOrderItemDto(item)) ?? [];
+    this.customerOrders = partial.customerOrders?.map(item => new CreateFullCustomerOrderDto(item)) ?? [];
+  }
 }
