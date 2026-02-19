@@ -2,7 +2,7 @@ import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/commo
 import { TransactionService } from '../../../common/transaction/transaction.service';
 import { ExchangeRateRepository } from '../repositories/exchange-rate.repository';
 import { MerchantRepository } from '../../merchants/repositories/merchant.repository';
-import { ExchangeRateCreateDto } from '../dto/exchange-rate-create.dto';
+import { ExchangeRateCreateDto, ExchangeRateCreateManyDto } from '../dto/exchange-rate-create.dto';
 import { ExchangeRateUpdateDto } from '../dto/exchange-rate-update.dto';
 import { ExchangeRateOrmEntity } from '../entities/exchange-rate.orm-entity';
 import { CurrentUserPayload } from 'src/common/decorators/current-user.decorator';
@@ -60,6 +60,62 @@ export class ExchangeRateCommandService {
       return { id: entity.id };
     });
   }
+
+  async createMany(
+    dto: ExchangeRateCreateManyDto,
+    currentUser: CurrentUserPayload,
+  ): Promise<{ ids: number[] }> {
+    if (!currentUser?.merchantId) {
+      throw new ForbiddenException('Merchant context required for this action');
+    }
+  
+    return this.transactionService.run(async (manager) => {
+      const merchant = await this.merchantRepository.findOneById(
+        currentUser.merchantId!,
+        manager,
+      );
+  
+      if (!merchant) throw new NotFoundException('Merchant not found');
+  
+      const rateDate = new Date();
+      const ids: number[] = [];
+  
+      for (const item of dto.items) {
+  
+        // ปิดเรทเก่าที่ active อยู่
+        await this.exchangeRateRepository.getRepo(manager).update(
+          {
+            merchant: { id: currentUser.merchantId! },
+            baseCurrency: item.baseCurrency,
+            targetCurrency: item.targetCurrency,
+            rateType: item.rateType,
+            isActive: true,
+          },
+          { isActive: false },
+        );
+  
+        // สร้างเรทใหม่
+        const entity = await this.exchangeRateRepository.create(
+          {
+            merchant,
+            baseCurrency: item.baseCurrency,
+            targetCurrency: item.targetCurrency,
+            rateType: item.rateType,
+            rate: String(item.rate),
+            isActive: true,
+            rateDate,
+            createdByUser: { id: currentUser.userId } as UserOrmEntity,
+          } as Partial<ExchangeRateOrmEntity>,
+          manager,
+        );
+  
+        ids.push(entity.id);
+      }
+  
+      return { ids };
+    });
+  }
+  
 
   async update(id: number, dto: ExchangeRateUpdateDto): Promise<void> {
     await this.transactionService.run(async (manager) => {

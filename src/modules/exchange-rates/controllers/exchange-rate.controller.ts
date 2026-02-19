@@ -10,10 +10,18 @@ import {
   Post,
   Query,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiParam, ApiBearerAuth } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiParam,
+  ApiBearerAuth,
+} from '@nestjs/swagger';
 import { ExchangeRateCommandService } from '../services/exchange-rate-command.service';
 import { ExchangeRateQueryService } from '../services/exchange-rate-query.service';
-import { ExchangeRateCreateDto } from '../dto/exchange-rate-create.dto';
+import {
+  ExchangeRateCreateDto,
+  ExchangeRateCreateManyDto,
+} from '../dto/exchange-rate-create.dto';
 import { ExchangeRateUpdateDto } from '../dto/exchange-rate-update.dto';
 import { ExchangeRateListQueryDto } from '../dto/exchange-rate-list-query.dto';
 import { ExchangeRateResponseDto } from '../dto/exchange-rate-response.dto';
@@ -47,6 +55,20 @@ export class ExchangeRateController {
     @CurrentUser() currentUser: CurrentUserPayload,
   ) {
     return this.commandService.create(dto, currentUser);
+  }
+
+  @Post('/bulk')
+  @ApiOperation({ summary: 'Create multiple exchange rates' })
+  @ApiBearerAuth('BearerAuth')
+  @ApiCreatedResponseBase()
+  @ApiBadRequestBase()
+  @ApiUnauthorizedBase()
+  @ApiNotFoundBase()
+  async createMany(
+    @Body() dto: ExchangeRateCreateManyDto,
+    @CurrentUser() currentUser: CurrentUserPayload,
+  ) {
+    return this.commandService.createMany(dto, currentUser);
   }
 
   @Get()

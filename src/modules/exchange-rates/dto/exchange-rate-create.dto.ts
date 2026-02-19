@@ -3,8 +3,12 @@ import {
   IsIn,
   IsNumber,
   Min,
+  IsArray,
+  ArrayMinSize,
+  ValidateNested,
 } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
 
 const RATE_TYPES = ['BUY', 'SELL'] as const;
 
@@ -25,4 +29,16 @@ export class ExchangeRateCreateDto {
   @IsNumber()
   @Min(0)
   rate: number;
+}
+
+export class ExchangeRateCreateManyDto {
+  @ApiProperty({
+    type: [ExchangeRateCreateDto],
+    description: 'List of exchange rates',
+  })
+  @IsArray()
+  @ArrayMinSize(1)
+  @ValidateNested({ each: true })
+  @Type(() => ExchangeRateCreateDto)
+  items: ExchangeRateCreateDto[];
 }
