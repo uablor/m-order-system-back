@@ -9,8 +9,7 @@ import { TransactionService } from '../common/transaction/transaction.service';
 import { runRoleSeeder, SUPERADMIN_ROLE_NAME } from './seeds/role.seeder';
 import {
   assignAllPermissionsToRole,
-  assignPermissionsToRoleByPrefixes,
-  MERCHANT_PERMISSION_PREFIXES,
+  assignMerchantPermissionsToRole,
 } from './seeds/role-permission.seeder';
 import { runUserSeeder, SUPERADMIN_DEFAULT_PASSWORD, SUPERADMIN_EMAIL } from './seeds/user.seeder';
 import { runPermissionSeeder } from './seeds/permission.seeder';
@@ -58,16 +57,14 @@ async function seed(): Promise<void> {
   );
 
   // 5️⃣ Assign merchant-related permissions
-  await assignPermissionsToRoleByPrefixes(
+  await assignMerchantPermissionsToRole(
     roles.admin_merchant.id,
-    [...MERCHANT_PERMISSION_PREFIXES],
     rolePermissionRepository,
     permissionQueryRepository,
     manager,
   );
-  await assignPermissionsToRoleByPrefixes(
+  await assignMerchantPermissionsToRole(
     roles.employee_merchant.id,
-    [...MERCHANT_PERMISSION_PREFIXES],
     rolePermissionRepository,
     permissionQueryRepository,
     manager,

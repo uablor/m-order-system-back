@@ -45,7 +45,7 @@ export class CustomerController {
   @ApiCreatedResponseBase()
   @ApiBadRequestBase()
   @ApiUnauthorizedBase()
-  async create(@Body() dto: CustomerCreateDto) {
+  async merchantCreate(@Body() dto: CustomerCreateDto) {
     return this.commandService.create(dto);
   }
 
@@ -79,7 +79,7 @@ export class CustomerController {
   @ApiBearerAuth('BearerAuth')
   @ApiOkResponseBase()
   @ApiUnauthorizedBase()
-  async getListByMerchant(@Query() query: CustomerListQueryDto, @CurrentUser() currentUser: CurrentUserPayload) {
+  async merchantGetList(@Query() query: CustomerListQueryDto, @CurrentUser() currentUser: CurrentUserPayload) {
     return this.queryService.getList(query, currentUser);
   }
 
@@ -91,7 +91,7 @@ export class CustomerController {
   @ApiBadRequestBase()
   @ApiNotFoundBase()
   @ApiUnauthorizedBase()
-  async update(
+  async merchantUpdate(
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: CustomerUpdateDto,
   ) {
@@ -104,7 +104,7 @@ export class CustomerController {
   @ApiParam({ name: 'id', description: 'Customer ID' })
   @ApiNotFoundBase()
   @ApiUnauthorizedBase()
-  async delete(@Param('id', ParseIntPipe) id: number) {
+  async adminDelete(@Param('id', ParseIntPipe) id: number) {
     return this.commandService.delete(id);
   }
 }

@@ -41,7 +41,7 @@ export class PermissionController {
   })
   @ApiOkResponseBase()
   @ApiUnauthorizedBase()
-  async generateFromControllers() {
+  async adminGenerateFromControllers() {
     return this.generatorService.generateFromControllers();
   }
 
@@ -51,7 +51,7 @@ export class PermissionController {
   @ApiCreatedResponseBase()
   @ApiBadRequestBase()
   @ApiUnauthorizedBase()
-  async create(@Body() dto: PermissionCreateDto) {
+  async adminCreate(@Body() dto: PermissionCreateDto) {
     return this.commandService.create(dto);
   }
 
@@ -63,7 +63,7 @@ export class PermissionController {
   @ApiNotFoundBase()
   @ApiUnauthorizedBase()
   @NoCache()
-  async getById(@Param('id', ParseIntPipe) id: number) {
+  async adminGetById(@Param('id', ParseIntPipe) id: number) {
     return this.queryService.getById(id);
   }
 
@@ -73,7 +73,7 @@ export class PermissionController {
   @ApiOkResponseBase()
   @ApiUnauthorizedBase()
   @NoCache()
-  async getList(@Query() query: PermissionListQueryDto) {
+  async adminGetList(@Query() query: PermissionListQueryDto) {
     return this.queryService.getList(query);
   }
 
@@ -85,7 +85,7 @@ export class PermissionController {
   @ApiBadRequestBase()
   @ApiNotFoundBase()
   @ApiUnauthorizedBase()
-  async update(@Param('id', ParseIntPipe) id: number, @Body() dto: PermissionUpdateDto) {
+  async adminUpdate(@Param('id', ParseIntPipe) id: number, @Body() dto: PermissionUpdateDto) {
     return this.commandService.update(id, dto);
   }
 
@@ -95,7 +95,7 @@ export class PermissionController {
   @ApiParam({ name: 'id', description: 'Permission ID' })
   @ApiNotFoundBase()
   @ApiUnauthorizedBase()
-  async delete(@Param('id', ParseIntPipe) id: number) {
+  async adminDelete(@Param('id', ParseIntPipe) id: number) {
     return this.commandService.delete(id);
   }
 }

@@ -93,18 +93,61 @@ export async function assignPermissionsToRoleByPrefixes(
   return doAssign(manager);
 }
 
-/** Prefixes for merchant-scoped permissions */
-export const MERCHANT_PERMISSION_PREFIXES = [
-  'orders:',
-  'order-items:',
-  'customer-orders:',
-  'customer-order-items:',
-  'arrivals:',
-  'arrival-items:',
-  'notifications:',
-  'customers:',
-  'merchants:',
-] as const;
+/**
+ * ตรวจว่า permission นี้ merchant role เข้าถึงได้หรือไม่
+ * รูปแบบ permissionCode: "{controllerPath}:{methodName}"
+ * - methodName ขึ้นต้นด้วย "admin" → admin-only (merchant เข้าไม่ได้)
+ * - อื่นๆ (merchant... หรือ shared) → merchant เข้าได้
+ */
+export function isMerchantAccessible(permissionCode: string): boolean {
+  const methodName = permissionCode.split(':')[1] ?? '';
+  return !methodName.startsWith('admin');
+}
+
+/**
+ * Assigns permissions accessible to merchant roles (non-admin methods) to the given role.
+ */
+export async function assignMerchantPermissionsToRole(
+  roleId: number,
+  rolePermissionRepository: RolePermissionRepository,
+  permissionQueryRepository: PermissionQueryRepository,
+  manager: EntityManager,
+): Promise<number> {
+  const doAssign = async (m: EntityManager) => {
+    const allPermissions = await permissionQueryRepository.findMany(
+      { order: { id: 'ASC' } },
+      m,
+    );
+    const toAssign = allPermissions.filter((p) =>
+      isMerchantAccessible(p.permissionCode),
+    );
+
+    if (toAssign.length === 0) {
+      console.log(`No merchant-accessible permissions found for role ${roleId}.`);
+      return 0;
+    }
+
+    let assigned = 0;
+    for (const permission of toAssign) {
+      const exists = await rolePermissionRepository.exists(
+        roleId,
+        permission.id,
+        m,
+      );
+      if (!exists) {
+        await rolePermissionRepository.add(roleId, permission.id, m);
+        assigned++;
+      }
+    }
+
+    console.log(
+      `Assigned ${assigned} merchant-accessible permission(s) to role ${roleId} (${toAssign.length} matched out of ${allPermissions.length} total).`,
+    );
+    return assigned;
+  };
+
+  return doAssign(manager);
+}
 
 /**
  * Legacy: assign all permissions to one role. Use assignAllPermissionsToRole instead.

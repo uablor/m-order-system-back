@@ -39,6 +39,12 @@ export class OrderItemOrmEntity extends BaseOrmEntity {
   @Column({ name: 'purchase_total_lak', type: 'decimal', precision: 18, scale: 2, default: 0 })
   purchaseTotalLak: string;
 
+  @Column({ name: 'shipping_price', type: 'decimal', precision: 18, scale: 4, default: 0, nullable: true })
+  shippingPrice: string | null;
+
+  @Column({ name: 'shipping_lak', type: 'decimal', precision: 18, scale: 2, default: 0 })
+  shippingLak: string;
+
   @Column({ name: 'total_cost_before_discount_lak', type: 'decimal', precision: 18, scale: 2, default: 0 })
   totalCostBeforeDiscountLak: string;
 

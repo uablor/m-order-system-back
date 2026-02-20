@@ -52,7 +52,7 @@ export class ExchangeRateController {
   @ApiBadRequestBase()
   @ApiUnauthorizedBase()
   @ApiNotFoundBase()
-  async create(
+  async merchantCreate(
     @Body() dto: ExchangeRateCreateDto,
     @CurrentUser() currentUser: CurrentUserPayload,
   ) {
@@ -66,7 +66,7 @@ export class ExchangeRateController {
   @ApiBadRequestBase()
   @ApiUnauthorizedBase()
   @ApiNotFoundBase()
-  async createMany(
+  async merchantCreateMany(
     @Body() dto: ExchangeRateCreateManyDto,
     @CurrentUser() currentUser: CurrentUserPayload,
   ) {
@@ -87,7 +87,7 @@ export class ExchangeRateController {
   @ApiBearerAuth('BearerAuth')
   @ApiOkResponseBase()
   @ApiUnauthorizedBase()
-  async getListBy(
+  async merchantGetList(
     @Query() query: ExchangeRateListQueryDto,
     @CurrentUser() currentUser: CurrentUserPayload,
   ) {
@@ -109,7 +109,7 @@ export class ExchangeRateController {
     description: 'Token does not carry a merchant context',
   })
   @ApiUnauthorizedBase()
-  async getTodayRates(@CurrentUser() currentUser: CurrentUserPayload) {
+  async merchantGetTodayRates(@CurrentUser() currentUser: CurrentUserPayload) {
     return this.queryService.getTodayRates(currentUser);
   }
 
@@ -132,7 +132,7 @@ export class ExchangeRateController {
   @ApiBadRequestBase()
   @ApiNotFoundBase()
   @ApiUnauthorizedBase()
-  async update(
+  async adminUpdate(
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: ExchangeRateUpdateDto,
   ) {
@@ -148,7 +148,7 @@ export class ExchangeRateController {
   @ApiBadRequestBase()
   @ApiNotFoundBase()
   @ApiUnauthorizedBase()
-  async updateBy(
+  async merchantUpdate(
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: ExchangeRateUpdateDto,
     @CurrentUser() currentUser: CurrentUserPayload,
@@ -162,7 +162,7 @@ export class ExchangeRateController {
   @ApiParam({ name: 'id', description: 'Exchange rate ID' })
   @ApiNotFoundBase()
   @ApiUnauthorizedBase()
-  async delete(@Param('id', ParseIntPipe) id: number) {
+  async adminDelete(@Param('id', ParseIntPipe) id: number) {
     return this.commandService.delete(id);
   }
 }

@@ -52,6 +52,8 @@ export class OrderItemQueryService {
       purchasePrice: entity.purchasePrice,
       purchaseExchangeRate: entity.purchaseExchangeRate,
       purchaseTotalLak: entity.purchaseTotalLak,
+      shippingPrice: entity.shippingPrice,
+      shippingLak: entity.shippingLak,
       totalCostBeforeDiscountLak: entity.totalCostBeforeDiscountLak,
       discountType: entity.discountType,
       discountValue: entity.discountValue,

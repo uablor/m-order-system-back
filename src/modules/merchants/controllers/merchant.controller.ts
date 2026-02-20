@@ -71,7 +71,7 @@ export class MerchantController {
   @ApiBearerAuth('BearerAuth')
   @ApiOkResponseBase()
   @ApiUnauthorizedBase()
-  async getMerchantDetail(@CurrentUser() currentUser: CurrentUserPayload) {
+  async merchantGetDetail(@CurrentUser() currentUser: CurrentUserPayload) {
     return this.queryService.findMerchantDetail(currentUser.userId);
   }
 

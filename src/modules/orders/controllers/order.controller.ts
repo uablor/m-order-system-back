@@ -31,7 +31,7 @@ export class OrderController {
   @ApiCreatedResponseBase()
   @ApiBadRequestBase()
   @ApiUnauthorizedBase()
-  async createFull(
+  async merchantCreateFull(
     @Body() dto: CreateFullOrderDto,
     @CurrentUser() currentUser: CurrentUserPayload,
   
@@ -45,7 +45,7 @@ export class OrderController {
   @ApiCreatedResponseBase()
   @ApiBadRequestBase()
   @ApiUnauthorizedBase()
-  async create(
+  async merchantCreate(
     @Body() dto: OrderCreateDto,
     @CurrentUser() currentUser?: CurrentUserPayload,
   ) {
@@ -57,8 +57,20 @@ export class OrderController {
   @ApiBearerAuth('BearerAuth')
   @ApiOkResponseBase()
   @ApiUnauthorizedBase()
-  async getList(@Query() query: OrderListQueryDto) {
+  async adminGetList(@Query() query: OrderListQueryDto) {
     return this.orderQueryService.getList(query);
+  }
+
+  @Get('by-merchant')
+  @ApiOperation({ summary: 'List orders for the authenticated merchant (auto-filter by JWT token)' })
+  @ApiBearerAuth('BearerAuth')
+  @ApiOkResponseBase()
+  @ApiUnauthorizedBase()
+  async merchantGetList(
+    @Query() query: OrderListQueryDto,
+    @CurrentUser() currentUser: CurrentUserPayload,
+  ) {
+    return this.orderQueryService.getListByMerchant(query, currentUser);
   }
 
   @Get(':id')
@@ -80,7 +92,7 @@ export class OrderController {
   @ApiBadRequestBase()
   @ApiNotFoundBase()
   @ApiUnauthorizedBase()
-  async update(
+  async merchantUpdate(
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: OrderUpdateDto,
   ) {
@@ -93,7 +105,7 @@ export class OrderController {
   @ApiParam({ name: 'id', description: 'Order ID' })
   @ApiNotFoundBase()
   @ApiUnauthorizedBase()
-  async delete(@Param('id', ParseIntPipe) id: number) {
+  async adminDelete(@Param('id', ParseIntPipe) id: number) {
     return this.orderCommandService.delete(id);
   }
 }

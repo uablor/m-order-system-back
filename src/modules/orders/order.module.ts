@@ -24,6 +24,7 @@ import { CustomerOrderItemController } from './controllers/customer-order-item.c
 import { TransactionService } from '../../common/transaction/transaction.service';
 import { MerchantModule } from '../merchants/merchant.module';
 import { CustomerModule } from '../customers/customer.module';
+import { ExchangeRateModule } from '../exchange-rates/exchange-rate.module';
 
 @Module({
   imports: [
@@ -35,6 +36,7 @@ import { CustomerModule } from '../customers/customer.module';
     ]),
     MerchantModule,
     CustomerModule,
+    ExchangeRateModule,
   ],
   controllers: [
     OrderController,

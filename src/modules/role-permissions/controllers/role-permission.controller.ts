@@ -40,7 +40,7 @@ export class RolePermissionController {
   @ApiBadRequestBase()
   @ApiUnauthorizedBase()
   @ApiNotFoundBase()
-  async assign(@Body() dto: AssignPermissionDto) {
+  async adminAssign(@Body() dto: AssignPermissionDto) {
     await this.commandService.assign(dto.roleId, dto.permissionId);
     return { success: true };
   }
@@ -52,7 +52,7 @@ export class RolePermissionController {
   @ApiParam({ name: 'permissionId', description: 'Permission ID' })
   @ApiNotFoundBase()
   @ApiUnauthorizedBase()
-  async unassign(
+  async adminUnassign(
     @Param('roleId', ParseIntPipe) roleId: number,
     @Param('permissionId', ParseIntPipe) permissionId: number,
   ) {
@@ -65,7 +65,7 @@ export class RolePermissionController {
   @ApiParam({ name: 'roleId', description: 'Role ID' })
   @ApiOkResponseBase()
   @ApiUnauthorizedBase()
-  async getByRoleId(@Param('roleId', ParseIntPipe) roleId: number) {
+  async adminGetByRoleId(@Param('roleId', ParseIntPipe) roleId: number) {
     return this.queryService.getPermissionsByRoleId(roleId);
   }
 }

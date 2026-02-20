@@ -63,7 +63,7 @@ export class RoleController {
   @ApiCreatedResponseBase()
   @ApiBadRequestBase()
   @ApiUnauthorizedBase()
-  async create(@Body() dto: RoleCreateDto) {
+  async adminCreate(@Body() dto: RoleCreateDto) {
     return this.commandService.create(dto);
   }
 
@@ -75,7 +75,7 @@ export class RoleController {
   @ApiNotFoundBase()
   @ApiUnauthorizedBase()
   @NoCache()
-  async getById(@Param('id', ParseIntPipe) id: number) {
+  async adminGetById(@Param('id', ParseIntPipe) id: number) {
     return this.queryService.getById(id);
   }
 
@@ -85,7 +85,7 @@ export class RoleController {
   @ApiOkResponseBase()
   @ApiUnauthorizedBase()
   @NoCache()
-  async getList(@Query() query: RoleListQueryDto) {
+  async adminGetList(@Query() query: RoleListQueryDto) {
     return this.queryService.getList(query);
   }
 
@@ -97,7 +97,7 @@ export class RoleController {
   @ApiBadRequestBase()
   @ApiNotFoundBase()
   @ApiUnauthorizedBase()
-  async update(
+  async adminUpdate(
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: RoleUpdateDto,
   ) {
@@ -110,7 +110,7 @@ export class RoleController {
   @ApiParam({ name: 'id', description: 'Role ID' })
   @ApiNotFoundBase()
   @ApiUnauthorizedBase()
-  async delete(@Param('id', ParseIntPipe) id: number) {
+  async adminDelete(@Param('id', ParseIntPipe) id: number) {
     return this.commandService.delete(id);
   }
 }

@@ -67,7 +67,7 @@ export class UserController {
   @ApiUnauthorizedBase()
   @ApiForbiddenBase()
   @ApiBearerAuth('BearerAuth')
-  async create(@Body() dto: UserCreateDto) {
+  async adminCreate(@Body() dto: UserCreateDto) {
     return this.commandService.create(dto);
   }
 
@@ -79,7 +79,7 @@ export class UserController {
   @ApiUnauthorizedBase()
   @ApiForbiddenBase()
   @ApiBearerAuth('BearerAuth')
-  async createUserWithMerchant(@Body() dto: UserMerchantCreateDto) {
+  async adminCreateWithMerchant(@Body() dto: UserMerchantCreateDto) {
     return this.commandService.createUserWithMerchant(dto);
   }
 
@@ -91,7 +91,7 @@ export class UserController {
   @ApiNotFoundBase()
   @ApiUnauthorizedBase()
   @ApiForbiddenBase()
-  async ChangePassword(
+  async changePassword(
     @Body() dto: ChangePasswordDto,
     @CurrentUser() currentUser: CurrentUserPayload,
   ) {
@@ -122,7 +122,7 @@ export class UserController {
   @ApiForbiddenBase()
   @ApiNotFoundBase()
   @ApiBearerAuth('BearerAuth')
-  async getListBy(
+  async merchantGetList(
     @Query() query: UserListQueryDto,
     @CurrentUser() currentUser: CurrentUserPayload,
   ) {
@@ -152,7 +152,7 @@ export class UserController {
   @ApiNotFoundBase()
   @ApiUnauthorizedBase()
   @ApiForbiddenBase()
-  async update(
+  async adminUpdate(
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: UserUpdateDto,
   ) {
@@ -168,7 +168,7 @@ export class UserController {
   @ApiNotFoundBase()
   @ApiUnauthorizedBase()
   @ApiForbiddenBase()
-  async AdminchangePassword(
+  async adminChangePassword(
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: ChangePasswordDto,
   ) {
@@ -183,7 +183,7 @@ export class UserController {
   @ApiNotFoundBase()
   @ApiUnauthorizedBase()
   @ApiForbiddenBase()
-  async delete(@Param('id', ParseIntPipe) id: number) {
+  async adminDelete(@Param('id', ParseIntPipe) id: number) {
     return this.commandService.delete(id);
   }
 
@@ -196,7 +196,7 @@ export class UserController {
   @ApiNotFoundBase()
   @ApiUnauthorizedBase()
   @ApiForbiddenBase()
-  async updateActive(
+  async adminUpdateActive(
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: AcitveDto,
   ) {

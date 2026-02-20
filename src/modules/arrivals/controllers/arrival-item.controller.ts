@@ -25,7 +25,7 @@ export class ArrivalItemController {
   @ApiBearerAuth('BearerAuth')
   @ApiOkResponseBase()
   @ApiUnauthorizedBase()
-  async getList(@Query() query: ArrivalItemListQueryDto) {
+  async merchantGetList(@Query() query: ArrivalItemListQueryDto) {
     return this.arrivalItemQueryService.getList(query);
   }
 
@@ -48,7 +48,7 @@ export class ArrivalItemController {
   @ApiBadRequestBase()
   @ApiNotFoundBase()
   @ApiUnauthorizedBase()
-  async update(
+  async merchantUpdate(
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: ArrivalItemUpdateDto,
   ) {
@@ -61,7 +61,7 @@ export class ArrivalItemController {
   @ApiParam({ name: 'id', description: 'Arrival item ID' })
   @ApiNotFoundBase()
   @ApiUnauthorizedBase()
-  async delete(@Param('id', ParseIntPipe) id: number) {
+  async adminDelete(@Param('id', ParseIntPipe) id: number) {
     return this.arrivalItemCommandService.delete(id);
   }
 }

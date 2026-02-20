@@ -25,7 +25,7 @@ export class NotificationController {
   @ApiBearerAuth('BearerAuth')
   @ApiOkResponseBase()
   @ApiUnauthorizedBase()
-  async getList(@Query() query: NotificationListQueryDto) {
+  async merchantGetList(@Query() query: NotificationListQueryDto) {
     return this.notificationQueryService.getList(query);
   }
 
@@ -48,7 +48,7 @@ export class NotificationController {
   @ApiBadRequestBase()
   @ApiNotFoundBase()
   @ApiUnauthorizedBase()
-  async update(
+  async merchantUpdate(
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: NotificationUpdateDto,
   ) {
@@ -61,7 +61,7 @@ export class NotificationController {
   @ApiParam({ name: 'id', description: 'Notification ID' })
   @ApiNotFoundBase()
   @ApiUnauthorizedBase()
-  async delete(@Param('id', ParseIntPipe) id: number) {
+  async adminDelete(@Param('id', ParseIntPipe) id: number) {
     return this.notificationCommandService.delete(id);
   }
 }

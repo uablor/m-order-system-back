@@ -46,6 +46,26 @@ export class ArrivalQueryService {
       limit: query.limit,
       merchantId: query.merchantId,
       orderId: query.orderId,
+      startDate: query.startDate,
+      endDate: query.endDate,
+    });
+    return createPaginatedResponse(
+      result.results.map((e) => this.toResponse(e)),
+      result.pagination,
+    );
+  }
+
+  async getListByMerchant(
+    query: ArrivalListQueryDto,
+    currentUser: import('../../../common/decorators/current-user.decorator').CurrentUserPayload,
+  ): Promise<ResponseWithPaginationInterface<ArrivalResponseDto>> {
+    const result = await this.arrivalQueryRepository.findWithPagination({
+      page: query.page,
+      limit: query.limit,
+      merchantId: currentUser.merchantId!,
+      orderId: query.orderId,
+      startDate: query.startDate,
+      endDate: query.endDate,
     });
     return createPaginatedResponse(
       result.results.map((e) => this.toResponse(e)),

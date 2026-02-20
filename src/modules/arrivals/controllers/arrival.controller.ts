@@ -31,7 +31,7 @@ export class ArrivalController {
   @ApiBadRequestBase()
   @ApiUnauthorizedBase()
   @ApiNotFoundBase()
-  async create(
+  async merchantCreate(
     @Body() dto: CreateArrivalDto,
     @CurrentUser() currentUser: CurrentUserPayload,
   ) {
@@ -43,8 +43,20 @@ export class ArrivalController {
   @ApiBearerAuth('BearerAuth')
   @ApiOkResponseBase()
   @ApiUnauthorizedBase()
-  async getList(@Query() query: ArrivalListQueryDto) {
+  async adminGetList(@Query() query: ArrivalListQueryDto) {
     return this.arrivalQueryService.getList(query);
+  }
+
+  @Get('by-merchant')
+  @ApiOperation({ summary: 'List arrivals for the authenticated merchant (auto-filter by JWT token)' })
+  @ApiBearerAuth('BearerAuth')
+  @ApiOkResponseBase()
+  @ApiUnauthorizedBase()
+  async merchantGetList(
+    @Query() query: ArrivalListQueryDto,
+    @CurrentUser() currentUser: CurrentUserPayload,
+  ) {
+    return this.arrivalQueryService.getListByMerchant(query, currentUser);
   }
 
   @Get(':id')
@@ -66,7 +78,7 @@ export class ArrivalController {
   @ApiBadRequestBase()
   @ApiNotFoundBase()
   @ApiUnauthorizedBase()
-  async update(
+  async merchantUpdate(
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: ArrivalUpdateDto,
   ) {
@@ -79,7 +91,7 @@ export class ArrivalController {
   @ApiParam({ name: 'id', description: 'Arrival ID' })
   @ApiNotFoundBase()
   @ApiUnauthorizedBase()
-  async delete(@Param('id', ParseIntPipe) id: number) {
+  async adminDelete(@Param('id', ParseIntPipe) id: number) {
     return this.arrivalCommandService.delete(id);
   }
 }

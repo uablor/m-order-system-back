@@ -17,6 +17,7 @@ import { CustomerModule } from './modules/customers/customer.module';
 import { OrderModule } from './modules/orders/order.module';
 import { ArrivalModule } from './modules/arrivals/arrival.module';
 import { ExchangeRateModule } from './modules/exchange-rates/exchange-rate.module';
+import { DashboardModule } from './modules/dashboard/dashboard.module';
 import { LoggerModule } from './common/logger/logger.module';
 import { JwtAuthGuard } from './modules/auth/guards/jwt-auth.guard';
 import { AllExceptionsFilter } from './common/filters/http-exception.filter';
@@ -97,6 +98,7 @@ import { AllExceptionsFilter } from './common/filters/http-exception.filter';
     OrderModule,
     ArrivalModule,
     ExchangeRateModule,
+    DashboardModule,
   ],
   providers: [
     {

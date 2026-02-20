@@ -51,6 +51,29 @@ export class OrderQueryService {
       page: query.page,
       limit: query.limit,
       merchantId: query.merchantId,
+      customerId: query.customerId,
+      customerName: query.customerName,
+      startDate: query.startDate,
+      endDate: query.endDate,
+    });
+    return createPaginatedResponse(
+      result.results.map((e) => this.toResponse(e)),
+      result.pagination,
+    );
+  }
+
+  async getListByMerchant(
+    query: OrderListQueryDto,
+    currentUser: import('../../../common/decorators/current-user.decorator').CurrentUserPayload,
+  ): Promise<ResponseWithPaginationInterface<OrderResponseDto>> {
+    const result = await this.orderQueryRepository.findWithPagination({
+      page: query.page,
+      limit: query.limit,
+      merchantId: currentUser.merchantId!,
+      customerId: query.customerId,
+      customerName: query.customerName,
+      startDate: query.startDate,
+      endDate: query.endDate,
     });
     return createPaginatedResponse(
       result.results.map((e) => this.toResponse(e)),
@@ -103,6 +126,8 @@ export class OrderQueryService {
         purchasePrice: item.purchasePrice,
         purchaseExchangeRate: item.purchaseExchangeRate,
         purchaseTotalLak: item.purchaseTotalLak,
+        shippingPrice: item.shippingPrice,
+        shippingLak: item.shippingLak,
         totalCostBeforeDiscountLak: item.totalCostBeforeDiscountLak,
         discountType: item.discountType,
         discountValue: item.discountValue,

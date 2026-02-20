@@ -31,6 +31,12 @@ export class OrderItemResponseDto {
   @ApiProperty()
   purchaseTotalLak: string;
 
+  @ApiPropertyOptional({ nullable: true })
+  shippingPrice: string | null;
+
+  @ApiProperty()
+  shippingLak: string;
+
   @ApiProperty()
   totalCostBeforeDiscountLak: string;
 
