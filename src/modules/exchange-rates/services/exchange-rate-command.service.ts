@@ -31,10 +31,12 @@ export class ExchangeRateCommandService {
     dto: ExchangeRateCreateDto,
     currentUser: CurrentUserPayload,
   ): Promise<{ id: number }> {
+    console.log('profile user', currentUser);
     if (!currentUser?.merchantId) {
       throw new ForbiddenException('Merchant context required for this action');
     }
     return this.transactionService.run(async (manager) => {
+      console.log('profile user', currentUser);
       const merchant = await this.merchantRepository.findOneById(
         currentUser.merchantId!,
         manager,

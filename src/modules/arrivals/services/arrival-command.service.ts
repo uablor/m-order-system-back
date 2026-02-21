@@ -6,52 +6,17 @@ import {
 import { TransactionService } from '../../../common/transaction/transaction.service';
 import { ArrivalRepository } from '../repositories/arrival.repository';
 import { ArrivalItemRepository } from '../repositories/arrival-item.repository';
-import { NotificationRepository } from '../repositories/notification.repository';
 import { OrderRepository } from '../../orders/repositories/order.repository';
 import { OrderItemRepository } from '../../orders/repositories/order-item.repository';
 import { MerchantRepository } from '../../merchants/repositories/merchant.repository';
+import { NotificationSendService } from '../../notifications/services/notification-send.service';
 import { CreateArrivalDto } from '../dto/create-arrival.dto';
 import { ArrivalUpdateDto } from '../dto/arrival-update.dto';
 import { ArrivalOrmEntity } from '../entities/arrival.orm-entity';
 import { ArrivalItemOrmEntity } from '../entities/arrival-item.orm-entity';
-import { NotificationOrmEntity } from '../entities/notification.orm-entity';
 import { OrderItemOrmEntity } from '../../orders/entities/order-item.orm-entity';
-import type { PreferredContactMethod } from '../../customers/entities/customer.orm-entity';
 import { CurrentUserPayload } from 'src/common/decorators/current-user.decorator';
 import { formatTime } from 'src/common/utils/dayjs.util';
-
-type NotificationChannel = 'FB' | 'LINE' | 'WHATSAPP';
-
-function preferredToChannel(
-  pref: PreferredContactMethod | null,
-): NotificationChannel | null {
-  if (!pref) return null;
-  if (pref === 'FACEBOOK') return 'FB';
-  if (pref === 'LINE') return 'LINE';
-  if (pref === 'WHATSAPP') return 'WHATSAPP';
-  return null; // PHONE - no channel
-}
-
-function getRecipientContact(
-  customer: {
-    contactFacebook?: string | null;
-    contactLine?: string | null;
-    contactWhatsapp?: string | null;
-    preferredContactMethod?: PreferredContactMethod | null;
-  },
-  channel: NotificationChannel,
-): string {
-  switch (channel) {
-    case 'FB':
-      return customer.contactFacebook ?? '';
-    case 'LINE':
-      return customer.contactLine ?? '';
-    case 'WHATSAPP':
-      return customer.contactWhatsapp ?? '';
-    default:
-      return '';
-  }
-}
 
 @Injectable()
 export class ArrivalCommandService {
@@ -59,10 +24,10 @@ export class ArrivalCommandService {
     private readonly transactionService: TransactionService,
     private readonly arrivalRepository: ArrivalRepository,
     private readonly arrivalItemRepository: ArrivalItemRepository,
-    private readonly notificationRepository: NotificationRepository,
     private readonly orderRepository: OrderRepository,
     private readonly orderItemRepository: OrderItemRepository,
     private readonly merchantRepository: MerchantRepository,
+    private readonly notificationSendService: NotificationSendService,
   ) {}
 
   async create(
@@ -165,84 +130,45 @@ export class ArrivalCommandService {
         );
       }
 
-      // 3) Build message with optional DAMAGED/LOST note
+      // 3) Build message and get distinct customers
       const arrivedDateStr = arrivedDate.toISOString().slice(0, 10);
       let messageContent = `Your order ${order.orderCode} has arrived on ${arrivedDateStr}.`;
       if (damagedOrLost.length > 0) {
         messageContent += ` Note: ${damagedOrLost.join('; ')}.`;
       }
-      const notificationLink = `/orders/${order.id}`;
+      const notificationLinkPath = `/orders/${order.id}`;
 
-      // 4) Get distinct customers from order's customer_orders and create notifications
       const customerOrders = order.customerOrders ?? [];
       const seenCustomerIds = new Set<number>();
-      const notifications: NotificationOrmEntity[] = [];
-
+      const customers: Array<{
+        id: number;
+        contactFacebook?: string | null;
+        contactLine?: string | null;
+        contactWhatsapp?: string | null;
+        preferredContactMethod?: 'PHONE' | 'FACEBOOK' | 'WHATSAPP' | 'LINE' | null;
+      }> = [];
       for (const co of customerOrders) {
         const customer = co.customer;
         if (!customer || seenCustomerIds.has(customer.id)) continue;
         seenCustomerIds.add(customer.id);
-
-        const channel = preferredToChannel(
-          customer.preferredContactMethod ?? null,
-        );
-        const recipientContact = channel
-          ? getRecipientContact(customer, channel)
-          : '';
-
-        let status: 'SENT' | 'FAILED' = 'SENT';
-        let errorMessage: string | null = null;
-        let sentAt: Date | null = new Date();
-
-        if (!channel || !recipientContact) {
-          status = 'FAILED';
-          errorMessage = 'No contact channel or recipient contact available';
-          sentAt = null;
-        }
-
-        try {
-          const notification = await this.notificationRepository.create(
-            {
-              merchant,
-              customer,
-              notificationType: 'ARRIVAL',
-              channel: channel ?? 'FB',
-              recipientContact: recipientContact || 'N/A',
-              messageContent,
-              notificationLink,
-              retryCount: 0,
-              lastRetryAt: null,
-              status,
-              sentAt,
-              errorMessage,
-              relatedOrders: [order.id],
-            } as Partial<NotificationOrmEntity>,
-            manager,
-          );
-          notifications.push(notification);
-        } catch (err) {
-          const errMsg = err instanceof Error ? err.message : 'Unknown error';
-          const failedNotification = await this.notificationRepository.create(
-            {
-              merchant,
-              customer,
-              notificationType: 'ARRIVAL',
-              channel: channel ?? 'FB',
-              recipientContact: recipientContact || 'N/A',
-              messageContent,
-              notificationLink,
-              retryCount: 0,
-              lastRetryAt: null,
-              status: 'FAILED',
-              sentAt: null,
-              errorMessage: errMsg,
-              relatedOrders: [order.id],
-            } as Partial<NotificationOrmEntity>,
-            manager,
-          );
-          notifications.push(failedNotification);
-        }
+        customers.push({
+          id: customer.id,
+          contactFacebook: customer.contactFacebook,
+          contactLine: customer.contactLine,
+          contactWhatsapp: customer.contactWhatsapp,
+          preferredContactMethod: customer.preferredContactMethod,
+        });
       }
+
+      // 4) Create and send notifications via notification module
+      const notifications =
+        await this.notificationSendService.sendArrivalNotifications(manager, {
+          merchant,
+          orderId: order.id,
+          customers,
+          messageContent,
+          notificationLinkPath,
+        });
 
       // 5) Update order arrival_status and arrived_at, notified_at
       await this.orderRepository.update(
