@@ -1,23 +1,9 @@
-import { IsOptional, IsInt, Min, Max } from 'class-validator';
+import { IsOptional, IsInt, Min, Max, IsString } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiPropertyOptional } from '@nestjs/swagger';
+import { BaseQueryDto } from 'src/common/base/dtos/base.query.dto';
 
-export class CustomerOrderListQueryDto {
-  @ApiPropertyOptional({ default: 1, minimum: 1 })
-  @IsOptional()
-  @Type(() => Number)
-  @IsInt()
-  @Min(1)
-  page?: number = 1;
-
-  @ApiPropertyOptional({ default: 10, minimum: 1, maximum: 100 })
-  @IsOptional()
-  @Type(() => Number)
-  @IsInt()
-  @Min(1)
-  @Max(100)
-  limit?: number = 10;
-
+export class CustomerOrderListQueryDto extends BaseQueryDto {
   @ApiPropertyOptional({ description: 'Filter by order ID' })
   @IsOptional()
   @Type(() => Number)
@@ -29,4 +15,24 @@ export class CustomerOrderListQueryDto {
   @Type(() => Number)
   @IsInt()
   customerId?: number;
+
+  @ApiPropertyOptional({ description: 'Filter by customer name (partial match)' })
+  @IsOptional()
+  @IsString()
+  customerName?: string;
+
+  @ApiPropertyOptional({ description: 'Filter by customer unique token' })
+  @IsOptional()
+  @IsString()
+  customerToken?: string;
+
+  @ApiPropertyOptional({ description: 'Start date filter (YYYY-MM-DD)', example: '2025-01-01' })
+  @IsOptional()
+  @IsString()
+  startDate?: string;
+
+  @ApiPropertyOptional({ description: 'End date filter (YYYY-MM-DD)', example: '2025-12-31' })
+  @IsOptional()
+  @IsString()
+  endDate?: string;
 }

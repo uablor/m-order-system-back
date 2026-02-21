@@ -20,6 +20,7 @@ import { ArrivalModule } from './modules/arrivals/arrival.module';
 import { NotificationModule } from './modules/notifications/notification.module';
 import { ExchangeRateModule } from './modules/exchange-rates/exchange-rate.module';
 import { DashboardModule } from './modules/dashboard/dashboard.module';
+import { PaymentModule } from './modules/payments/payment.module';
 import { LoggerModule } from './common/logger/logger.module';
 import { JwtAuthGuard } from './modules/auth/guards/jwt-auth.guard';
 import { AllExceptionsFilter } from './common/filters/http-exception.filter';
@@ -102,6 +103,7 @@ import { AllExceptionsFilter } from './common/filters/http-exception.filter';
     NotificationModule,
     ExchangeRateModule,
     DashboardModule,
+    PaymentModule,
   ],
   providers: [
     {

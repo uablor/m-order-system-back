@@ -11,7 +11,7 @@ export class CustomerOrderController {
   constructor(private readonly customerOrderQueryService: CustomerOrderQueryService) {}
 
   @Get()
-  @ApiOperation({ summary: 'List customer orders with pagination (optional orderId, customerId filter)' })
+  @ApiOperation({ summary: 'List customer orders with pagination and token authentication' })
   @ApiBearerAuth('BearerAuth')
   @ApiOkResponseBase()
   @ApiUnauthorizedBase()
@@ -28,5 +28,20 @@ export class CustomerOrderController {
   @ApiUnauthorizedBase()
   async getById(@Param('id', ParseIntPipe) id: number) {
     return this.customerOrderQueryService.getByIdOrFail(id);
+  }
+
+  @Get('by-token/:token')
+  @ApiOperation({ summary: 'Get customer orders by customer token' })
+  @ApiBearerAuth('BearerAuth')
+  @ApiParam({ name: 'token', description: 'Customer unique token' })
+  @ApiOkResponseBase()
+  @ApiUnauthorizedBase()
+  async getByToken(
+    @Param('token') token: string,
+    @Query() query: CustomerOrderListQueryDto,
+  ) {
+    // Override customerToken in query with the token from URL
+    const queryWithToken = { ...query, customerToken: token };
+    return this.customerOrderQueryService.getList(queryWithToken);
   }
 }

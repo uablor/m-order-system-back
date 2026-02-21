@@ -34,6 +34,10 @@ export class CustomerOrderQueryService {
       limit: query.limit,
       orderId: query.orderId,
       customerId: query.customerId,
+      customerToken: query.customerToken,
+      customerName: query.customerName,
+      startDate: query.startDate,
+      endDate: query.endDate,
     });
     return createPaginatedResponse(
       result.results.map((e) => this.toResponse(e)),
@@ -46,10 +50,21 @@ export class CustomerOrderQueryService {
       id: entity.id,
       orderId: entity.order?.id ?? 0,
       customerId: entity.customer?.id ?? 0,
+      customerName: entity.customer?.contactLine || '',
+      customerToken: entity.customer?.uniqueToken || '',
       totalSellingAmountLak: entity.totalSellingAmountLak,
       totalPaid: entity.totalPaid,
       remainingAmount: entity.remainingAmount,
       paymentStatus: entity.paymentStatus,
+      customerOrderItems: entity.customerOrderItems?.map(item => ({
+        id: item.id,
+        orderId: item.orderItem?.id ?? 0,
+        productName: item.orderItem?.productName || '',
+        quantity: item.quantity,
+        sellingPriceForeign: item.sellingPriceForeign,
+        sellingTotalLak: item.sellingTotalLak,
+        profitLak: item.profitLak,
+      })) || [],
       createdAt: entity.createdAt,
       updatedAt: entity.updatedAt,
     };
