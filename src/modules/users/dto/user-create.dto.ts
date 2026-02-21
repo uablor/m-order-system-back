@@ -18,10 +18,6 @@ export class UserCreateDto {
   @MaxLength(200)
   fullName: string;
 
-  @ApiProperty({ example: 1 })
-  @IsNumber()
-  roleId: number;
-
   @ApiPropertyOptional({ default: true })
   @IsOptional()
   @IsBoolean()

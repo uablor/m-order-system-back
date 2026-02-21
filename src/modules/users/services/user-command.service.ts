@@ -35,7 +35,7 @@ export class UserCommandService {
     private readonly roleRepository: RoleRepository,
     private readonly merchantRepository: MerchantRepository,
     private readonly transactionService: TransactionService,
-  ) {}
+  ) { }
 
   async create(
     dto: UserCreateDto,
@@ -49,45 +49,35 @@ export class UserCommandService {
       if (existing) {
         throw new ConflictException('User with this email already exists');
       }
-      const role = await this.roleRepository.findOneById(
-        Number(dto.roleId),
+
+      const passwordHash = await hashPassword(dto.password);
+      const roleName = auth?.merchantId
+        ? EMPLOYEE_MERCHANT_ROLE_NAME
+        : ADMIN_ROLE_NAME;
+      const role = await this.roleRepository.findOneBy(
+        { roleName },
         manager,
       );
-      
       if (!role) {
         throw new NotFoundException('Role not found');
       }
-      const passwordHash = await hashPassword(dto.password);
-      let entity: UserOrmEntity;
-      if (auth?.merchantId) {
-        entity = await this.userRepository.create(
-          {
-            email: dto.email,
-            passwordHash,
-            fullName: dto.fullName,
-            merchantId: auth.merchantId,
-            roleId: role.id,
-            role: role,
-            isActive: dto.isActive ?? true,
-          } as Partial<UserOrmEntity>,
-          manager,
-        );
-      } else {
-        entity = await this.userRepository.create(
-          {
-            email: dto.email,
-            passwordHash,
-            fullName: dto.fullName,
-            roleId: role.id,
-            role: role,
-            isActive: dto.isActive ?? true,
-          } as Partial<UserOrmEntity>,
-          manager,
-        );
-      }
+
+      const entity = await this.userRepository.create(
+        {
+          email: dto.email,
+          passwordHash,
+          fullName: dto.fullName,
+          roleId: role.id,
+          role,
+          isActive: dto.isActive ?? true,
+          ...(auth?.merchantId && { merchantId: auth.merchantId }),
+        } as Partial<UserOrmEntity>,
+        manager,
+      );
 
       return { id: entity.id };
-  })}
+    })
+  }
 
   async createUserWithMerchant(
     dto: UserMerchantCreateDto,
