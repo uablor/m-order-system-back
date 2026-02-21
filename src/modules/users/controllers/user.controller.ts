@@ -22,6 +22,7 @@ import { UserCommandService } from '../services/user-command.service';
 import { UserQueryService } from '../services/user-query.service';
 import { UserCreateDto } from '../dto/user-create.dto';
 import { UserUpdateDto } from '../dto/user-update.dto';
+import { ProfileUpdateDto } from '../dto/profile-update.dto';
 import { UserMerchantCreateDto } from '../dto/user-merchant-create.dto';
 import { UserListQueryDto } from '../dto/user-list-query.dto';
 import { UserResponseDto } from '../dto/user-response.dto';
@@ -130,7 +131,7 @@ export class UserController {
   }
 
   @Patch('profile')
-  @ApiOperation({ summary: 'Update user profile' })
+  @ApiOperation({ summary: 'Update own profile (email, fullName only)' })
   @ApiBearerAuth('BearerAuth')
   @ApiOkResponseBase()
   @ApiBadRequestBase()
@@ -138,10 +139,10 @@ export class UserController {
   @ApiUnauthorizedBase()
   @ApiForbiddenBase()
   async updateProfile(
-    @Body() dto: UserUpdateDto,
+    @Body() dto: ProfileUpdateDto,
     @CurrentUser() currentUser: CurrentUserPayload,
   ) {
-    return this.commandService.update(currentUser.userId!, dto);
+    return this.commandService.update(currentUser.userId!, dto as any);
   }
   @Patch(':id')
   @ApiOperation({ summary: 'Update user by admin' })

@@ -9,11 +9,12 @@
 | กลุ่ม (Module) | จำนวน Endpoint | หมายเหตุ |
 |----------------|----------------|----------|
 | Auth | 2 | ล็อกอิน + ดึงโปรไฟล์ |
+| Dashboard | 4 | สรุปภาพรวม Admin + Merchant |
 | Users | 11 | จัดการผู้ใช้ + สร้าง user-merchant |
 | Roles | 5 | จัดการบทบาท (ใช้กับ Super Admin) |
 | Permissions | 6 | จัดการสิทธิ์ (รวม generate) |
 | Role-Permissions | 3 | ผูกสิทธิ์กับบทบาท |
-| Merchants | 7 | จัดการร้านค้า |
+| Merchants | 8 | จัดการร้านค้า (รวม detail endpoint) |
 | Customers | 6 | จัดการลูกค้า |
 | Exchange Rates | 10 | อัตราแลกเปลี่ยน |
 | Orders | 6 | คำสั่งซื้อ |
@@ -24,7 +25,7 @@
 | Arrival Items | 5 | รายการการมาถึง |
 | Notifications | 4 | การแจ้งเตือน |
 | App (root) | 1 | ตรวจสอบว่า server ทำงาน |
-| **รวม** | **77** | |
+| **รวม** | **82** | |
 
 ---
 
@@ -38,7 +39,13 @@ Super Admin ใช้ API เหล่านี้เพื่อจัดกา
 | POST | `/auth/login` | ล็อกอินด้วยอีเมล/รหัสผ่าน (Public) |
 | GET | `/auth/me` | ดึงข้อมูลผู้ใช้ที่ล็อกอินอยู่ (Bearer token) |
 
-### 2. Users — `/users`
+### 2. Dashboard (ส่วนของ Admin) — `/dashboard`
+| Method | Path | การทำงาน |
+|--------|------|-----------|
+| GET | `/dashboard/admin` | สรุปภาพรวมทั้งระบบ (ทุก merchant) เช่น ยอดรวมออเดอร์, สถานะการมาถึง, สถานะการชำระเงิน |
+| GET | `/dashboard/admin/annual-report` | รายงานรายปีทั้งระบบ (เลือกปีจาก query: year) |
+
+### 3. Users — `/users`
 | Method | Path | การทำงาน | หมายเหตุ |
 |--------|------|-----------|----------|
 | POST | `/users` | สร้างผู้ใช้ใหม่ | Super Admin |
@@ -50,7 +57,7 @@ Super Admin ใช้ API เหล่านี้เพื่อจัดกา
 | PATCH | `/users/:id/change-password-by-id` | เปลี่ยนรหัสผ่านผู้ใช้ตาม ID | Super Admin |
 | DELETE | `/users/:id` | ลบผู้ใช้ | Super Admin |
 
-### 3. Roles — `/roles`
+### 4. Roles — `/roles`
 ใช้กับ Super Admin เท่านั้น (มี `@UseGuards(RolesGuard)` และ `@Roles(ADMIN_ROLE)` บาง route)
 
 | Method | Path | การทำงาน |
@@ -61,7 +68,7 @@ Super Admin ใช้ API เหล่านี้เพื่อจัดกา
 | PATCH | `/roles/:id` | แก้ไขบทบาท |
 | DELETE | `/roles/:id` | ลบบทบาท |
 
-### 4. Permissions — `/permissions`
+### 5. Permissions — `/permissions`
 | Method | Path | การทำงาน |
 |--------|------|-----------|
 | POST | `/permissions/generate` | สร้าง permission จากชื่อ controller/method (ADMIN only) |
@@ -71,22 +78,23 @@ Super Admin ใช้ API เหล่านี้เพื่อจัดกา
 | PATCH | `/permissions/:id` | แก้ไขสิทธิ์ |
 | DELETE | `/permissions/:id` | ลบสิทธิ์ |
 
-### 5. Role-Permissions — `/role-permissions`
+### 6. Role-Permissions — `/role-permissions`
 | Method | Path | การทำงาน |
 |--------|------|-----------|
 | POST | `/role-permissions/assign` | ผูกสิทธิ์ให้บทบาท (ADMIN only) |
 | DELETE | `/role-permissions/:roleId/:permissionId` | ยกเลิกการผูกสิทธิ์จากบทบาท |
 | GET | `/role-permissions/role/:roleId` | รายการสิทธิ์ของบทบาทตาม roleId |
 
-### 6. Merchants (ส่วนที่ Super Admin ใช้) — `/merchants`
+### 7. Merchants (ส่วนที่ Super Admin ใช้) — `/merchants`
 | Method | Path | การทำงาน |
 |--------|------|-----------|
 | GET | `/merchants` | รายการร้านค้าทั้งหมดแบบแบ่งหน้า |
-| GET | `/merchants/:id` | ดึงร้านค้าตาม ID |
+| GET | `/merchants/:id` | ดึงร้านค้าตาม ID (ข้อมูลร้านค้าเบื้องต้น) |
+| GET | `/merchants/:id/detail` | ดึงรายละเอียดร้านค้าแบบเต็ม (join users + customers + summary) |
 | PATCH | `/merchants/:id` | แก้ไขร้านค้าตาม ID |
 | DELETE | `/merchants/:id` | ลบร้านค้า |
 
-### 7. Customers (ส่วนที่ Super Admin ใช้) — `/customers`
+### 8. Customers (ส่วนที่ Super Admin ใช้) — `/customers`
 | Method | Path | การทำงาน |
 |--------|------|-----------|
 | GET | `/customers` | รายการลูกค้าทั้งหมด (เลือก filter ตาม merchantId ได้) |
@@ -94,7 +102,7 @@ Super Admin ใช้ API เหล่านี้เพื่อจัดกา
 | PATCH | `/customers/:id` | แก้ไขลูกค้า |
 | DELETE | `/customers/:id` | ลบลูกค้า |
 
-### 8. Exchange Rates (ส่วนที่ Super Admin ใช้) — `/exchange-rates`
+### 9. Exchange Rates (ส่วนที่ Super Admin ใช้) — `/exchange-rates`
 | Method | Path | การทำงาน |
 |--------|------|-----------|
 | GET | `/exchange-rates` | รายการอัตราแลกเปลี่ยนแบบแบ่งหน้า (ทุก merchant) |
@@ -102,10 +110,10 @@ Super Admin ใช้ API เหล่านี้เพื่อจัดกา
 | PATCH | `/exchange-rates/:id` | แก้ไขอัตราแลกเปลี่ยน |
 | DELETE | `/exchange-rates/:id` | ลบอัตราแลกเปลี่ยน |
 
-### 9. Orders, Order Items, Customer Orders, Customer Order Items
+### 10. Orders, Order Items, Customer Orders, Customer Order Items
 Super Admin สามารถเรียก GET list / GET by id / PATCH / DELETE ได้ตามสิทธิ์ที่กำหนดไว้ในระบบ (ใช้ร่วมกับ permission/role)
 
-### 10. Arrivals, Arrival Items, Notifications
+### 11. Arrivals, Arrival Items, Notifications
 ใช้จัดการข้อมูลการมาถึงของสินค้าและการแจ้งเตือนได้ทั้งระบบ
 
 ---
@@ -121,20 +129,26 @@ API ในส่วนนี้ใช้ **CurrentUser** (JWT) เพื่อ�
 | PATCH | `/users/profile` | แก้ไขโปรไฟล์ตัวเอง |
 | PATCH | `/users/change-password-user` | เปลี่ยนรหัสผ่านตัวเอง |
 
-### 2. Merchants (ส่วนของ Merchant) — `/merchants`
+### 2. Dashboard (ส่วนของ Merchant) — `/dashboard`
+| Method | Path | การทำงาน |
+|--------|------|-----------|
+| GET | `/dashboard/merchant` | สรุปภาพรวมร้านของตัวเอง (กรองด้วย merchantId จาก JWT อัตโนมัติ) เช่น ยอดออเดอร์, สถานะการมาถึง, สถานะการชำระเงิน |
+| GET | `/dashboard/merchant/annual-report` | รายงานรายปีของร้าน (เลือกปีจาก query: year) กรองด้วย merchantId จาก JWT อัตโนมัติ |
+
+### 3. Merchants (ส่วนของ Merchant) — `/merchants`
 | Method | Path | การทำงาน |
 |--------|------|-----------|
 | POST | `/merchants` | สร้างร้านค้า (ผูกกับ current user) |
 | GET | `/merchants/merchant-detail` | ดึงรายละเอียดร้านของตัวเอง (ตาม userId จาก token) |
 | PATCH | `/merchants/my-merchant` | แก้ไขร้านของตัวเอง |
 
-### 3. Customers (ส่วนของ Merchant) — `/customers`
+### 4. Customers (ส่วนของ Merchant) — `/customers`
 | Method | Path | การทำงาน |
 |--------|------|-----------|
 | POST | `/customers` | สร้างลูกค้า (มักผูกกับ merchant จาก token) |
 | GET | `/customers/by-merchant` | รายการลูกค้าของร้าน (ตาม merchant จาก token) |
 
-### 4. Exchange Rates (ส่วนของ Merchant) — `/exchange-rates`
+### 5. Exchange Rates (ส่วนของ Merchant) — `/exchange-rates`
 | Method | Path | การทำงาน |
 |--------|------|-----------|
 | POST | `/exchange-rates` | สร้างอัตราแลกเปลี่ยนของร้าน |
@@ -143,7 +157,7 @@ API ในส่วนนี้ใช้ **CurrentUser** (JWT) เพื่อ�
 | GET | `/exchange-rates/today` | อัตราวันนี้ (BUY/SELL) ของร้าน จาก token |
 | PATCH | `/exchange-rates/:id/by-merchant` | แก้ไขอัตราของร้าน (ตรวจสิทธิ์ตาม merchant) |
 
-### 5. Orders (ส่วนของ Merchant) — `/orders`
+### 6. Orders (ส่วนของ Merchant) — `/orders`
 | Method | Path | การทำงาน |
 |--------|------|-----------|
 | POST | `/orders/create-full` | สร้างออเดอร์เต็ม (ออเดอร์ + รายการ + customer orders) ในครั้งเดียว |
@@ -153,25 +167,25 @@ API ในส่วนนี้ใช้ **CurrentUser** (JWT) เพื่อ�
 | PATCH | `/orders/:id` | แก้ไขออเดอร์ |
 | DELETE | `/orders/:id` | ลบออเดอร์ |
 
-### 6. Order Items — `/order-items`
+### 7. Order Items — `/order-items`
 | Method | Path | การทำงาน |
 |--------|------|-----------|
 | GET | `/order-items` | รายการ order item (filter ตาม orderId ได้) |
 | GET | `/order-items/:id` | ดึง order item ตาม ID |
 
-### 7. Customer Orders — `/customer-orders`
+### 8. Customer Orders — `/customer-orders`
 | Method | Path | การทำงาน |
 |--------|------|-----------|
 | GET | `/customer-orders` | รายการ customer order (filter ตาม orderId, customerId ได้) |
 | GET | `/customer-orders/:id` | ดึง customer order ตาม ID |
 
-### 8. Customer Order Items — `/customer-order-items`
+### 9. Customer Order Items — `/customer-order-items`
 | Method | Path | การทำงาน |
 |--------|------|-----------|
 | GET | `/customer-order-items` | รายการ customer order item |
 | GET | `/customer-order-items/:id` | ดึง customer order item ตาม ID |
 
-### 9. Arrivals (ส่วนของ Merchant) — `/arrivals`
+### 10. Arrivals (ส่วนของ Merchant) — `/arrivals`
 | Method | Path | การทำงาน |
 |--------|------|-----------|
 | POST | `/arrivals/create` | บันทึกการมาถึง สร้าง arrival items อัปเดตสต็อก และส่งการแจ้งเตือน |
@@ -180,7 +194,7 @@ API ในส่วนนี้ใช้ **CurrentUser** (JWT) เพื่อ�
 | PATCH | `/arrivals/:id` | แก้ไขการมาถึง |
 | DELETE | `/arrivals/:id` | ลบการมาถึง |
 
-### 10. Arrival Items — `/arrival-items`
+### 11. Arrival Items — `/arrival-items`
 | Method | Path | การทำงาน |
 |--------|------|-----------|
 | GET | `/arrival-items` | รายการ arrival item |
@@ -188,7 +202,7 @@ API ในส่วนนี้ใช้ **CurrentUser** (JWT) เพื่อ�
 | PATCH | `/arrival-items/:id` | แก้ไข arrival item |
 | DELETE | `/arrival-items/:id` | ลบ arrival item |
 
-### 11. Notifications — `/notifications`
+### 12. Notifications — `/notifications`
 | Method | Path | การทำงาน |
 |--------|------|-----------|
 | GET | `/notifications` | รายการการแจ้งเตือน |
@@ -202,11 +216,11 @@ API ในส่วนนี้ใช้ **CurrentUser** (JWT) เพื่อ�
 
 - **Super Admin**  
   - ใช้ API ที่เป็น **รายการทั้งระบบ** (GET list โดยไม่กรอง merchant), **สร้าง/แก้/ลบ user, role, permission, role-permission, merchant, customer, exchange rate** และการจัดการที่ระบุว่า ADMIN only  
-  - ตัวอย่าง: `GET /users`, `GET /merchants`, `POST /users/user-merchant`, `POST /roles`, `POST /permissions/generate`, `POST /role-permissions/assign`
+  - ตัวอย่าง: `GET /dashboard/admin`, `GET /dashboard/admin/annual-report`, `GET /users`, `GET /merchants`, `POST /users/user-merchant`, `POST /roles`, `POST /permissions/generate`, `POST /role-permissions/assign`
 
 - **Merchant / User**  
   - ใช้ API ที่ผูกกับ **Current User / Merchant** จาก JWT  
-  - ตัวอย่าง: `GET /users/by-merchant`, `GET /merchants/merchant-detail`, `PATCH /merchants/my-merchant`, `GET /customers/by-merchant`, `GET /exchange-rates/by-merchant`, `GET /exchange-rates/today`, `POST /exchange-rates`, `POST /exchange-rates/bulk`, `POST /orders/create-full`, `POST /arrivals/create`
+  - ตัวอย่าง: `GET /dashboard/merchant`, `GET /dashboard/merchant/annual-report`, `GET /users/by-merchant`, `GET /merchants/merchant-detail`, `PATCH /merchants/my-merchant`, `GET /customers/by-merchant`, `GET /exchange-rates/by-merchant`, `GET /exchange-rates/today`, `POST /exchange-rates`, `POST /exchange-rates/bulk`, `POST /orders/create-full`, `POST /arrivals/create`
 
 - **Auth**  
   - `POST /auth/login` ใช้ได้ทุกคน (Public)  
@@ -219,3 +233,151 @@ API ในส่วนนี้ใช้ **CurrentUser** (JWT) เพื่อ�
 - ทุก API ที่ไม่ใช่ `POST /auth/login` ต้องส่ง **Bearer token** (JWT) ใน header (ยกเว้นมี `@Public()`)
 - การตรวจสิทธิ์ราย route ใช้ Guard + Permission/Role ตามที่ตั้งค่าในโปรเจกต์
 - ไฟล์นี้สร้างจากการตรวจสอบ controller ในโค้ดโดยตรง ไม่ได้อ้างอิงหรือแก้ไขไฟล์ `BACKEND_API_ANALYSIS.md`
+
+---
+
+## รายละเอียด API ใหม่: `GET /merchants/:id/detail`
+
+### Endpoint
+```
+GET /merchants/:id/detail
+```
+
+### Header
+| Key | Value |
+|-----|-------|
+| Authorization | `Bearer <access_token>` |
+
+### Path Parameters
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| id | number | Merchant ID |
+
+### Response Format
+```json
+{
+  "success": true,
+  "Code": 200,
+  "message": "Success",
+  "results": [
+    {
+      "id": 1,
+      "ownerUserId": 2,
+      "shopName": "ร้านค้า ABC",
+      "shopLogoUrl": null,
+      "shopAddress": "123 ถ.สุขุมวิท กรุงเทพ",
+      "contactPhone": "081-234-5678",
+      "contactEmail": "shop@example.com",
+      "contactFacebook": null,
+      "contactLine": "@shop-abc",
+      "contactWhatsapp": null,
+      "defaultCurrency": "THB",
+      "isActive": true,
+      "createdAt": "2025-01-15T10:30:00.000Z",
+      "updatedAt": "2025-06-01T08:15:00.000Z",
+      "owner": {
+        "id": 2,
+        "email": "owner@example.com",
+        "fullName": "สมชาย ใจดี",
+        "roleId": 3,
+        "roleName": "admin_merchant",
+        "isActive": true,
+        "createdAt": "2025-01-10T09:00:00.000Z",
+        "lastLogin": "2025-06-15T14:20:00.000Z"
+      },
+      "summary": {
+        "totalCustomers": 25,
+        "activeCustomers": 22,
+        "inactiveCustomers": 3,
+        "customerTypeCustomer": 20,
+        "customerTypeAgent": 5,
+        "financial": {
+          "totalOrders": 48,
+          "ordersUnpaid": 12,
+          "ordersPartial": 8,
+          "ordersPaid": 28,
+          "totalIncomeLak": 85000000,
+          "totalIncomeThb": 350000,
+          "totalExpenseLak": 62000000,
+          "totalExpenseThb": 255000,
+          "totalProfitLak": 23000000,
+          "totalProfitThb": 95000,
+          "totalPaidAmount": 70000000,
+          "totalRemainingAmount": 15000000
+        }
+      }
+    }
+  ]
+}
+```
+
+### คำอธิบาย Response
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `id` - `updatedAt` | - | ข้อมูลร้านค้าพื้นฐาน (เหมือน GET /:id) |
+| `owner` | object/null | ข้อมูลเจ้าของร้าน (owner_user_id → join users + role) |
+| `summary.totalCustomers` | number | จำนวน customer ทั้งหมด |
+| `summary.activeCustomers` | number | จำนวน customer ที่ active |
+| `summary.inactiveCustomers` | number | จำนวน customer ที่ inactive |
+| `summary.customerTypeCustomer` | number | จำนวน customer ประเภท CUSTOMER |
+| `summary.customerTypeAgent` | number | จำนวน customer ประเภท AGENT |
+| `summary.financial.totalOrders` | number | จำนวน orders ทั้งหมด |
+| `summary.financial.ordersUnpaid` | number | จำนวน orders ที่ยังไม่จ่าย (UNPAID) |
+| `summary.financial.ordersPartial` | number | จำนวน orders ที่จ่ายบางส่วน (PARTIAL) |
+| `summary.financial.ordersPaid` | number | จำนวน orders ที่จ่ายครบแล้ว (PAID) |
+| `summary.financial.totalIncomeLak` | number | รายรับรวม (ยอดขาย LAK) |
+| `summary.financial.totalIncomeThb` | number | รายรับรวม (ยอดขาย THB) |
+| `summary.financial.totalExpenseLak` | number | รายจ่ายรวม (ต้นทุน LAK) |
+| `summary.financial.totalExpenseThb` | number | รายจ่ายรวม (ต้นทุน THB) |
+| `summary.financial.totalProfitLak` | number | กำไรรวม LAK (รายรับ - รายจ่าย) |
+| `summary.financial.totalProfitThb` | number | กำไรรวม THB |
+| `summary.financial.totalPaidAmount` | number | ยอดที่จ่ายแล้วทั้งหมด |
+| `summary.financial.totalRemainingAmount` | number | ยอดค้างชำระทั้งหมด |
+
+### Error Responses
+
+| Status | Message | Description |
+|--------|---------|-------------|
+| 401 | Invalid or missing token | ไม่ได้ส่ง token หรือ token หมดอายุ |
+| 404 | Merchant not found | ไม่พบ merchant ที่มี id นี้ |
+
+---
+
+## รายละเอียด API: `GET /dashboard/merchant` — latestOrders
+
+### Response เพิ่มเติมใน Merchant Dashboard
+
+Response ของ `GET /dashboard/merchant` มีฟิลด์ `latestOrders` เพิ่มเข้ามา ซึ่งแสดงออเดอร์ล่าสุด 5 รายการของร้านค้า
+
+```json
+{
+  "latestOrders": [
+    {
+      "id": 1,
+      "orderCode": "ORD-20260220-001",
+      "arrivalStatus": "NOT_ARRIVED",
+      "totalAmount": "1500000.00",
+      "customerName": "ລູກຄ້າ ທີ 1"
+    },
+    {
+      "id": 2,
+      "orderCode": "ORD-20260220-002",
+      "arrivalStatus": "ARRIVED",
+      "totalAmount": "2300000.00",
+      "customerName": "ລູກຄ້າ ທີ 2"
+    }
+  ]
+}
+```
+
+### คำอธิบาย latestOrders
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `latestOrders` | array | ออเดอร์ล่าสุด 5 รายการ เรียงตามวันสร้าง (ใหม่สุดก่อน) |
+| `latestOrders[].id` | number | ID ของ order |
+| `latestOrders[].orderCode` | string | รหัสออเดอร์ |
+| `latestOrders[].arrivalStatus` | string | สถานะการมาถึง (`NOT_ARRIVED` / `ARRIVED`) |
+| `latestOrders[].totalAmount` | string | ยอดรวมที่ลูกค้าต้องจ่าย (total_selling_amount_lak) |
+| `latestOrders[].customerName` | string/null | ชื่อลูกค้า (join จาก customer_orders → customers, แสดงลูกค้าคนแรก) |

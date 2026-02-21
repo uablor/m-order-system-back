@@ -3,6 +3,12 @@ import { MerchantQueryRepository } from '../repositories/merchant.query-reposito
 import { MerchantRepository } from '../repositories/merchant.repository';
 import { MerchantListQueryDto } from '../dto/merchant-list-query.dto';
 import { MerchantResponseDto } from '../dto/merchant-response.dto';
+import {
+  MerchantDetailResponseDto,
+  MerchantDetailUserDto,
+  MerchantDetailSummaryDto,
+  MerchantDetailFinancialDto,
+} from '../dto/merchant-detail-response.dto';
 import type {
   ResponseInterface,
   ResponseWithPaginationInterface,
@@ -64,6 +70,80 @@ export class MerchantQueryService {
       );
       if (!entity) throw new NotFoundException('Merchant not found');
       return createSingleResponse(this.toResponse(entity));
+    });
+  }
+
+  async getDetailById(
+    id: number,
+  ): Promise<ResponseInterface<MerchantDetailResponseDto>> {
+    return this.transactionService.run(async (manager) => {
+      const merchant = await this.merchantQueryRepository.findByIdWithOwner(id, manager);
+      if (!merchant) throw new NotFoundException('Merchant not found');
+
+      const [customers, financialRaw] = await Promise.all([
+        this.merchantQueryRepository.findCustomersByMerchantId(id, manager),
+        this.merchantQueryRepository.getFinancialSummaryByMerchantId(id, manager),
+      ]);
+
+      const activeCustomers = customers.filter((c) => c.isActive).length;
+
+      const financial: MerchantDetailFinancialDto = {
+        totalOrders: financialRaw.totalOrders,
+        ordersUnpaid: financialRaw.ordersUnpaid,
+        ordersPartial: financialRaw.ordersPartial,
+        ordersPaid: financialRaw.ordersPaid,
+        totalIncomeLak: financialRaw.totalIncomeLak,
+        totalIncomeThb: financialRaw.totalIncomeThb,
+        totalExpenseLak: financialRaw.totalExpenseLak,
+        totalExpenseThb: financialRaw.totalExpenseThb,
+        totalProfitLak: financialRaw.totalProfitLak,
+        totalProfitThb: financialRaw.totalProfitThb,
+        totalPaidAmount: financialRaw.totalPaidAmount,
+        totalRemainingAmount: financialRaw.totalRemainingAmount,
+      };
+
+      const summary: MerchantDetailSummaryDto = {
+        totalCustomers: customers.length,
+        activeCustomers,
+        inactiveCustomers: customers.length - activeCustomers,
+        customerTypeCustomer: customers.filter((c) => c.customerType === 'CUSTOMER').length,
+        customerTypeAgent: customers.filter((c) => c.customerType === 'AGENT').length,
+        financial,
+      };
+
+      const ownerDto: MerchantDetailUserDto | null = merchant.ownerUser
+        ? {
+            id: merchant.ownerUser.id,
+            email: merchant.ownerUser.email,
+            fullName: merchant.ownerUser.fullName,
+            roleId: merchant.ownerUser.roleId,
+            roleName: merchant.ownerUser.role?.roleName,
+            isActive: merchant.ownerUser.isActive,
+            createdAt: merchant.ownerUser.createdAt,
+            lastLogin: merchant.ownerUser.lastLogin,
+          }
+        : null;
+
+      const detail: MerchantDetailResponseDto = {
+        id: merchant.id,
+        ownerUserId: merchant.ownerUserId,
+        shopName: merchant.shopName,
+        shopLogoUrl: merchant.shopLogoUrl,
+        shopAddress: merchant.shopAddress,
+        contactPhone: merchant.contactPhone,
+        contactEmail: merchant.contactEmail,
+        contactFacebook: merchant.contactFacebook,
+        contactLine: merchant.contactLine,
+        contactWhatsapp: merchant.contactWhatsapp,
+        defaultCurrency: merchant.defaultCurrency,
+        isActive: merchant.isActive,
+        createdAt: merchant.createdAt,
+        updatedAt: merchant.updatedAt,
+        owner: ownerDto,
+        summary,
+      };
+
+      return createSingleResponse(detail);
     });
   }
 

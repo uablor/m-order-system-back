@@ -21,6 +21,7 @@ import { MerchantCreateDto } from '../dto/merchant-create.dto';
 import { MerchantUpdateDto } from '../dto/merchant-update.dto';
 import { MerchantListQueryDto } from '../dto/merchant-list-query.dto';
 import { MerchantResponseDto } from '../dto/merchant-response.dto';
+import { MerchantDetailResponseDto } from '../dto/merchant-detail-response.dto';
 import { CurrentUser } from '../../../common/decorators/current-user.decorator';
 import type { CurrentUserPayload } from '../../../common/decorators/current-user.decorator';
 import { NoCache } from '../../../common/decorators/no-cache.decorator';
@@ -73,6 +74,23 @@ export class MerchantController {
   @ApiUnauthorizedBase()
   async merchantGetDetail(@CurrentUser() currentUser: CurrentUserPayload) {
     return this.queryService.findMerchantDetail(currentUser.userId);
+  }
+
+  @Get(':id/detail')
+  @ApiOperation({
+    summary: 'Get merchant detail by ID with owner and summary',
+    description:
+      'Returns full merchant info joined with owner user, ' +
+      'and a summary (customer counts, financial summary from orders).',
+  })
+  @ApiBearerAuth('BearerAuth')
+  @ApiParam({ name: 'id', description: 'Merchant ID' })
+  @ApiOkResponseBase(MerchantDetailResponseDto)
+  @ApiNotFoundBase()
+  @ApiUnauthorizedBase()
+  @NoCache()
+  async getDetailById(@Param('id', ParseIntPipe) id: number) {
+    return this.queryService.getDetailById(id);
   }
 
   @Get(':id')
