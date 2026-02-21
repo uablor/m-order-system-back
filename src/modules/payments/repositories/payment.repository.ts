@@ -4,6 +4,7 @@ import { Repository, SelectQueryBuilder, EntityManager } from 'typeorm';
 import { PaymentOrmEntity } from '../entities/payment.orm-entity';
 import { fetchWithPagination } from '../../../common/utils/pagination.util';
 import { SortDirection } from '../../../common/base/enums/base.query.enum';
+import { PaymentListQueryDto } from '../dto/payment-list-query.dto';
 
 @Injectable()
 export class PaymentRepository {
@@ -41,7 +42,7 @@ export class PaymentRepository {
 
   async findByMerchant(
     merchantId: number,
-    query: { page?: number; limit?: number; status?: string; customerOrderId?: number; customerId?: number; paymentDateFrom?: Date; paymentDateTo?: Date; search?: string; searchField?: string; sort?: string },
+    query: PaymentListQueryDto,
     manager?: EntityManager,
   ) {
     const { page = 1, limit = 10, status, customerOrderId, customerId, paymentDateFrom, paymentDateTo, search, searchField, sort } = query;
@@ -108,7 +109,7 @@ export class PaymentRepository {
 
   async findByCustomer(
     customerId: number,
-    query: { page?: number; limit?: number; status?: string; paymentDateFrom?: Date; paymentDateTo?: Date; search?: string; searchField?: string; sort?: string },
+    query: PaymentListQueryDto,
     manager?: EntityManager,
   ) {
     const { page = 1, limit = 10, status, paymentDateFrom, paymentDateTo, search, searchField, sort } = query;

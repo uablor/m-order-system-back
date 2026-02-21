@@ -21,16 +21,18 @@ export class PaymentCommandService {
   ) {
     const payment = await this.transactionService.run(async (manager) => {
       // ตรวจสอบว่า customer order เป็นของลูกค้าคนนี้จริงๆ
-      const paymentRepo = manager.getRepository(PaymentOrmEntity);
-      const customerOrderRepo = manager.getRepository(CustomerOrderOrmEntity);
+      const existingPayment = await this.paymentRepository.findById(
+        dto.customerOrderId,
+        ['customerOrder', 'customerOrder.customer'],
+      );
       
-      const customerOrder = await customerOrderRepo.findOne({
-        where: { id: dto.customerOrderId },
-        relations: ['customer'],
-      });
-
-      if (!customerOrder) {
+      if (!existingPayment) {
         throw new NotFoundException('Customer order not found');
+      }
+
+      const customerOrder = existingPayment.customerOrder;
+      if (!customerOrder || !customerOrder.customer) {
+        throw new NotFoundException('Customer order or customer not found');
       }
 
       if (customerOrder.customer.id !== currentUser.userId) {
@@ -46,7 +48,7 @@ export class PaymentCommandService {
       }
 
       // สร้าง payment
-      const payment = await this.paymentRepository.create(
+      const newPayment = await this.paymentRepository.create(
         {
           customerOrderId: dto.customerOrderId,
           paymentAmount: dto.paymentAmount.toString(),
@@ -58,7 +60,7 @@ export class PaymentCommandService {
         manager,
       );
 
-      return payment;
+      return newPayment;
     });
 
     return createSingleResponse(payment, 'Payment created successfully');
@@ -115,6 +117,7 @@ export class PaymentCommandService {
 
     return this.transactionService.run(async (manager) => {
       // อัปเดต payment
+      const paymentRepo = manager.getRepository(PaymentOrmEntity);
       await this.paymentRepository.update(
         id,
         {
@@ -144,7 +147,10 @@ export class PaymentCommandService {
         });
       }
 
-      const verifiedPayment = await this.paymentRepository.findById(id);
+      const verifiedPayment = await paymentRepo.findOne({
+        where: { id },
+        relations: ['customerOrder', 'customerOrder.order', 'customerOrder.customer', 'verifiedBy', 'rejectedBy'],
+      });
       if (!verifiedPayment) {
         throw new Error('Payment verification failed');
       }
@@ -153,16 +159,22 @@ export class PaymentCommandService {
   }
 
   async delete(id: number): Promise<void> {
-    const payment = await this.paymentRepository.findById(id);
-    if (!payment) {
-      throw new NotFoundException('Payment not found');
-    }
+    return this.transactionService.run(async (manager) => {
+      const paymentRepo = manager.getRepository(PaymentOrmEntity);
+      const payment = await paymentRepo.findOne({
+        where: { id },
+      });
+      
+      if (!payment) {
+        throw new NotFoundException('Payment not found');
+      }
 
-    if (payment.status !== 'PENDING') {
-      throw new BadRequestException('Only pending payments can be deleted');
-    }
+      if (payment.status !== 'PENDING') {
+        throw new BadRequestException('Only pending payments can be deleted');
+      }
 
-    await this.paymentRepository.delete(id);
+      await paymentRepo.delete(id);
+    });
   }
 
   async bulkVerify(
