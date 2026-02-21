@@ -59,17 +59,6 @@ export class CreateFullOrderItemDto {
   @IsNumber()
   @Min(0)
   sellingPriceForeign: number;
-
-  constructor(partial: Partial<CreateFullOrderItemDto>) {
-    this.productName = partial.productName ?? '';
-    this.variant = partial.variant ?? '';
-    this.quantity = partial.quantity ?? 1;
-    this.purchasePrice = partial.purchasePrice ?? 0;
-    this.shippingPrice = partial.shippingPrice ?? 0;
-    this.discountType = partial.discountType ?? undefined;
-    this.discountValue = partial.discountValue ?? 0;
-    this.sellingPriceForeign = partial.sellingPriceForeign ?? 0;
-  }
 }
 
 export class CreateFullCustomerOrderItemDto {
@@ -89,11 +78,6 @@ export class CreateFullCustomerOrderItemDto {
   @Min(0)
   sellingPriceForeign?: number;
 
-  constructor(partial: Partial<CreateFullCustomerOrderItemDto>) {
-    this.orderItemIndex = partial.orderItemIndex ?? 0;
-    this.quantity = partial.quantity ?? 1;
-    this.sellingPriceForeign = partial.sellingPriceForeign ?? 0;
-  }
 }
 
 export class CreateFullCustomerOrderDto {
@@ -107,10 +91,6 @@ export class CreateFullCustomerOrderDto {
   @Type(() => CreateFullCustomerOrderItemDto)
   items: CreateFullCustomerOrderItemDto[];
 
-  constructor(partial: Partial<CreateFullCustomerOrderDto>) {
-    this.customerId = partial.customerId ?? 0;
-    this.items = partial.items?.map(item => new CreateFullCustomerOrderItemDto(item)) ?? [];
-  }
 }
 
 export class CreateFullOrderDto {
@@ -131,9 +111,4 @@ export class CreateFullOrderDto {
   @Type(() => CreateFullCustomerOrderDto)
   customerOrders: CreateFullCustomerOrderDto[];
 
-  constructor(partial: Partial<CreateFullOrderDto>) {
-    this.orderCode = partial.orderCode ?? '';
-    this.items = partial.items?.map(item => new CreateFullOrderItemDto(item)) ?? [];
-    this.customerOrders = partial.customerOrders?.map(item => new CreateFullCustomerOrderDto(item)) ?? [];
-  }
 }

@@ -8,7 +8,6 @@ import type { PreferredContactMethod } from '../../customers/entities/customer.o
 import type { MerchantOrmEntity } from '../../merchants/entities/merchant.orm-entity';
 
 type NotificationChannel = 'FB' | 'LINE' | 'WHATSAPP';
-
 function preferredToChannel(
   pref: PreferredContactMethod | null,
 ): NotificationChannel | null {
