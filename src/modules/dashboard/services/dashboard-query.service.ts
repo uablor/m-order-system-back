@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { DataSource } from 'typeorm';
 import { AdminDashboardResponseDto } from '../dto/admin-dashboard-response.dto';
-import { MerchantDashboardResponseDto } from '../dto/merchant-dashboard-response.dto';
+import { MerchantDashboardResponseDto, LatestOrderDto } from '../dto/merchant-dashboard-response.dto';
 import { AnnualReportResponseDto, MonthlyReportDto } from '../dto/annual-report-response.dto';
 
 const MONTH_NAMES = [
@@ -102,6 +102,7 @@ export class DashboardQueryService {
       arrivalStatusRows,
       customerCount,
       arrivalCount,
+      latestOrderRows,
     ] = await Promise.all([
       this.dataSource.query<{ id: number; shop_name: string }[]>(
         `SELECT id, shop_name FROM merchants WHERE id = ?`,
@@ -154,11 +155,44 @@ export class DashboardQueryService {
         `SELECT COUNT(*) AS total FROM arrivals WHERE merchant_id = ?`,
         [merchantId],
       ),
+      this.dataSource.query<{
+        id: string;
+        order_code: string;
+        arrival_status: string;
+        total_selling_amount_lak: string;
+        customer_name: string | null;
+      }[]>(
+        `SELECT
+          o.id,
+          o.order_code,
+          o.arrival_status,
+          o.total_selling_amount_lak,
+          (
+            SELECT c.customer_name
+            FROM customer_orders co
+            INNER JOIN customers c ON c.id = co.customer_id
+            WHERE co.order_id = o.id
+            LIMIT 1
+          ) AS customer_name
+        FROM orders o
+        WHERE o.merchant_id = ?
+        ORDER BY o.created_at DESC
+        LIMIT 5`,
+        [merchantId],
+      ),
     ]);
 
     const paymentMap = this.toStatusMap(paymentStatusRows, 'payment_status');
     const arrivalMap = this.toStatusMap(arrivalStatusRows, 'arrival_status');
     const stats = orderStats[0];
+
+    const latestOrders: LatestOrderDto[] = latestOrderRows.map((row) => ({
+      id: Number(row.id),
+      orderCode: row.order_code,
+      arrivalStatus: row.arrival_status,
+      totalAmount: String(row.total_selling_amount_lak ?? '0'),
+      customerName: row.customer_name ?? null,
+    }));
 
     return {
       merchantId,
@@ -182,6 +216,7 @@ export class DashboardQueryService {
       totalProfitLak: String(stats?.totalProfitLak ?? '0'),
       totalProfitThb: String(stats?.totalProfitThb ?? '0'),
       totalOutstandingAmountLak: String(stats?.totalOutstandingAmountLak ?? '0'),
+      latestOrders,
     };
   }
 

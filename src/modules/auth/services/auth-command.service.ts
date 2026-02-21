@@ -31,6 +31,9 @@ export class AuthCommandService {
       throw new UnauthorizedException('Invalid email or password');
     }
 
+    entity.lastLogin = new Date();
+    await this.userQueryRepository.repository.save(entity);
+
     const merchantId = entity.merchantId ?? entity.merchant?.id ?? null;
     const permResp = await this.rolePermissionQueryService.getPermissionsByRoleId(entity.roleId);
     const permissionCodes = permResp.results?.map((p) => p.permissionCode) ?? [];

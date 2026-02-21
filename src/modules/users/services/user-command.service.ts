@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ConflictException,
   ForbiddenException,
   Injectable,
@@ -197,7 +198,7 @@ export class UserCommandService {
       if (!found) throw new NotFoundException('User not found');
 
       const match = await comparePassword(dto.currentPassword, found.passwordHash);
-      if (!match) throw new ForbiddenException('Invalid current password');
+      if (!match) throw new BadRequestException('Invalid current password');
 
       found.passwordHash = await hashPassword(dto.password);
       await this.userRepository.update(id, found, manager);
