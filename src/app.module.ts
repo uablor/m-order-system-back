@@ -7,6 +7,7 @@ import { CacheModule } from '@nestjs/cache-manager';
 import { getDatabaseConfig } from './config/database.config';
 import appConfig from './config/app.config';
 import redisConfig from './config/redis.config';
+import facebookConfig from './config/facebook.config';
 import { UserModule } from './modules/users/user.module';
 import { RoleModule } from './modules/roles/role.module';
 import { PermissionModule } from './modules/permissions/permission.module';
@@ -16,6 +17,7 @@ import { MerchantModule } from './modules/merchants/merchant.module';
 import { CustomerModule } from './modules/customers/customer.module';
 import { OrderModule } from './modules/orders/order.module';
 import { ArrivalModule } from './modules/arrivals/arrival.module';
+import { NotificationModule } from './modules/notifications/notification.module';
 import { ExchangeRateModule } from './modules/exchange-rates/exchange-rate.module';
 import { DashboardModule } from './modules/dashboard/dashboard.module';
 import { LoggerModule } from './common/logger/logger.module';
@@ -29,7 +31,7 @@ import { AllExceptionsFilter } from './common/filters/http-exception.filter';
       isGlobal: true,
       envFilePath: ['.env', '.env.local'],
 
-      load: [appConfig, redisConfig],
+      load: [appConfig, redisConfig, facebookConfig],
     }),
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
@@ -97,6 +99,7 @@ import { AllExceptionsFilter } from './common/filters/http-exception.filter';
     CustomerModule,
     OrderModule,
     ArrivalModule,
+    NotificationModule,
     ExchangeRateModule,
     DashboardModule,
   ],
