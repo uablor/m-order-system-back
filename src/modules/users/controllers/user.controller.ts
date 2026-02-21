@@ -72,6 +72,18 @@ export class UserController {
     return this.commandService.create(dto);
   }
 
+  @Post()
+  @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({ summary: 'Create new user' })
+  @ApiCreatedResponseBase()
+  @ApiBadRequestBase()
+  @ApiUnauthorizedBase()
+  @ApiForbiddenBase()
+  @ApiBearerAuth('BearerAuth')
+  async  merchantCreate(@Body() dto: UserCreateDto, @CurrentUser auth : CurrentUserPayload) {
+    return this.commandService.create(dto, auth);
+  }
+
   @Post('user-merchant')
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: 'Create user and merchant (registration flow)' })

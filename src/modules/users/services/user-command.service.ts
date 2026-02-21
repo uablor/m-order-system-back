@@ -37,7 +37,10 @@ export class UserCommandService {
     private readonly transactionService: TransactionService,
   ) {}
 
-  async create(dto: UserCreateDto): Promise<{ id: number }> {
+  async create(
+    dto: UserCreateDto,
+    auth?: CurrentUserPayload,
+  ): Promise<{ id: number }> {
     return this.transactionService.run(async (manager) => {
       const existing = await this.userRepository.findOneBy(
         { email: dto.email },
@@ -50,24 +53,41 @@ export class UserCommandService {
         Number(dto.roleId),
         manager,
       );
+      
       if (!role) {
         throw new NotFoundException('Role not found');
       }
       const passwordHash = await hashPassword(dto.password);
-      const entity = await this.userRepository.create(
-        {
-          email: dto.email,
-          passwordHash,
-          fullName: dto.fullName,
-          roleId: role.id,
-          role: role,
-          isActive: dto.isActive ?? true,
-        } as Partial<UserOrmEntity>,
-        manager,
-      );
+      let entity: UserOrmEntity;
+      if (auth?.merchantId) {
+        entity = await this.userRepository.create(
+          {
+            email: dto.email,
+            passwordHash,
+            fullName: dto.fullName,
+            merchantId: auth.merchantId,
+            roleId: role.id,
+            role: role,
+            isActive: dto.isActive ?? true,
+          } as Partial<UserOrmEntity>,
+          manager,
+        );
+      } else {
+        entity = await this.userRepository.create(
+          {
+            email: dto.email,
+            passwordHash,
+            fullName: dto.fullName,
+            roleId: role.id,
+            role: role,
+            isActive: dto.isActive ?? true,
+          } as Partial<UserOrmEntity>,
+          manager,
+        );
+      }
+
       return { id: entity.id };
-    });
-  }
+  })}
 
   async createUserWithMerchant(
     dto: UserMerchantCreateDto,
@@ -135,7 +155,11 @@ export class UserCommandService {
     });
   }
 
-  async update(id: number, dto: UserUpdateDto, currentUser?: CurrentUserPayload): Promise<void> {
+  async update(
+    id: number,
+    dto: UserUpdateDto,
+    currentUser?: CurrentUserPayload,
+  ): Promise<void> {
     await this.transactionService.run(async (manager) => {
       const existing = await this.userRepository.findOneById(id, manager, {
         relations: ['role'],
@@ -182,22 +206,21 @@ export class UserCommandService {
     });
   }
 
-  async setActive(id: number, dto : AcitveDto): Promise<void> {
+  async setActive(id: number, dto: AcitveDto): Promise<void> {
     await this.update(id, { isActive: dto.isActive } as UserUpdateDto);
   }
 
-  async changePassword(
-      id: number,
-    dto : ChangePasswordDto,
-  
-  ): Promise<void> {
+  async changePassword(id: number, dto: ChangePasswordDto): Promise<void> {
     await this.transactionService.run(async (manager) => {
       const found = await this.userRepository.findOneById(id, manager, {
         relations: ['role', 'merchant'],
       });
       if (!found) throw new NotFoundException('User not found');
 
-      const match = await comparePassword(dto.currentPassword, found.passwordHash);
+      const match = await comparePassword(
+        dto.currentPassword,
+        found.passwordHash,
+      );
       if (!match) throw new BadRequestException('Invalid current password');
 
       found.passwordHash = await hashPassword(dto.password);
