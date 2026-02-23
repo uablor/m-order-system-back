@@ -62,7 +62,7 @@ describe('UserController', () => {
       };
       commandService.create.mockResolvedValue({ id: 1 });
 
-      const result = await controller.create(dto);
+      const result = await controller.adminCreate(dto);
 
       expect(commandService.create).toHaveBeenCalledWith(dto);
       expect(result).toEqual({ id: 1 });
@@ -82,7 +82,7 @@ describe('UserController', () => {
         merchantId: 10,
       });
 
-      const result = await controller.createUserWithMerchant(dto);
+      const result = await controller.adminCreateWithMerchant(dto);
 
       expect(commandService.createUserWithMerchant).toHaveBeenCalledWith(dto);
       expect(result).toEqual({ userId: 1, merchantId: 10 });
@@ -129,7 +129,7 @@ describe('UserController', () => {
         },
       });
 
-      await controller.getListBy(query, mockCurrentUser);
+      await controller.merchantGetList(query, mockCurrentUser);
 
       expect(queryService.getList).toHaveBeenCalledWith(query, 10);
     });
@@ -161,7 +161,7 @@ describe('UserController', () => {
       const dto = { fullName: 'Updated Name' };
       commandService.update.mockResolvedValue(undefined);
 
-      await controller.update(1, dto);
+      await controller.adminUpdate(1, dto);
 
       expect(commandService.update).toHaveBeenCalledWith(1, dto);
     });
@@ -182,7 +182,7 @@ describe('UserController', () => {
     it('ควรเรียก commandService.delete ด้วย id', async () => {
       commandService.delete.mockResolvedValue(undefined);
 
-      await controller.delete(5);
+      await controller.adminDelete(5);
 
       expect(commandService.delete).toHaveBeenCalledWith(5);
     });
@@ -193,7 +193,7 @@ describe('UserController', () => {
       const dto = { password: 'newpass123', currentPassword: 'oldpass123' };
       commandService.changePassword.mockResolvedValue(undefined);
 
-      await controller.ChangePassword(dto, mockCurrentUser);
+      await controller.changePassword(dto, mockCurrentUser);
 
       expect(commandService.changePassword).toHaveBeenCalledWith(1, dto);
     });
@@ -204,7 +204,7 @@ describe('UserController', () => {
       const dto = { isActive: false };
       commandService.setActive.mockResolvedValue(undefined);
 
-      await controller.updateActive(5, dto);
+      await controller.adminUpdateActive(5, dto);
 
       expect(commandService.setActive).toHaveBeenCalledWith(5, dto);
     });

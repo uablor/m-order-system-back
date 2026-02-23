@@ -184,14 +184,25 @@ export class UserCommandService {
   async delete(id: number): Promise<void> {
     await this.transactionService.run(async (manager) => {
       const found = await this.userRepository.findOneById(id, manager, {
-        relations: ['role'],
+        relations: ['role', 'merchant'],
       });
       if (!found) {
         throw new NotFoundException('User not found');
       }
-      if (found.role) {
-        throw new ConflictException('Cannot delete user with role');
+      if (found.role?.roleName === SUPERADMIN_ROLE_NAME) {
+        throw new ForbiddenException('Cannot delete a superadmin user');
       }
+
+      const ownedMerchant = await this.merchantRepository.findOneByOwnerUserId(
+        found.id,
+        manager,
+      );
+      if (ownedMerchant) {
+        throw new ConflictException(
+          'Cannot delete user who owns a merchant. Remove or reassign the merchant first.',
+        );
+      }
+
       await this.userRepository.delete(id, manager);
     });
   }

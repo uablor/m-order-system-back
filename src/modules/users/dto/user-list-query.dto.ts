@@ -1,5 +1,5 @@
 import { IsOptional, IsInt, Min, Max, IsBoolean, IsString } from 'class-validator';
-import { Type } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { BaseQueryDto } from 'src/common/base/dtos/base.query.dto';
 
@@ -7,7 +7,11 @@ export class UserListQueryDto extends BaseQueryDto {
   @ApiPropertyOptional({ description: 'Filter by active status' })
   @IsOptional()
   @IsBoolean()
-  @Type(() => Boolean)
+  @Transform(({ value }) => {
+    if (value === 'true' || value === true) return true;
+    if (value === 'false' || value === false) return false;
+    return value;
+  })
   isActive?: boolean;
 
   @ApiPropertyOptional({ description: '' })

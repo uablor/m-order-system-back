@@ -81,4 +81,35 @@ export class CustomerQueryRepository extends BaseQueryRepository<CustomerOrmEnti
     };
     return { success: true, Code: 200, message: 'Customers fetched successfully', results: data, pagination };
   }
+
+  async getSummary(
+    options: { merchantId?: number; search?: string },
+    manager?: import('typeorm').EntityManager,
+  ): Promise<{
+    totalCustomers: number;
+    totalActive: number;
+    totalInactive: number;
+  }> {
+    const repo = this.getRepo(manager);
+    const qb = repo.createQueryBuilder('customer')
+      .leftJoin('customer.merchant', 'merchant')
+      .select('COUNT(customer.id)', 'totalCustomers')
+      .addSelect(`SUM(CASE WHEN customer.isActive = true THEN 1 ELSE 0 END)`, 'totalActive')
+      .addSelect(`SUM(CASE WHEN customer.isActive = false THEN 1 ELSE 0 END)`, 'totalInactive');
+
+    if (options.merchantId != null) {
+      qb.andWhere('merchant.id = :merchantId', { merchantId: options.merchantId });
+    }
+    if (options.search?.trim()) {
+      const s = `%${options.search.trim()}%`;
+      qb.andWhere('(customer.customerName LIKE :s OR customer.contactPhone LIKE :s)', { s });
+    }
+
+    const raw = await qb.getRawOne();
+    return {
+      totalCustomers: Number(raw?.totalCustomers ?? 0),
+      totalActive: Number(raw?.totalActive ?? 0),
+      totalInactive: Number(raw?.totalInactive ?? 0),
+    };
+  }
 }

@@ -110,6 +110,50 @@ describe('OrderQueryService', () => {
     });
   });
 
+  describe('getById - orderItems/customerOrders safety', () => {
+    it('ควร handle undefined orderItems gracefully', async () => {
+      const orderWithoutItems = { ...mockOrder, orderItems: undefined, customerOrders: undefined };
+      orderQueryRepository.repository.findOne.mockResolvedValue(orderWithoutItems);
+
+      const result = await service.getById(1);
+
+      expect(result).toBeDefined();
+      expect(result!.orderItems).toEqual([]);
+      expect(result!.customerOrders).toEqual([]);
+    });
+
+    it('ควร handle null orderItems gracefully', async () => {
+      const orderWithNull = { ...mockOrder, orderItems: null, customerOrders: null };
+      orderQueryRepository.repository.findOne.mockResolvedValue(orderWithNull);
+
+      const result = await service.getById(1);
+
+      expect(result).toBeDefined();
+      expect(result!.orderItems).toEqual([]);
+      expect(result!.customerOrders).toEqual([]);
+    });
+
+    it('ควร map customerOrders with undefined customerOrderItems', async () => {
+      const orderWithCo = {
+        ...mockOrder,
+        customerOrders: [{
+          id: 1, orderId: 1, customerId: 1,
+          totalSellingAmountLak: '1000', totalSellingAmountThb: '30',
+          paymentStatus: 'UNPAID', paidAmount: '0', remainingAmount: '1000',
+          customer: { id: 1, customerName: 'Test', customerType: 'CUSTOMER' },
+          customerOrderItems: undefined,
+          createdAt: new Date(), updatedAt: new Date(),
+        }],
+      };
+      orderQueryRepository.repository.findOne.mockResolvedValue(orderWithCo);
+
+      const result = await service.getById(1);
+
+      expect(result!.customerOrders).toHaveLength(1);
+      expect(result!.customerOrders[0].items).toEqual([]);
+    });
+  });
+
   describe('getList', () => {
     it('ควร return paginated response', async () => {
       orderQueryRepository.findWithPagination.mockResolvedValue({
@@ -140,6 +184,22 @@ describe('OrderQueryService', () => {
 
       expect(orderQueryRepository.findWithPagination).toHaveBeenCalledWith(
         expect.objectContaining({ merchantId: 5 }),
+      );
+    });
+
+    it('ควรส่ง search parameter เมื่อระบุ', async () => {
+      orderQueryRepository.findWithPagination.mockResolvedValue({
+        results: [],
+        pagination: {
+          total: 0, page: 1, limit: 10,
+          totalPages: 0, hasNextPage: false, hasPreviousPage: false,
+        },
+      });
+
+      await service.getList({ page: 1, limit: 10, search: 'ORD-001' });
+
+      expect(orderQueryRepository.findWithPagination).toHaveBeenCalledWith(
+        expect.objectContaining({ search: 'ORD-001' }),
       );
     });
   });

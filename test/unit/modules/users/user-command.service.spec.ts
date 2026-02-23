@@ -1,6 +1,6 @@
 import {
+  BadRequestException,
   ConflictException,
-  ForbiddenException,
   NotFoundException,
 } from '@nestjs/common';
 import { UserCommandService } from '../../../../src/modules/users/services/user-command.service';
@@ -66,14 +66,14 @@ describe('UserCommandService', () => {
 
     it('ควร throw NotFoundException เมื่อหา role ไม่เจอ', async () => {
       userRepository.findOneBy.mockResolvedValue(null);
-      roleRepository.findOneById.mockResolvedValue(null);
+      roleRepository.findOneBy.mockResolvedValue(null);
 
       await expect(service.create(dto)).rejects.toThrow(NotFoundException);
     });
 
     it('ควรสร้าง user สำเร็จและ return id', async () => {
       userRepository.findOneBy.mockResolvedValue(null);
-      roleRepository.findOneById.mockResolvedValue({ id: 1, roleName: 'ADMIN' });
+      roleRepository.findOneBy.mockResolvedValue({ id: 1, roleName: 'ADMIN' });
       userRepository.create.mockResolvedValue({ id: 99 });
 
       const result = await service.create(dto);
@@ -92,7 +92,7 @@ describe('UserCommandService', () => {
 
     it('ควร hash password ก่อนบันทึก', async () => {
       userRepository.findOneBy.mockResolvedValue(null);
-      roleRepository.findOneById.mockResolvedValue({ id: 1 });
+      roleRepository.findOneBy.mockResolvedValue({ id: 1, roleName: 'ADMIN' });
       userRepository.create.mockResolvedValue({ id: 1 });
 
       await service.create(dto);
@@ -218,7 +218,7 @@ describe('UserCommandService', () => {
       ).rejects.toThrow(NotFoundException);
     });
 
-    it('ควร throw ForbiddenException เมื่อ current password ไม่ถูกต้อง', async () => {
+    it('ควร throw BadRequestException เมื่อ current password ไม่ถูกต้อง', async () => {
       const bcrypt = require('bcrypt');
       const hash = await bcrypt.hash('correctpass', 10);
       userRepository.findOneById.mockResolvedValue({
@@ -231,7 +231,7 @@ describe('UserCommandService', () => {
           currentPassword: 'wrongpass',
           password: 'new123456',
         }),
-      ).rejects.toThrow(ForbiddenException);
+      ).rejects.toThrow(BadRequestException);
     });
 
     it('ควร update password สำเร็จ', async () => {

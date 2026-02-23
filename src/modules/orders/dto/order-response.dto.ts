@@ -26,19 +26,36 @@ export class CustomerOrderItemResponseDto {
   updatedAt: Date;
 }
 
+export class CustomerSnapshotDto {
+  @ApiProperty()
+  id: number;
+
+  @ApiProperty()
+  customerName: string;
+
+  @ApiProperty()
+  customerType: string;
+}
+
 // 👇 DTO สำหรับ CustomerOrder
 export class CustomerOrderResponseDto {
   @ApiProperty()
   id: number;
 
   @ApiProperty()
+  orderId: number;
+
+  @ApiProperty()
   customerId: number;
+
+  @ApiPropertyOptional({ nullable: true, type: () => CustomerSnapshotDto })
+  customer: CustomerSnapshotDto | null;
 
   @ApiProperty()
   totalSellingAmountLak: string;
 
   @ApiProperty()
-  totalPaid: string;
+  paidAmount: string;
 
   @ApiProperty()
   remainingAmount: string;
@@ -47,7 +64,7 @@ export class CustomerOrderResponseDto {
   paymentStatus: string;
 
   @ApiProperty({ type: [CustomerOrderItemResponseDto] })
-  items: CustomerOrderItemResponseDto[];
+  customerOrderItems: CustomerOrderItemResponseDto[];
 
   @ApiProperty()
   createdAt: Date;

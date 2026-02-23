@@ -68,7 +68,7 @@ export class PaymentQueryService {
   async getListByMerchant(
     query: PaymentListQueryDto,
     currentUser: CurrentUserPayload,
-  ): Promise<ResponseWithPaginationInterface<PaymentResponseDto>> {
+  ): Promise<ResponseWithPaginationInterface<PaymentResponseDto> & { summary: any }> {
     if (!currentUser.merchantId) {
       throw new ForbiddenException('Only merchants can view their payments');
     }
@@ -77,7 +77,12 @@ export class PaymentQueryService {
       currentUser.merchantId,
       query,
     );
-    return createPaginatedResponse(response.results, response.pagination, 'Payments retrieved successfully');
+    const summary = await this.paymentRepository.getSummaryByMerchant(
+      currentUser.merchantId,
+      query,
+    );
+    const paginated = createPaginatedResponse(response.results, response.pagination, 'Payments retrieved successfully');
+    return { ...paginated, summary };
   }
 
   async getListByCustomer(

@@ -133,5 +133,79 @@ describe('UserQueryService', () => {
       expect(result.results).toHaveLength(0);
       expect(result.pagination.total).toBe(0);
     });
+
+    it('ควรส่ง isActive=true filter ได้', async () => {
+      userQueryRepository.findWithPagination.mockResolvedValue({
+        results: [mockUser],
+        pagination: {
+          total: 1, page: 1, limit: 10,
+          totalPages: 1, hasNextPage: false, hasPreviousPage: false,
+        },
+      });
+
+      await service.getList({ page: 1, limit: 10, isActive: true });
+
+      expect(userQueryRepository.findWithPagination).toHaveBeenCalledWith(
+        expect.objectContaining({ isActive: true }),
+        mockManager,
+      );
+    });
+
+    it('ควรส่ง isActive=false filter ได้ (ไม่ถูกข้าม)', async () => {
+      userQueryRepository.findWithPagination.mockResolvedValue({
+        results: [],
+        pagination: {
+          total: 0, page: 1, limit: 10,
+          totalPages: 0, hasNextPage: false, hasPreviousPage: false,
+        },
+      });
+
+      await service.getList({ page: 1, limit: 10, isActive: false });
+
+      expect(userQueryRepository.findWithPagination).toHaveBeenCalledWith(
+        expect.objectContaining({ isActive: false }),
+        mockManager,
+      );
+    });
+
+    it('ควรส่ง search parameter ได้', async () => {
+      userQueryRepository.findWithPagination.mockResolvedValue({
+        results: [mockUser],
+        pagination: {
+          total: 1, page: 1, limit: 10,
+          totalPages: 1, hasNextPage: false, hasPreviousPage: false,
+        },
+      });
+
+      await service.getList({ page: 1, limit: 10, search: 'test' });
+
+      expect(userQueryRepository.findWithPagination).toHaveBeenCalledWith(
+        expect.objectContaining({ search: 'test' }),
+        mockManager,
+      );
+    });
+
+    it('ควรส่ง date range filter ได้', async () => {
+      userQueryRepository.findWithPagination.mockResolvedValue({
+        results: [],
+        pagination: {
+          total: 0, page: 1, limit: 10,
+          totalPages: 0, hasNextPage: false, hasPreviousPage: false,
+        },
+      });
+
+      await service.getList({
+        page: 1, limit: 10,
+        startDate: '2025-01-01', endDate: '2025-12-31',
+      });
+
+      expect(userQueryRepository.findWithPagination).toHaveBeenCalledWith(
+        expect.objectContaining({
+          startDate: '2025-01-01',
+          endDate: '2025-12-31',
+        }),
+        mockManager,
+      );
+    });
   });
 });
