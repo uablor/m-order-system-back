@@ -36,7 +36,9 @@ export class ArrivalQueryRepository extends BaseQueryRepository<ArrivalOrmEntity
       .createQueryBuilder('arrival')
       .leftJoinAndSelect('arrival.order', 'order')
       .leftJoinAndSelect('arrival.merchant', 'merchant')
-      .leftJoinAndSelect('arrival.recordedByUser', 'recordedByUser');
+      .leftJoinAndSelect('arrival.recordedByUser', 'recordedByUser')
+      .leftJoinAndSelect('arrival.arrivalItems', 'arrivalItems')
+      .leftJoinAndSelect('arrivalItems.orderItem', 'orderItem');
 
     if (options.merchantId != null) {
       qb.andWhere('merchant.id = :merchantId', { merchantId: options.merchantId });

@@ -18,7 +18,7 @@ export class ArrivalQueryService {
     const entity = withRelations
       ? await this.arrivalQueryRepository.repository.findOne({
           where: { id },
-          relations: ['order', 'merchant', 'recordedByUser'],
+          relations: ['order', 'merchant', 'recordedByUser', 'arrivalItems', 'arrivalItems.orderItem'],
         })
       : await this.arrivalRepository.findOneById(id);
     if (!entity) return null;
@@ -85,6 +85,7 @@ export class ArrivalQueryService {
       arrivedDate,
       arrivedTime: entity.arrivedTime,
       recordedBy: entity.recordedByUser?.id ?? null,
+      arrivalItems: entity.arrivalItems ?? [],
       notes: entity.notes ?? null,
       createdAt: entity.createdAt,
       updatedAt: entity.updatedAt,

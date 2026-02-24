@@ -22,6 +22,9 @@ export class ArrivalResponseDto {
   @ApiPropertyOptional({ nullable: true })
   notes: string | null;
 
+  @ApiPropertyOptional({ nullable: true })
+  arrivalItems: any[] | null;
+
   @ApiProperty()
   createdAt: Date;
 
