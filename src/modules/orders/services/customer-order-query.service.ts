@@ -16,7 +16,7 @@ export class CustomerOrderQueryService {
   async getById(id: number): Promise<CustomerOrderResponseDto | null> {
     const entity = await this.customerOrderQueryRepository.repository.findOne({
       where: { id },
-      relations: ['order', 'customer'],
+      relations: ['order', 'customer', 'customerOrderItems', 'customerOrderItems.orderItem'],
     });
     if (!entity) return null;
     return this.toResponse(entity);

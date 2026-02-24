@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, SelectQueryBuilder, EntityManager } from 'typeorm';
+import { Repository, EntityManager } from 'typeorm';
 import { PaymentOrmEntity } from '../entities/payment.orm-entity';
 import { fetchWithPagination } from '../../../common/utils/pagination.util';
 import { SortDirection } from '../../../common/base/enums/base.query.enum';
@@ -47,60 +47,35 @@ export class PaymentRepository {
   ) {
     const { page = 1, limit = 10, status, customerOrderId, customerId, paymentDateFrom, paymentDateTo, search, searchField, sort } = query;
 
-    let queryBuilder: SelectQueryBuilder<PaymentOrmEntity> = this.repository
-      .createQueryBuilder('payment')
-      .leftJoinAndSelect('payment.customerOrder', 'customerOrder')
-      .leftJoinAndSelect('customerOrder.order', 'order')
-      .leftJoinAndSelect('customerOrder.customer', 'customer')
-      .where('order.merchantId = :merchantId', { merchantId });
-
-    if (status) {
-      queryBuilder = queryBuilder.andWhere('payment.status = :status', { status });
-    }
-
-    if (customerOrderId) {
-      queryBuilder = queryBuilder.andWhere('payment.customerOrderId = :customerOrderId', {
-        customerOrderId,
-      });
-    }
-
-    if (customerId) {
-      queryBuilder = queryBuilder.andWhere('customerOrder.customerId = :customerId', {
-        customerId,
-      });
-    }
-
-    if (paymentDateFrom) {
-      queryBuilder = queryBuilder.andWhere('payment.paymentDate >= :paymentDateFrom', {
-        paymentDateFrom,
-      });
-    }
-
-    if (paymentDateTo) {
-      queryBuilder = queryBuilder.andWhere('payment.paymentDate <= :paymentDateTo', {
-        paymentDateTo,
-      });
-    }
-
-    // Use pagination utility
     const repo = manager ? manager.getRepository(PaymentOrmEntity) : this.repository;
     const qb = repo.createQueryBuilder('payment')
       .leftJoinAndSelect('payment.customerOrder', 'customerOrder')
       .leftJoinAndSelect('customerOrder.order', 'order')
       .leftJoinAndSelect('customerOrder.customer', 'customer')
-      .where('order.merchantId = :merchantId', { merchantId });
+      .leftJoinAndSelect('order.merchant', 'merchant');
 
-    // Apply filters
+    // ถ้า merchantId > 0 ให้กรองตาม merchant ถ้าเป็น 0 (admin) ดูทั้งหมด
+    if (merchantId > 0) {
+      qb.where('merchant.id = :merchantId', { merchantId });
+    }
+
     if (status) qb.andWhere('payment.status = :status', { status });
     if (customerOrderId) qb.andWhere('payment.customerOrderId = :customerOrderId', { customerOrderId });
     if (customerId) qb.andWhere('customerOrder.customerId = :customerId', { customerId });
     if (paymentDateFrom) qb.andWhere('payment.paymentDate >= :paymentDateFrom', { paymentDateFrom });
     if (paymentDateTo) qb.andWhere('payment.paymentDate <= :paymentDateTo', { paymentDateTo });
 
+    // ค้นหาจาก customer name หรือ order code
+    if (search) {
+      qb.andWhere(
+        '(customer.customerName LIKE :search OR order.orderCode LIKE :search)',
+        { search: `%${search}%` },
+      );
+    }
+
     return fetchWithPagination({
       qb,
       sort: sort as SortDirection,
-      search: search && searchField ? { kw: search, field: `payment.${searchField}` } : undefined,
       page,
       limit,
       manager: manager || repo.manager,
@@ -153,5 +128,51 @@ export class PaymentRepository {
   async delete(id: number, manager?: any): Promise<void> {
     const repo = manager ? manager.getRepository(PaymentOrmEntity) : this.repository;
     await repo.delete(id);
+  }
+
+  async getSummaryByMerchant(
+    merchantId: number,
+    query: PaymentListQueryDto,
+    manager?: EntityManager,
+  ): Promise<{
+    totalPayments: number;
+    totalAmount: string;
+    totalPending: number;
+    totalVerified: number;
+    totalRejected: number;
+  }> {
+    const repo = manager ? manager.getRepository(PaymentOrmEntity) : this.repository;
+    const qb = repo.createQueryBuilder('payment')
+      .leftJoin('payment.customerOrder', 'customerOrder')
+      .leftJoin('customerOrder.order', 'order')
+      .leftJoin('customerOrder.customer', 'customer')
+      .leftJoin('order.merchant', 'merchant');
+
+    if (merchantId > 0) {
+      qb.where('merchant.id = :merchantId', { merchantId });
+    }
+
+    const { status, search, paymentDateFrom, paymentDateTo } = query;
+    if (status) qb.andWhere('payment.status = :status', { status });
+    if (paymentDateFrom) qb.andWhere('payment.paymentDate >= :paymentDateFrom', { paymentDateFrom });
+    if (paymentDateTo) qb.andWhere('payment.paymentDate <= :paymentDateTo', { paymentDateTo });
+    if (search) {
+      qb.andWhere('(customer.customerName LIKE :search OR order.orderCode LIKE :search)', { search: `%${search}%` });
+    }
+
+    qb.select('COUNT(payment.id)', 'totalPayments')
+      .addSelect('COALESCE(SUM(payment.paymentAmount), 0)', 'totalAmount')
+      .addSelect(`SUM(CASE WHEN payment.status = 'PENDING' THEN 1 ELSE 0 END)`, 'totalPending')
+      .addSelect(`SUM(CASE WHEN payment.status = 'VERIFIED' THEN 1 ELSE 0 END)`, 'totalVerified')
+      .addSelect(`SUM(CASE WHEN payment.status = 'REJECTED' THEN 1 ELSE 0 END)`, 'totalRejected');
+
+    const raw = await qb.getRawOne();
+    return {
+      totalPayments: Number(raw?.totalPayments ?? 0),
+      totalAmount: raw?.totalAmount ?? '0',
+      totalPending: Number(raw?.totalPending ?? 0),
+      totalVerified: Number(raw?.totalVerified ?? 0),
+      totalRejected: Number(raw?.totalRejected ?? 0),
+    };
   }
 }

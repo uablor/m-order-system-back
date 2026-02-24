@@ -20,8 +20,6 @@ import { PaymentListQueryDto } from '../dto/payment-list-query.dto';
 import { PaymentResponseDto } from '../dto/payment-response.dto';
 import { CurrentUser } from '../../../common/decorators/current-user.decorator';
 import type { CurrentUserPayload } from '../../../common/decorators/current-user.decorator';
-import { RequireAutoPermission } from '../../../common/decorators/require-permissions.decorator';
-import { PermissionsGuard } from '../../../common/policies/permissions.guard';
 import { Roles } from '../../../common/decorators/roles.decorator';
 import { RolesGuard } from '../../../common/policies/roles.guard';
 import {
@@ -32,23 +30,40 @@ import {
   ApiNotFoundBase,
   ApiForbiddenBase,
 } from '../../../common/swagger/swagger.decorators';
+import {
+  SUPERADMIN_ROLE_NAME,
+  ADMIN_ROLE_NAME,
+  ADMIN_MERCHANT_ROLE_NAME,
+  EMPLOYEE_MERCHANT_ROLE_NAME,
+} from '../../../database/seeds/role.seeder';
+import { Public } from '../../../common/decorators/public.decorator';
+
+/** Roles allowed to manage merchant payments (verify / reject) */
+const MERCHANT_ROLES = [
+  SUPERADMIN_ROLE_NAME,
+  ADMIN_ROLE_NAME,
+  ADMIN_MERCHANT_ROLE_NAME,
+  EMPLOYEE_MERCHANT_ROLE_NAME,
+] as const;
+
+/** Roles allowed to view the full payment list (admin only) */
+const ADMIN_ROLES = [SUPERADMIN_ROLE_NAME, ADMIN_ROLE_NAME] as const;
 
 @ApiTags('Payments')
 @Controller('payments')
-@UseGuards(PermissionsGuard)
 export class PaymentController {
   constructor(
     private readonly commandService: PaymentCommandService,
     private readonly queryService: PaymentQueryService,
   ) {}
 
+  // ─── Create (public — customer uses URL token, no JWT needed) ────────────
+
   @Post()
-  @RequireAutoPermission()
-  @ApiOperation({ summary: 'Create payment (customer only)' })
-  @ApiBearerAuth('BearerAuth')
+  @Public()
+  @ApiOperation({ summary: 'Create payment (public — customer submits via token page)' })
   @ApiCreatedResponseBase()
   @ApiBadRequestBase()
-  @ApiUnauthorizedBase()
   async create(
     @Body() dto: PaymentCreateDto,
     @CurrentUser() currentUser: CurrentUserPayload,
@@ -56,8 +71,9 @@ export class PaymentController {
     return this.commandService.create(dto, currentUser);
   }
 
+  // ─── Customer: own payments ─────────────────────────────────────────────
+
   @Get('my-payments')
-  @RequireAutoPermission()
   @ApiOperation({ summary: 'Get my payments (customer only)' })
   @ApiBearerAuth('BearerAuth')
   @ApiOkResponseBase()
@@ -69,9 +85,12 @@ export class PaymentController {
     return this.queryService.getListByCustomer(query, currentUser);
   }
 
+  // ─── Merchant: payments for their orders ───────────────────────────────
+
   @Get('merchant')
-  @RequireAutoPermission()
-  @ApiOperation({ summary: 'Get payments by merchant (merchant only)' })
+  @UseGuards(RolesGuard)
+  @Roles(...MERCHANT_ROLES)
+  @ApiOperation({ summary: 'Get payments by merchant' })
   @ApiBearerAuth('BearerAuth')
   @ApiOkResponseBase()
   @ApiUnauthorizedBase()
@@ -82,11 +101,12 @@ export class PaymentController {
     return this.queryService.getListByMerchant(query, currentUser);
   }
 
+  // ─── Admin: full payment list ───────────────────────────────────────────
+
   @Get()
-  @RequireAutoPermission()
   @UseGuards(RolesGuard)
-  @Roles('ADMIN', 'STAFF')
-  @ApiOperation({ summary: 'Get all payments (admin/staff only)' })
+  @Roles(...ADMIN_ROLES)
+  @ApiOperation({ summary: 'Get all payments (admin only)' })
   @ApiBearerAuth('BearerAuth')
   @ApiOkResponseBase()
   @ApiUnauthorizedBase()
@@ -95,8 +115,7 @@ export class PaymentController {
   }
 
   @Get(':id')
-  @RequireAutoPermission()
-  @ApiOperation({ summary: 'Get payment by ID (check ownership)' })
+  @ApiOperation({ summary: 'Get payment by ID' })
   @ApiBearerAuth('BearerAuth')
   @ApiParam({ name: 'id', description: 'Payment ID' })
   @ApiOkResponseBase(PaymentResponseDto)
@@ -110,11 +129,12 @@ export class PaymentController {
     return this.queryService.getByIdWithOwnership(id, currentUser);
   }
 
+  // ─── Verify / Reject (merchant & admin) ────────────────────────────────
+
   @Patch(':id/verify')
-  @RequireAutoPermission()
   @UseGuards(RolesGuard)
-  @Roles('ADMIN', 'STAFF')
-  @ApiOperation({ summary: 'Verify payment (admin/staff only)' })
+  @Roles(...MERCHANT_ROLES)
+  @ApiOperation({ summary: 'Verify payment (admin / merchant)' })
   @ApiBearerAuth('BearerAuth')
   @ApiParam({ name: 'id', description: 'Payment ID' })
   @ApiOkResponseBase()
@@ -129,10 +149,9 @@ export class PaymentController {
   }
 
   @Patch('bulk-verify')
-  @RequireAutoPermission()
   @UseGuards(RolesGuard)
-  @Roles('ADMIN', 'STAFF')
-  @ApiOperation({ summary: 'Verify multiple payments (admin/staff only)' })
+  @Roles(...MERCHANT_ROLES)
+  @ApiOperation({ summary: 'Verify multiple payments (admin / merchant)' })
   @ApiBearerAuth('BearerAuth')
   @ApiOkResponseBase()
   @ApiBadRequestBase()
@@ -145,10 +164,9 @@ export class PaymentController {
   }
 
   @Patch(':id/reject')
-  @RequireAutoPermission()
   @UseGuards(RolesGuard)
-  @Roles('ADMIN', 'STAFF')
-  @ApiOperation({ summary: 'Reject payment (admin/staff only)' })
+  @Roles(...MERCHANT_ROLES)
+  @ApiOperation({ summary: 'Reject payment (admin / merchant)' })
   @ApiBearerAuth('BearerAuth')
   @ApiParam({ name: 'id', description: 'Payment ID' })
   @ApiOkResponseBase()
@@ -164,10 +182,9 @@ export class PaymentController {
   }
 
   @Patch('bulk-reject')
-  @RequireAutoPermission()
   @UseGuards(RolesGuard)
-  @Roles('ADMIN', 'STAFF')
-  @ApiOperation({ summary: 'Reject multiple payments (admin/staff only)' })
+  @Roles(...MERCHANT_ROLES)
+  @ApiOperation({ summary: 'Reject multiple payments (admin / merchant)' })
   @ApiBearerAuth('BearerAuth')
   @ApiOkResponseBase()
   @ApiBadRequestBase()
@@ -179,9 +196,12 @@ export class PaymentController {
     return this.commandService.bulkReject(dto, currentUser);
   }
 
+  // ─── Delete ─────────────────────────────────────────────────────────────
+
   @Delete(':id')
-  @RequireAutoPermission()
-  @ApiOperation({ summary: 'Delete payment (only pending payments)' })
+  @UseGuards(RolesGuard)
+  @Roles(...MERCHANT_ROLES)
+  @ApiOperation({ summary: 'Delete payment (pending only)' })
   @ApiBearerAuth('BearerAuth')
   @ApiParam({ name: 'id', description: 'Payment ID' })
   @ApiOkResponseBase()

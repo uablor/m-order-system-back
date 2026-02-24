@@ -381,3 +381,45 @@ Response ของ `GET /dashboard/merchant` มีฟิลด์ `latestOrders
 | `latestOrders[].arrivalStatus` | string | สถานะการมาถึง (`NOT_ARRIVED` / `ARRIVED`) |
 | `latestOrders[].totalAmount` | string | ยอดรวมที่ลูกค้าต้องจ่าย (total_selling_amount_lak) |
 | `latestOrders[].customerName` | string/null | ชื่อลูกค้า (join จาก customer_orders → customers, แสดงลูกค้าคนแรก) |
+
+---
+
+### Summary APIs (included in list endpoints)
+
+#### Payment Summary (included in GET /payments/merchant response)
+Response now includes a `summary` field:
+```json
+{
+  "summary": {
+    "totalPayments": 15,
+    "totalAmount": "5000000.00",
+    "totalPending": 5,
+    "totalVerified": 8,
+    "totalRejected": 2
+  }
+}
+```
+
+#### User/Team Member Summary (included in GET /users and GET /users/by-merchant response)
+Response now includes a `summary` field:
+```json
+{
+  "summary": {
+    "totalUsers": 10,
+    "totalActive": 8,
+    "totalInactive": 2
+  }
+}
+```
+
+#### Customer Summary (included in GET /customers and GET /customers/by-merchant response)
+Response now includes a `summary` field:
+```json
+{
+  "summary": {
+    "totalCustomers": 25,
+    "totalActive": 20,
+    "totalInactive": 5
+  }
+}
+```

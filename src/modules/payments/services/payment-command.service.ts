@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PaymentRepository } from '../repositories/payment.repository';
 import { PaymentOrmEntity, PaymentStatus } from '../entities/payment.orm-entity';
 import { PaymentCreateDto } from '../dto/payment-create.dto';
@@ -20,31 +20,27 @@ export class PaymentCommandService {
     currentUser: CurrentUserPayload,
   ) {
     const payment = await this.transactionService.run(async (manager) => {
-      // ตรวจสอบว่า customer order เป็นของลูกค้าคนนี้จริงๆ
-      const existingPayment = await this.paymentRepository.findById(
-        dto.customerOrderId,
-        ['customerOrder', 'customerOrder.customer'],
-      );
-      
-      if (!existingPayment) {
+      // ค้นหา customer order โดยตรงจาก id
+      const customerOrderRepo = manager.getRepository(CustomerOrderOrmEntity);
+      const customerOrder = await customerOrderRepo.findOne({
+        where: { id: dto.customerOrderId },
+      });
+
+      if (!customerOrder) {
         throw new NotFoundException('Customer order not found');
-      }
-
-      const customerOrder = existingPayment.customerOrder;
-      if (!customerOrder || !customerOrder.customer) {
-        throw new NotFoundException('Customer order or customer not found');
-      }
-
-      if (customerOrder.customer.id !== currentUser.userId) {
-        throw new ForbiddenException('You can only create payment for your own orders');
       }
 
       // ตรวจสอบว่า payment amount ไม่เกิน remaining amount
       const remainingAmount = parseFloat(customerOrder.remainingAmount);
       if (dto.paymentAmount > remainingAmount) {
         throw new BadRequestException(
-          `Payment amount (${dto.paymentAmount}) cannot exceed remaining amount (${remainingAmount})`
+          `Payment amount (${dto.paymentAmount}) cannot exceed remaining amount (${remainingAmount})`,
         );
+      }
+
+      // ตรวจสอบว่าสถานะยังสามารถชำระได้
+      if (customerOrder.paymentStatus === 'PAID') {
+        throw new BadRequestException('This order has already been fully paid');
       }
 
       // สร้าง payment

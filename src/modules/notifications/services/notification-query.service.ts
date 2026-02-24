@@ -37,6 +37,9 @@ export class NotificationQueryService {
       customerId: query.customerId,
       notificationType: query.notificationType,
       status: query.status,
+      search: query.search,
+      startDate: query.startDate,
+      endDate: query.endDate,
     });
     return createPaginatedResponse(
       result.results.map((e) => this.toResponse(e)),

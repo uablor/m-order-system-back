@@ -36,18 +36,23 @@ export class CustomerQueryService {
   async getList(
     query: CustomerListQueryDto,
     currentUser?: CurrentUserPayload,
-  ): Promise<ResponseWithPaginationInterface<CustomerResponseDto>> {
+  ): Promise<ResponseWithPaginationInterface<CustomerResponseDto> & { summary: any }> {
+    const merchantId = currentUser?.merchantId ? currentUser.merchantId : query.merchantId;
     const result = await this.customerQueryRepository.findWithPagination({
       page: query.page,
       limit: query.limit,
-      merchantId: currentUser?.merchantId
-        ? currentUser.merchantId
-        : query.merchantId,
+      merchantId,
+      search: query.search,
     });
-    return createPaginatedResponse(
+    const summary = await this.customerQueryRepository.getSummary({
+      merchantId,
+      search: query.search,
+    });
+    const paginated = createPaginatedResponse(
       result.results.map((e) => this.toResponse(e)),
       result.pagination,
     );
+    return { ...paginated, summary };
   }
 
   private toResponse(

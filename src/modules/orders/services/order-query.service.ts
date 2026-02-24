@@ -2,9 +2,10 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { OrderQueryRepository } from '../repositories/order.query-repository';
 import { OrderRepository } from '../repositories/order.repository';
 import { OrderListQueryDto } from '../dto/order-list-query.dto';
-import { OrderResponseDto } from '../dto/order-response.dto';
+import { OrderResponseDto, CustomerOrderResponseDto } from '../dto/order-response.dto';
 import type { ResponseInterface, ResponseWithPaginationInterface } from '../../../common/base/interfaces/response.interface';
-import { createPaginatedResponse, createSingleResponse } from '../../../common/base/helpers/response.helper';
+import { createSingleResponse } from '../../../common/base/helpers/response.helper';
+import { DEFAULT_SUCCESS_CODE, DEFAULT_SUCCESS_MESSAGE } from '../../../common/base/helpers/response.helper';
 
 @Injectable()
 export class OrderQueryService {
@@ -17,7 +18,14 @@ export class OrderQueryService {
     const entity = withRelations
       ? await this.orderQueryRepository.repository.findOne({
           where: { id },
-          relations: ['merchant', 'createdByUser'],
+          relations: [
+            'merchant',
+            'createdByUser',
+            'orderItems',
+            'customerOrders',
+            'customerOrders.customerOrderItems',
+            'customerOrders.customer',
+          ],
         })
       : await this.orderRepository.findOneById(id);
     if (!entity) return null;
@@ -46,39 +54,55 @@ export class OrderQueryService {
     return this.toResponse(entity);
   }
 
-  async getList(query: OrderListQueryDto): Promise<ResponseWithPaginationInterface<OrderResponseDto>> {
+  async getList(query: OrderListQueryDto): Promise<ResponseWithPaginationInterface<OrderResponseDto> & { summary: any }> {
     const result = await this.orderQueryRepository.findWithPagination({
       page: query.page,
       limit: query.limit,
+      search: query.search,
+      searchField: query.searchField,
       merchantId: query.merchantId,
       customerId: query.customerId,
       customerName: query.customerName,
       startDate: query.startDate,
       endDate: query.endDate,
+      arrivalStatus: query.arrivalStatus,
+      paymentStatus: query.paymentStatus,
     });
-    return createPaginatedResponse(
-      result.results.map((e) => this.toResponse(e)),
-      result.pagination,
-    );
+    return {
+      success: true,
+      Code: DEFAULT_SUCCESS_CODE,
+      message: DEFAULT_SUCCESS_MESSAGE,
+      results: result.results.map((e) => this.toResponse(e)),
+      pagination: result.pagination,
+      summary: result.summary,
+    };
   }
 
   async getListByMerchant(
     query: OrderListQueryDto,
     currentUser: import('../../../common/decorators/current-user.decorator').CurrentUserPayload,
-  ): Promise<ResponseWithPaginationInterface<OrderResponseDto>> {
+  ): Promise<ResponseWithPaginationInterface<OrderResponseDto> & { summary: any }> {
     const result = await this.orderQueryRepository.findWithPagination({
       page: query.page,
       limit: query.limit,
+      search: query.search,
+      searchField: query.searchField,
       merchantId: currentUser.merchantId!,
       customerId: query.customerId,
       customerName: query.customerName,
       startDate: query.startDate,
       endDate: query.endDate,
+      arrivalStatus: query.arrivalStatus,
+      paymentStatus: query.paymentStatus,
     });
-    return createPaginatedResponse(
-      result.results.map((e) => this.toResponse(e)),
-      result.pagination,
-    );
+    return {
+      success: true,
+      Code: DEFAULT_SUCCESS_CODE,
+      message: DEFAULT_SUCCESS_MESSAGE,
+      results: result.results.map((e) => this.toResponse(e)),
+      pagination: result.pagination,
+      summary: result.summary,
+    };
   }
 
   private toResponse(entity: import('../entities/order.orm-entity').OrderOrmEntity): OrderResponseDto {
@@ -115,7 +139,7 @@ export class OrderQueryService {
       paidAmount: entity.paidAmount,
       remainingAmount: entity.remainingAmount,
       paymentStatus: entity.paymentStatus,
-      orderItems: entity.orderItems.map((item) => ({
+      orderItems: (entity.orderItems ?? []).map((item) => ({
         id: item.id,
         orderId: item.order?.id ?? 0,
         productName: item.productName,
@@ -142,15 +166,22 @@ export class OrderQueryService {
         createdAt: item.createdAt,
         updatedAt: item.updatedAt,
       })),
-      customerOrders: entity.customerOrders.map((customerOrder) => ({
+      customerOrders: (entity.customerOrders ?? []).map((customerOrder): CustomerOrderResponseDto => ({
         id: customerOrder.id,
         orderId: customerOrder.order?.id ?? 0,
         customerId: customerOrder.customer?.id ?? 0,
+        customer: customerOrder.customer
+          ? {
+              id: customerOrder.customer.id,
+              customerName: customerOrder.customer.customerName,
+              customerType: customerOrder.customer.customerType,
+            }
+          : null,
         totalSellingAmountLak: customerOrder.totalSellingAmountLak,
-        totalPaid: customerOrder.totalPaid,
+        paidAmount: customerOrder.totalPaid,
         remainingAmount: customerOrder.remainingAmount,
         paymentStatus: customerOrder.paymentStatus,
-        items: customerOrder.customerOrderItems.map((item) => ({
+        customerOrderItems: (customerOrder.customerOrderItems ?? []).map((item) => ({
           id: item.id,
           customerOrderId: item.customerOrder?.id ?? 0,
           orderItemId: item.orderItem?.id ?? 0,

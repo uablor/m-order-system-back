@@ -8,6 +8,7 @@ import { PaginatedResult, PaginationResponse } from '../../../common/base/interf
 export interface ArrivalFindOptions {
   page?: number;
   limit?: number;
+  search?: string;
   merchantId?: number;
   orderId?: number;
   startDate?: string;
@@ -54,6 +55,10 @@ export class ArrivalQueryRepository extends BaseQueryRepository<ArrivalOrmEntity
 
     if (options.endDate) {
       qb.andWhere('DATE(arrival.arrivedDate) <= :endDate', { endDate: options.endDate });
+    }
+
+    if (options.search) {
+      qb.andWhere('order.orderCode LIKE :search', { search: `%${options.search}%` });
     }
 
     qb.orderBy('arrival.createdAt', 'DESC').skip(skip).take(limit);

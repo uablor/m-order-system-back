@@ -10,10 +10,10 @@ describe('ArrivalCommandService', () => {
   let transactionService: { run: jest.Mock };
   let arrivalRepository: Record<string, jest.Mock>;
   let arrivalItemRepository: Record<string, jest.Mock>;
-  let notificationRepository: Record<string, jest.Mock>;
   let orderRepository: Record<string, jest.Mock>;
   let orderItemRepository: Record<string, jest.Mock>;
   let merchantRepository: Record<string, jest.Mock>;
+  let notificationSendService: Record<string, jest.Mock>;
 
   const currentUser: CurrentUserPayload = {
     userId: 1,
@@ -37,9 +37,6 @@ describe('ArrivalCommandService', () => {
     arrivalItemRepository = {
       create: jest.fn(),
     };
-    notificationRepository = {
-      create: jest.fn(),
-    };
     orderRepository = {
       getRepo: jest.fn().mockReturnValue({ findOne: jest.fn() }),
       update: jest.fn(),
@@ -50,15 +47,18 @@ describe('ArrivalCommandService', () => {
     merchantRepository = {
       findOneById: jest.fn(),
     };
+    notificationSendService = {
+      sendArrivalNotifications: jest.fn(),
+    };
 
     service = new ArrivalCommandService(
       transactionService as unknown as TransactionService,
       arrivalRepository as any,
       arrivalItemRepository as any,
-      notificationRepository as any,
       orderRepository as any,
       orderItemRepository as any,
       merchantRepository as any,
+      notificationSendService as any,
     );
   });
 

@@ -49,16 +49,15 @@ export class CustomerController {
     return this.commandService.create(dto);
   }
 
-  @Get(':id')
-  @ApiOperation({ summary: 'Get customer by ID' })
+  @Get('by-merchant')
+  @ApiOperation({
+    summary: 'List customers by merchant (uses JWT merchantId)',
+  })
   @ApiBearerAuth('BearerAuth')
-  @ApiParam({ name: 'id', description: 'Customer ID' })
-  @ApiOkResponseBase(CustomerResponseDto)
-  @ApiNotFoundBase()
+  @ApiOkResponseBase()
   @ApiUnauthorizedBase()
-  @NoCache()
-  async getById(@Param('id', ParseIntPipe) id: number) {
-    return this.queryService.getByIdOrFail(id);
+  async merchantGetList(@Query() query: CustomerListQueryDto, @CurrentUser() currentUser: CurrentUserPayload) {
+    return this.queryService.getList(query, currentUser);
   }
 
   @Get()
@@ -72,15 +71,16 @@ export class CustomerController {
     return this.queryService.getList(query);
   }
 
-  @Get('by-merchant')
-  @ApiOperation({
-    summary: 'List customers with pagination (optional merchantId filter)',
-  })
+  @Get(':id')
+  @ApiOperation({ summary: 'Get customer by ID' })
   @ApiBearerAuth('BearerAuth')
-  @ApiOkResponseBase()
+  @ApiParam({ name: 'id', description: 'Customer ID' })
+  @ApiOkResponseBase(CustomerResponseDto)
+  @ApiNotFoundBase()
   @ApiUnauthorizedBase()
-  async merchantGetList(@Query() query: CustomerListQueryDto, @CurrentUser() currentUser: CurrentUserPayload) {
-    return this.queryService.getList(query, currentUser);
+  @NoCache()
+  async getById(@Param('id', ParseIntPipe) id: number) {
+    return this.queryService.getByIdOrFail(id);
   }
 
   @Patch(':id')

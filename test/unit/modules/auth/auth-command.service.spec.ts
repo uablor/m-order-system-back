@@ -6,13 +6,13 @@ import { RolePermissionQueryService } from '../../../../src/modules/role-permiss
 
 describe('AuthCommandService', () => {
   let service: AuthCommandService;
-  let userQueryRepository: { repository: { findOne: jest.Mock } };
+  let userQueryRepository: { repository: { findOne: jest.Mock; save: jest.Mock } };
   let rolePermissionQueryService: { getPermissionsByRoleId: jest.Mock };
   let jwtService: { sign: jest.Mock };
 
   beforeEach(() => {
     userQueryRepository = {
-      repository: { findOne: jest.fn() },
+      repository: { findOne: jest.fn(), save: jest.fn() },
     };
     rolePermissionQueryService = {
       getPermissionsByRoleId: jest.fn(),
