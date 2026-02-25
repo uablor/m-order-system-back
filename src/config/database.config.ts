@@ -8,7 +8,7 @@ export function getDatabaseConfig(config: ConfigService): TypeOrmModuleOptions {
   const username = config.get<string>('database.username', { infer: true }) ?? (type === 'postgres' ? 'postgres' : 'root');
   const password = config.get<string>('database.password', { infer: true }) ?? '';
   const database = config.get<string>('database.database', { infer: true }) ?? 'm_order_system';
-  // const logging = config.get<boolean>('database.logging', { infer: true }) ?? (type === 'postgres');
+  const logging = config.get<boolean>('database.logging', { infer: true }) ?? (type === 'postgres');
   const entities = [join(__dirname, '/../**/*.orm-entity.{ts,js}')];
   return {
     type: type as 'mysql' | 'postgres',
@@ -17,7 +17,7 @@ export function getDatabaseConfig(config: ConfigService): TypeOrmModuleOptions {
     username,
     password,
     database,
-    // logging,
+    logging,
     synchronize: false,
     entities,
     autoLoadEntities: true,
