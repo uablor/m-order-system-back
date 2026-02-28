@@ -13,6 +13,12 @@ export interface ArrivalFindOptions {
   orderId?: number;
   startDate?: string;
   endDate?: string;
+  status?: string;
+  createdByUserId?: number;
+  statusSent?: string;
+  arrivalDate?: string;
+  arrivalTime?: string;
+  arrival?: boolean;
 }
 
 @Injectable()
@@ -60,6 +66,33 @@ export class ArrivalQueryRepository extends BaseQueryRepository<ArrivalOrmEntity
     if (options.search) {
       qb.andWhere('order.orderCode LIKE :search', { search: `%${options.search}%` });
     }
+
+    // Enable createdByUserId filter since recordedByUser relation exists
+    if (options.createdByUserId != null) {
+      qb.andWhere('recordedByUser.id = :createdByUserId', { createdByUserId: options.createdByUserId });
+    }
+
+    // Add arrival date filter
+    if (options.arrivalDate) {
+      qb.andWhere('DATE(arrival.arrivedDate) = :arrivalDate', { arrivalDate: options.arrivalDate });
+    }
+
+    // Add arrival time filter
+    if (options.arrivalTime) {
+      qb.andWhere('arrival.arrivedTime = :arrivalTime', { arrivalTime: options.arrivalTime });
+    }
+
+    // Add arrival boolean filter (filter for arrivals that exist)
+    if (options.arrival !== undefined) {
+      if (options.arrival) {
+        // Filter for records that have arrival data
+        qb.andWhere('arrival.arrivedDate IS NOT NULL AND arrival.arrivedTime IS NOT NULL');
+      } else {
+        // Filter for records that don't have arrival data
+        qb.andWhere('arrival.arrivedDate IS NULL OR arrival.arrivedTime IS NULL');
+      }
+    }
+
 
     qb.orderBy('arrival.createdAt', 'DESC').skip(skip).take(limit);
 

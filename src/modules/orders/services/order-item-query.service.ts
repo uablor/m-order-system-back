@@ -5,6 +5,7 @@ import { OrderItemListQueryDto } from '../dto/order-item-list-query.dto';
 import { OrderItemResponseDto } from '../dto/order-item-response.dto';
 import type { ResponseInterface, ResponseWithPaginationInterface } from '../../../common/base/interfaces/response.interface';
 import { createPaginatedResponse, createSingleResponse } from '../../../common/base/helpers/response.helper';
+import { ExchangeRateOrmEntity } from 'src/modules/exchange-rates/entities/exchange-rate.orm-entity';
 
 @Injectable()
 export class OrderItemQueryService {
@@ -40,6 +41,35 @@ export class OrderItemQueryService {
     );
   }
 
+  
+  private convertToTargetCurrency(amount: number, exchangeRate: ExchangeRateOrmEntity | null): string {
+    if (!exchangeRate) {
+      console.log('No exchange rate provided, returning original amount:', amount);
+      return amount.toString();
+    }
+      
+      // If base currency is already the target currency, no conversion needed
+      if (exchangeRate.baseCurrency === exchangeRate.targetCurrency) {
+        console.log('Base and target currency are the same:', exchangeRate.baseCurrency);
+        return amount.toString();
+      }
+      
+      // Convert based on rate type
+      if (exchangeRate.rateType === 'BUY') {
+        // BUY rate: foreign currency -> base currency (LAK)
+        // To convert from base to foreign: amount / rate
+        const converted = amount / exchangeRate.rate;
+        console.log(`BUY conversion: ${amount} / ${exchangeRate.rate} = ${converted}`);
+        return converted.toString();
+      } else {
+        // SELL rate: base currency (LAK) -> foreign currency  
+        // To convert from base to foreign: amount * rate
+        const converted = amount * exchangeRate.rate;
+        console.log(`SELL conversion: ${amount} * ${exchangeRate.rate} = ${converted}`);
+        return converted.toString();
+      }
+    }
+  
   private toResponse(entity: import('../entities/order-item.orm-entity').OrderItemOrmEntity): OrderItemResponseDto {
     return {
       id: entity.id,
@@ -78,6 +108,21 @@ export class OrderItemQueryService {
       sellingPriceForeign: entity.sellingPriceForeign.toString(),
       sellingTotal: entity.sellingTotal.toString(),
       profit: entity.profit.toString(),
+
+              targetCurrencyPurchasePrice: this.convertToTargetCurrency(entity.purchasePrice, entity.exchangeRateSell),
+        targetCurrencyPurchaseTotal: this.convertToTargetCurrency(entity.purchaseTotal, entity.exchangeRateSell),
+        targetCurrencyShippingPrice: entity.shippingPrice ? this.convertToTargetCurrency(entity.shippingPrice, entity.exchangeRateSell) : null,
+        targetCurrencyTotalCostBeforeDiscount: this.convertToTargetCurrency(entity.totalCostBeforeDiscount, entity.exchangeRateSell),
+        targetCurrencyDiscountType: entity.discountType,
+        targetCurrencyDiscountValue: entity.discountValue ? this.convertToTargetCurrency(entity.discountValue, entity.exchangeRateSell) : null,
+        targetCurrencyDiscountAmount: this.convertToTargetCurrency(entity.discountAmount, entity.exchangeRateSell),
+        targetCurrencyFinalCost: this.convertToTargetCurrency(entity.finalCost, entity.exchangeRateSell),
+        targetCurrencySellingPriceForeign: this.convertToTargetCurrency(entity.sellingPriceForeign, entity.exchangeRateSell),
+        targetCurrencySellingTotal: this.convertToTargetCurrency(entity.sellingTotal, entity.exchangeRateSell),
+        targetCurrencyProfit: this.convertToTargetCurrency(entity.profit, entity.exchangeRateSell),
+        
+
+
       createdAt: entity.createdAt,
       updatedAt: entity.updatedAt,
     };

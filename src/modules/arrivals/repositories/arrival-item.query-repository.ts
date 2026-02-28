@@ -15,7 +15,15 @@ export class ArrivalItemQueryRepository extends BaseQueryRepository<ArrivalItemO
   }
 
   async findWithPagination(
-    options: { page?: number; limit?: number; arrivalId?: number; orderItemId?: number },
+    options: { 
+      page?: number; 
+      limit?: number; 
+      arrivalId?: number; 
+      orderItemId?: number;
+      status?: string;
+      createdByUserId?: number;
+      statusSent?: string;
+    },
     manager?: import('typeorm').EntityManager,
   ): Promise<PaginatedResult<ArrivalItemOrmEntity>> {
     const repo = this.getRepo(manager);
@@ -25,9 +33,14 @@ export class ArrivalItemQueryRepository extends BaseQueryRepository<ArrivalItemO
     const where: FindOptionsWhere<ArrivalItemOrmEntity> = {};
     if (options.arrivalId != null) where.arrival = { id: options.arrivalId };
     if (options.orderItemId != null) where.orderItem = { id: options.orderItemId };
+    
+    // TODO: Add these filters when the fields are added to the entity
+    // if (options.status != null) where.status = options.status;
+    // if (options.createdByUserId != null) where.createdByUser = { id: options.createdByUserId };
+    // if (options.statusSent != null) where.statusSent = options.statusSent;
     const [data, total] = await repo.findAndCount({
       where: Object.keys(where).length ? where : undefined,
-      relations: ['arrival', 'orderItem'],
+      relations: ['arrival', 'orderItem', 'arrival.recordedByUser'],
       order: { id: 'ASC' as const },
       skip,
       take: limit,

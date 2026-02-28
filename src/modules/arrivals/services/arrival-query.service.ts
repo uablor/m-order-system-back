@@ -47,6 +47,10 @@ export class ArrivalQueryService {
       orderId: query.orderId,
       startDate: query.startDate,
       endDate: query.endDate,
+      createdByUserId: query.createdByUserId,
+      arrivalDate: query.arrivalDate,
+      arrivalTime: query.arrivalTime,
+      arrival: query.arrival,
     });
     return createPaginatedResponse(
       result.results.map((e) => this.toResponse(e)),
@@ -66,6 +70,10 @@ export class ArrivalQueryService {
       orderId: query.orderId,
       startDate: query.startDate,
       endDate: query.endDate,
+      createdByUserId: query.createdByUserId,
+      arrivalDate: query.arrivalDate,
+      arrivalTime: query.arrivalTime,
+      arrival: query.arrival,
     });
     return createPaginatedResponse(
       result.results.map((e) => this.toResponse(e)),

@@ -7,14 +7,13 @@ import type { ResponseInterface, ResponseWithPaginationInterface } from '../../.
 import { createPaginatedResponse, createSingleResponse } from '../../../common/base/helpers/response.helper';
 import { NotificationOrmEntity } from '../entities/notification.orm-entity';
 import type { CurrentUserPayload } from 'src/common/decorators/current-user.decorator';
-import { MerchantResponseDto } from 'src/modules/merchants/dto/merchant-response.dto';
 
 @Injectable()
 export class NotificationQueryService {
   constructor(
     private readonly notificationRepository: NotificationRepository,
     private readonly notificationQueryRepository: NotificationQueryRepository,
-  ) { }
+  ) { }s
 
   async getById(id: number): Promise<NotificationResponseDto | null> {
     const entity = await this.notificationQueryRepository.repository.findOne({

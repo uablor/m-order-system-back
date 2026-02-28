@@ -37,7 +37,6 @@ import {
 
 @ApiTags('Roles')
 @Controller('roles')
-@UseGuards(RolesGuard)
 // export class RoleController extends BaseController<
 //   RoleCreateDto,
 //   RoleUpdateDto,
@@ -57,7 +56,6 @@ export class RoleController {
   ) {}
 
   @Post()
-  @Roles(ADMIN_ROLE)
   @ApiOperation({ summary: 'Create new role (ADMIN only)' })
   @ApiBearerAuth('BearerAuth')
   @ApiCreatedResponseBase()

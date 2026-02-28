@@ -88,8 +88,6 @@ export class PaymentController {
   // ─── Merchant: payments for their orders ───────────────────────────────
 
   @Get('merchant')
-  @UseGuards(RolesGuard)
-  @Roles(...MERCHANT_ROLES)
   @ApiOperation({ summary: 'Get payments by merchant' })
   @ApiBearerAuth('BearerAuth')
   @ApiOkResponseBase()
@@ -104,8 +102,6 @@ export class PaymentController {
   // ─── Admin: full payment list ───────────────────────────────────────────
 
   @Get()
-  @UseGuards(RolesGuard)
-  @Roles(...ADMIN_ROLES)
   @ApiOperation({ summary: 'Get all payments (admin only)' })
   @ApiBearerAuth('BearerAuth')
   @ApiOkResponseBase()
@@ -132,8 +128,6 @@ export class PaymentController {
   // ─── Verify / Reject (merchant & admin) ────────────────────────────────
 
   @Patch(':id/verify')
-  @UseGuards(RolesGuard)
-  @Roles(...MERCHANT_ROLES)
   @ApiOperation({ summary: 'Verify payment (admin / merchant)' })
   @ApiBearerAuth('BearerAuth')
   @ApiParam({ name: 'id', description: 'Payment ID' })
@@ -149,8 +143,6 @@ export class PaymentController {
   }
 
   @Patch('bulk-verify')
-  @UseGuards(RolesGuard)
-  @Roles(...MERCHANT_ROLES)
   @ApiOperation({ summary: 'Verify multiple payments (admin / merchant)' })
   @ApiBearerAuth('BearerAuth')
   @ApiOkResponseBase()
@@ -164,8 +156,6 @@ export class PaymentController {
   }
 
   @Patch(':id/reject')
-  @UseGuards(RolesGuard)
-  @Roles(...MERCHANT_ROLES)
   @ApiOperation({ summary: 'Reject payment (admin / merchant)' })
   @ApiBearerAuth('BearerAuth')
   @ApiParam({ name: 'id', description: 'Payment ID' })
@@ -182,8 +172,6 @@ export class PaymentController {
   }
 
   @Patch('bulk-reject')
-  @UseGuards(RolesGuard)
-  @Roles(...MERCHANT_ROLES)
   @ApiOperation({ summary: 'Reject multiple payments (admin / merchant)' })
   @ApiBearerAuth('BearerAuth')
   @ApiOkResponseBase()
@@ -199,8 +187,6 @@ export class PaymentController {
   // ─── Delete ─────────────────────────────────────────────────────────────
 
   @Delete(':id')
-  @UseGuards(RolesGuard)
-  @Roles(...MERCHANT_ROLES)
   @ApiOperation({ summary: 'Delete payment (pending only)' })
   @ApiBearerAuth('BearerAuth')
   @ApiParam({ name: 'id', description: 'Payment ID' })

@@ -1,6 +1,7 @@
-import { IsOptional, IsInt, Min, Max } from 'class-validator';
+import { IsOptional, IsInt, Min, Max, IsString, IsEnum } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiPropertyOptional } from '@nestjs/swagger';
+import { StatusSend } from 'src/modules/notifications/enum/status-send.enum';
 
 export class ArrivalItemListQueryDto {
   @ApiPropertyOptional({ description: 'Page number', default: 1, minimum: 1 })
@@ -29,4 +30,21 @@ export class ArrivalItemListQueryDto {
   @Type(() => Number)
   @IsInt()
   orderItemId?: number;
+
+  @ApiPropertyOptional({ description: 'Filter by status' })
+  @IsOptional()
+  @Type(() => String)
+  @IsString()
+  status?: string;
+
+  @ApiPropertyOptional({ description: 'Filter by created by user ID' })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  createdByUserId?: number;
+
+  @ApiPropertyOptional({ enum: StatusSend, description: 'Filter by status sent' })
+  @IsOptional()
+  @IsEnum(StatusSend)
+  statusSent?: StatusSend;
 }

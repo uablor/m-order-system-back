@@ -148,6 +148,28 @@ export class OrderResponseDto {
   @ApiProperty()
   totalProfit: string;
 
+  
+  @ApiProperty()
+  targetCurrencyTotalPurchaseCost: string;
+
+  @ApiProperty()
+  targetCurrencyTotalShippingCost: string;
+
+  @ApiProperty()
+  targetCurrencyTotalCostBeforeDiscount: string;
+
+  @ApiProperty()
+  targetCurrencyTotalDiscount: string;
+
+  @ApiProperty()
+  targetCurrencyTotalFinalCost: string;
+
+  @ApiProperty()
+  targetCurrencyTotalSellingAmount: string;
+
+  @ApiProperty()
+  targetCurrencyTotalProfit: string;
+
   @ApiProperty()
   paymentStatus: string;
 
