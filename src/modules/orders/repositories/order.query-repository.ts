@@ -4,28 +4,15 @@ import { FindManyOptions, Repository } from 'typeorm';
 import { BaseQueryRepository } from '../../../common/base/repositories/base.query-repository';
 import { OrderOrmEntity } from '../entities/order.orm-entity';
 import { PaginationResponse } from '../../../common/base/interfaces/paginted.interface';
+import { OrderListQueryDto } from '../dto/order-list-query.dto';
 
-export interface OrderFindOptions {
-  page?: number;
-  limit?: number;
-  search?: string;
-  searchField?: string;
-  merchantId?: number;
-  customerId?: number;
-  customerName?: string;
-  startDate?: string;
-  endDate?: string;
-  arrivalStatus?: string;
-  paymentStatus?: string;
-}
+
 
 export interface OrderSummary {
   totalOrders: number;
-  totalFinalCostLak: string;
-  totalSellingAmountLak: string;
-  totalProfitLak: string;
-  totalPaidAmount: string;
-  totalRemainingAmount: string;
+  totalFinalCost: string;
+  totalSellingAmount: string;
+  totalProfit: string;
 }
 
 export interface OrderPaginatedResult {
@@ -47,7 +34,7 @@ export class OrderQueryRepository extends BaseQueryRepository<OrderOrmEntity> {
   }
 
   async findWithPagination(
-    options: OrderFindOptions,
+    options: OrderListQueryDto,
     manager?: import('typeorm').EntityManager,
     _relations?: FindManyOptions<OrderOrmEntity>['relations'],
   ): Promise<OrderPaginatedResult> {
@@ -93,7 +80,11 @@ export class OrderQueryRepository extends BaseQueryRepository<OrderOrmEntity> {
       .leftJoinAndSelect('order.orderItems', 'orderItems')
       .leftJoinAndSelect('order.customerOrders', 'customerOrders')
       .leftJoinAndSelect('customerOrders.customerOrderItems', 'customerOrderItems')
-      .leftJoinAndSelect('customerOrders.customer', 'customer');
+      .leftJoinAndSelect('customerOrders.customer', 'customer')
+      .leftJoinAndSelect('order.exchangeRateBuy', 'exchangeRateBuy')
+      .leftJoinAndSelect('order.exchangeRateSell', 'exchangeRateSell')
+      .leftJoinAndSelect('orderItems.exchangeRateBuy', 'orderItems.exchangeRateBuy')
+      .leftJoinAndSelect('orderItems.exchangeRateSell', 'orderItems.exchangeRateSell');
 
     buildFilters(qb);
     qb.orderBy('order.createdAt', 'DESC').skip(skip).take(limit);
@@ -106,22 +97,18 @@ export class OrderQueryRepository extends BaseQueryRepository<OrderOrmEntity> {
       .leftJoin('order.customerOrders', 'customerOrders')
       .leftJoin('customerOrders.customer', 'customer')
       .select('COUNT(DISTINCT order.id)', 'totalOrders')
-      .addSelect('COALESCE(SUM(order.totalFinalCostLak), 0)', 'totalFinalCostLak')
-      .addSelect('COALESCE(SUM(order.totalSellingAmountLak), 0)', 'totalSellingAmountLak')
-      .addSelect('COALESCE(SUM(order.totalProfitLak), 0)', 'totalProfitLak')
-      .addSelect('COALESCE(SUM(order.paidAmount), 0)', 'totalPaidAmount')
-      .addSelect('COALESCE(SUM(order.remainingAmount), 0)', 'totalRemainingAmount');
+      .addSelect('COALESCE(SUM(order.totalFinalCost), 0)', 'totalFinalCost')
+      .addSelect('COALESCE(SUM(order.totalSellingAmount), 0)', 'totalSellingAmount')
+      .addSelect('COALESCE(SUM(order.totalProfit), 0)', 'totalProfit');
 
     buildFilters(aggQb);
     const aggRaw = await aggQb.getRawOne<Record<string, string>>();
 
     const summary: OrderSummary = {
       totalOrders: Number(aggRaw?.totalOrders ?? total),
-      totalFinalCostLak: aggRaw?.totalFinalCostLak ?? '0',
-      totalSellingAmountLak: aggRaw?.totalSellingAmountLak ?? '0',
-      totalProfitLak: aggRaw?.totalProfitLak ?? '0',
-      totalPaidAmount: aggRaw?.totalPaidAmount ?? '0',
-      totalRemainingAmount: aggRaw?.totalRemainingAmount ?? '0',
+      totalFinalCost: aggRaw?.totalFinalCost ?? '0',
+      totalSellingAmount: aggRaw?.totalSellingAmount ?? '0',
+      totalProfit: aggRaw?.totalProfit ?? '0',
     };
 
     const totalPages = Math.ceil(total / limit);

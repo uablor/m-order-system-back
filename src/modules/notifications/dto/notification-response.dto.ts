@@ -1,14 +1,16 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-
+import { CustomerResponseDto } from 'src/modules/customers/dto/customer-response.dto';
+import { MerchantResponseDto } from 'src/modules/merchants/dto/merchant-response.dto';
+  
 export class NotificationResponseDto {
   @ApiProperty()
   id: number;
 
   @ApiProperty()
-  merchantId: number;
+  merchant: MerchantResponseDto;
 
   @ApiProperty()
-  customerId: number;
+  customer: CustomerResponseDto;
 
   @ApiProperty({ enum: ['ARRIVAL', 'PAYMENT', 'REMINDER'] })
   notificationType: string;
@@ -33,6 +35,10 @@ export class NotificationResponseDto {
 
   @ApiProperty({ enum: ['SENT', 'FAILED'] })
   status: string;
+
+  // Add missing statusSent field
+  @ApiProperty({ enum: ['PENDING', 'SENT', 'CANCELLED'] })
+  statusSent?: string;
 
   @ApiPropertyOptional({ nullable: true })
   sentAt: Date | null;

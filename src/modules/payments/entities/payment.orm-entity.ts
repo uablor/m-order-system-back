@@ -15,7 +15,7 @@ export class PaymentOrmEntity extends BaseOrmEntity {
   customerOrderId: number;
 
   @Column({ name: 'payment_amount', type: 'decimal', precision: 18, scale: 2 })
-  paymentAmount: string;
+  paymentAmount: number;
 
   @Column({ name: 'payment_date', type: 'timestamp', nullable: true })
   paymentDate: Date;

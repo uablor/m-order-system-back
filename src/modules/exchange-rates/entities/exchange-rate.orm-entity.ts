@@ -21,7 +21,7 @@ export class ExchangeRateOrmEntity extends BaseOrmEntity {
   rateType: ExchangeRateType;
 
   @Column({ type: 'decimal', precision: 18, scale: 6, default: 0 })
-  rate: string;
+  rate: number;
 
   @Column({ name: 'is_active', type: 'boolean', default: true })
   isActive: boolean;

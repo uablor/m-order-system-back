@@ -104,7 +104,7 @@ export class OrderResponseDto {
     id: number;
     baseCurrency: string;
     targetCurrency: string;
-    rate: string;
+    rate: string | null;
     rateType: string;
     rateDate: Date;
     isActive: boolean;
@@ -115,7 +115,7 @@ export class OrderResponseDto {
     id: number;
     baseCurrency: string;
     targetCurrency: string;
-    rate: string;
+    rate: string | null;
     rateType: string;
     rateDate: Date;
     isActive: boolean;

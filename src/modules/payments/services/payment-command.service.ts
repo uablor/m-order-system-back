@@ -13,7 +13,7 @@ export class PaymentCommandService {
   constructor(
     private readonly paymentRepository: PaymentRepository,
     private readonly transactionService: TransactionService,
-  ) {}
+  ) { }
 
   async create(
     dto: PaymentCreateDto,
@@ -31,10 +31,9 @@ export class PaymentCommandService {
       }
 
       // ตรวจสอบว่า payment amount ไม่เกิน remaining amount
-      const remainingAmount = parseFloat(customerOrder.remainingAmount);
-      if (dto.paymentAmount > remainingAmount) {
+      if (dto.paymentAmount > customerOrder.remainingAmount) {
         throw new BadRequestException(
-          `Payment amount (${dto.paymentAmount}) cannot exceed remaining amount (${remainingAmount})`,
+          `Payment amount (${dto.paymentAmount}) cannot exceed remaining amount (${customerOrder.remainingAmount})`,
         );
       }
 
@@ -47,7 +46,7 @@ export class PaymentCommandService {
       const newPayment = await this.paymentRepository.create(
         {
           customerOrderId: dto.customerOrderId,
-          paymentAmount: dto.paymentAmount.toString(),
+          paymentAmount: dto.paymentAmount,
           paymentProofUrl: dto.paymentProofUrl,
           customerMessage: dto.customerMessage,
           status: 'PENDING' as PaymentStatus,
@@ -131,14 +130,14 @@ export class PaymentCommandService {
       });
 
       if (customerOrder) {
-        const currentPaid = parseFloat(customerOrder.totalPaid);
-        const paymentAmount = parseFloat(payment.paymentAmount);
+        const currentPaid = customerOrder.totalPaid;
+        const paymentAmount = payment.paymentAmount;
         const newPaid = currentPaid + paymentAmount;
-        const remainingAmount = parseFloat(customerOrder.remainingAmount) - paymentAmount;
+        const remainingAmount = customerOrder.remainingAmount - paymentAmount;
 
         await customerOrderRepo.update(payment.customerOrderId, {
-          totalPaid: newPaid.toString(),
-          remainingAmount: remainingAmount.toString(),
+          totalPaid: newPaid,
+          remainingAmount: remainingAmount,
           paymentStatus: remainingAmount <= 0 ? 'PAID' : 'PARTIAL',
         });
       }
@@ -160,7 +159,7 @@ export class PaymentCommandService {
       const payment = await paymentRepo.findOne({
         where: { id },
       });
-      
+
       if (!payment) {
         throw new NotFoundException('Payment not found');
       }

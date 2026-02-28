@@ -17,11 +17,11 @@ export class CustomerOrderItemOrmEntity extends BaseOrmEntity {
   quantity: number;
 
   @Column({ name: 'selling_price_foreign', type: 'decimal', precision: 18, scale: 4, default: 0 })
-  sellingPriceForeign: string;
+  sellingPriceForeign: number;
 
   @Column({ name: 'selling_total', type: 'decimal', precision: 18, scale: 2, default: 0 })
-  sellingTotal: string;
+  sellingTotal: number;
 
   @Column({ name: 'profit', type: 'decimal', precision: 18, scale: 2, default: 0 })
-  profit: string;
+  profit: number;
 }

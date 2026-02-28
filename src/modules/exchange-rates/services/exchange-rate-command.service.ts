@@ -31,12 +31,10 @@ export class ExchangeRateCommandService {
     dto: ExchangeRateCreateDto,
     currentUser: CurrentUserPayload,
   ): Promise<{ id: number }> {
-    console.log('profile user', currentUser);
     if (!currentUser?.merchantId) {
       throw new ForbiddenException('Merchant context required for this action');
     }
     return this.transactionService.run(async (manager) => {
-      console.log('profile user', currentUser);
       const merchant = await this.merchantRepository.findOneById(
         currentUser.merchantId!,
         manager,
@@ -60,13 +58,14 @@ export class ExchangeRateCommandService {
           baseCurrency: dto.baseCurrency,
           targetCurrency: dto.targetCurrency,
           rateType: dto.rateType,
-          rate: String(dto.rate),
+          rate: dto.rate,
           isActive: true,
           rateDate,
           createdByUser: { id: currentUser.userId } as UserOrmEntity,
         } as Partial<ExchangeRateOrmEntity>,
         manager,
       );
+      console.log('entity', entity);
       await this.clearExchangeRateCache();
       return { id: entity.id };
     });
@@ -109,7 +108,7 @@ export class ExchangeRateCommandService {
             baseCurrency: item.baseCurrency,
             targetCurrency: item.targetCurrency,
             rateType: item.rateType,
-            rate: String(item.rate),
+            rate: item.rate,
             isActive: true,
             rateDate,
             createdByUser: { id: currentUser.userId } as UserOrmEntity,
@@ -149,7 +148,7 @@ export class ExchangeRateCommandService {
       if (dto.targetCurrency !== undefined)
         updateData.targetCurrency = dto.targetCurrency;
       if (dto.rateType !== undefined) updateData.rateType = dto.rateType;
-      if (dto.rate !== undefined) updateData.rate = String(dto.rate);
+      if (dto.rate !== undefined) updateData.rate = dto.rate;
       if (dto.rateDate !== undefined)
         updateData.rateDate = new Date(dto.rateDate);
       if (dto.isActive !== undefined) updateData.isActive = dto.isActive;

@@ -2,10 +2,12 @@ import { Column, Entity, JoinColumn, ManyToOne } from 'typeorm';
 import { BaseOrmEntity } from '../../../common/base/enities/base.orm-entities';
 import { MerchantOrmEntity } from '../../merchants/entities/merchant.orm-entity';
 import { CustomerOrmEntity } from '../../customers/entities/customer.orm-entity';
+import { StatusSend } from '../enum/status-send.enum';
 
 export type NotificationType = 'ARRIVAL' | 'PAYMENT' | 'REMINDER';
 export type NotificationChannel = 'FB' | 'LINE' | 'WHATSAPP';
 export type NotificationStatus = 'SENT' | 'FAILED';
+
 
 @Entity('notifications')
 export class NotificationOrmEntity extends BaseOrmEntity {
@@ -40,6 +42,9 @@ export class NotificationOrmEntity extends BaseOrmEntity {
 
   @Column({ type: 'varchar', length: 20 })
   status: NotificationStatus;
+
+  @Column({ name: 'status_sent', type: 'enum', enum: StatusSend, default: StatusSend.PENDING })
+  statusSent: StatusSend;
 
   @Column({ name: 'sent_at', type: 'datetime', nullable: true })
   sentAt: Date | null;

@@ -3,7 +3,8 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { BaseQueryRepository } from '../../../common/base/repositories/base.query-repository';
 import { NotificationOrmEntity } from '../entities/notification.orm-entity';
-import { PaginatedResult, PaginationResponse } from '../../../common/base/interfaces/paginted.interface';
+import { fetchWithPagination } from '../../../common/utils/pagination.util';
+import { SortDirection } from '../../../common/base/enums/base.query.enum';
 
 @Injectable()
 export class NotificationQueryRepository extends BaseQueryRepository<NotificationOrmEntity> {
@@ -27,12 +28,8 @@ export class NotificationQueryRepository extends BaseQueryRepository<Notificatio
       endDate?: string;
     },
     manager?: import('typeorm').EntityManager,
-  ): Promise<PaginatedResult<NotificationOrmEntity>> {
+  ) {
     const repo = this.getRepo(manager);
-    const page = Math.max(1, options.page ?? 1);
-    const limit = Math.min(100, Math.max(1, options.limit ?? 10));
-    const skip = (page - 1) * limit;
-
     const qb = repo
       .createQueryBuilder('notification')
       .leftJoinAndSelect('notification.merchant', 'merchant')
@@ -65,25 +62,13 @@ export class NotificationQueryRepository extends BaseQueryRepository<Notificatio
       qb.andWhere('DATE(notification.sentAt) <= :endDate', { endDate: options.endDate });
     }
 
-    qb.orderBy('notification.createdAt', 'DESC').skip(skip).take(limit);
-
-    const [data, total] = await qb.getManyAndCount();
-
-    const totalPages = Math.ceil(total / limit);
-    const pagination: PaginationResponse = {
-      total,
-      page,
-      limit,
-      totalPages,
-      hasNextPage: page < totalPages,
-      hasPreviousPage: page > 1,
-    };
-    return {
-      success: true,
-      Code: 200,
-      message: 'Notifications fetched successfully',
-      results: data,
-      pagination,
-    };
+    return fetchWithPagination({
+      qb,
+      page: options.page ?? 1,
+      limit: options.limit ?? 10,
+      search: options.search ? { kw: options.search, field: 'recipientContact' } : undefined,
+      sort: 'DESC' as SortDirection,
+      manager: manager || repo.manager,
+    });
   }
 }

@@ -72,7 +72,7 @@ export class OrderItemResponseDto {
   sellingPriceForeign: string;
 
   @ApiProperty()
-  sellingTotalLak: string;
+  sellingTotal: string;
 
   @ApiProperty()
   profit: string;
