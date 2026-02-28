@@ -8,10 +8,25 @@ export class CustomerOrderItemResponseDto {
   id: number;
 
   @ApiProperty()
+  customerOrderId: number;
+
+  @ApiProperty()
   orderItemId: number;
+
+  @ApiPropertyOptional({ nullable: true })
+  orderItemIndex: number | null;
+
+  @ApiPropertyOptional({ nullable: true })
+  productName: string | null;
+
+  @ApiPropertyOptional({ nullable: true })
+  variant: string | null;
 
   @ApiProperty()
   quantity: number;
+
+  @ApiProperty()
+  sellingPriceForeign: string;
 
   @ApiProperty()
   sellingTotalLak: string;

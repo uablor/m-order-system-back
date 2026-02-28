@@ -2,7 +2,7 @@ import { Module } from '@nestjs/common';
 import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
+// import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { CacheModule } from '@nestjs/cache-manager';
 import { getDatabaseConfig } from './config/database.config';
 import appConfig from './config/app.config';
@@ -39,18 +39,18 @@ import { AllExceptionsFilter } from './common/filters/http-exception.filter';
       inject: [ConfigService],
       useFactory: (config: ConfigService) => getDatabaseConfig(config),
     }),
-    ThrottlerModule.forRootAsync({
-      imports: [ConfigModule],
-      inject: [ConfigService],
-      useFactory: (config: ConfigService) => [
-        {
-          ttl:
-            config.get<number>('app.throttle.ttl', { infer: true }) ?? 60_000,
-          limit:
-            config.get<number>('app.throttle.limit', { infer: true }) ?? 10,
-        },
-      ],
-    }),
+    // ThrottlerModule.forRootAsync({
+    //   imports: [ConfigModule],
+    //   inject: [ConfigService],
+    //   useFactory: (config: ConfigService) => [
+    //     {
+    //       ttl:
+    //         config.get<number>('app.throttle.ttl', { infer: true }) ?? 60_000,
+    //       limit:
+    //         config.get<number>('app.throttle.limit', { infer: true }) ?? 10,
+    //     },
+    //   ],
+    // }),
     CacheModule.registerAsync({
       isGlobal: true,
       imports: [ConfigModule],
@@ -106,10 +106,10 @@ import { AllExceptionsFilter } from './common/filters/http-exception.filter';
     PaymentModule,
   ],
   providers: [
-    {
-      provide: APP_GUARD,
-      useClass: ThrottlerGuard,
-    },
+    // {
+    //   provide: APP_GUARD,
+    //   useClass: ThrottlerGuard,
+    // },
     {
       provide: APP_GUARD,
       useClass: JwtAuthGuard,

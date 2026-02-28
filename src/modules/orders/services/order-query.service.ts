@@ -23,8 +23,9 @@ export class OrderQueryService {
             'createdByUser',
             'orderItems',
             'customerOrders',
-            'customerOrders.customerOrderItems',
             'customerOrders.customer',
+            'customerOrders.customerOrderItems',
+            'customerOrders.customerOrderItems.orderItem',
           ],
         })
       : await this.orderRepository.findOneById(id);
@@ -46,8 +47,9 @@ export class OrderQueryService {
         'createdByUser',
         'orderItems',
         'customerOrders',
-        'customerOrders.customerOrderItems',
         'customerOrders.customer',
+        'customerOrders.customerOrderItems',
+        'customerOrders.customerOrderItems.orderItem',
       ],
     });
     if (!entity) return null;
@@ -185,7 +187,11 @@ export class OrderQueryService {
           id: item.id,
           customerOrderId: item.customerOrder?.id ?? 0,
           orderItemId: item.orderItem?.id ?? 0,
+          orderItemIndex: item.orderItem?.orderItemIndex ?? null,
+          productName: item.orderItem?.productName ?? null,
+          variant: item.orderItem?.variant ?? null,
           quantity: item.quantity,
+          sellingPriceForeign: item.sellingPriceForeign,
           sellingTotalLak: item.sellingTotalLak,
           profitLak: item.profitLak,
           createdAt: item.createdAt,
