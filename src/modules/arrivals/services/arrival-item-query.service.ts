@@ -35,9 +35,7 @@ export class ArrivalItemQueryService {
       limit: query.limit,
       arrivalId: query.arrivalId,
       orderItemId: query.orderItemId,
-      status: query.status,
       createdByUserId: query.createdByUserId,
-      statusSent: query.statusSent,
     });
     return createPaginatedResponse(
       result.results.map((e) => this.toResponse(e)),

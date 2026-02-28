@@ -3,23 +3,10 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { BaseQueryRepository } from '../../../common/base/repositories/base.query-repository';
 import { ArrivalOrmEntity } from '../entities/arrival.orm-entity';
+import { fetchWithPagination } from '../../../common/utils/pagination.util';
 import { PaginatedResult, PaginationResponse } from '../../../common/base/interfaces/paginted.interface';
-
-export interface ArrivalFindOptions {
-  page?: number;
-  limit?: number;
-  search?: string;
-  merchantId?: number;
-  orderId?: number;
-  startDate?: string;
-  endDate?: string;
-  status?: string;
-  createdByUserId?: number;
-  statusSent?: string;
-  arrivalDate?: string;
-  arrivalTime?: string;
-  arrival?: boolean;
-}
+import { SortDirection } from '../../../common/base/enums/base.query.enum';
+import { ArrivalListQueryDto } from '../dto/arrival-list-query.dto';
 
 @Injectable()
 export class ArrivalQueryRepository extends BaseQueryRepository<ArrivalOrmEntity> {
@@ -29,16 +16,11 @@ export class ArrivalQueryRepository extends BaseQueryRepository<ArrivalOrmEntity
   ) {
     super(repository);
   }
-
   async findWithPagination(
-    options: ArrivalFindOptions,
+    options: ArrivalListQueryDto,
     manager?: import('typeorm').EntityManager,
   ): Promise<PaginatedResult<ArrivalOrmEntity>> {
     const repo = this.getRepo(manager);
-    const page = Math.max(1, options.page ?? 1);
-    const limit = Math.min(100, Math.max(1, options.limit ?? 10));
-    const skip = (page - 1) * limit;
-
     const qb = repo
       .createQueryBuilder('arrival')
       .leftJoinAndSelect('arrival.order', 'order')
@@ -93,20 +75,13 @@ export class ArrivalQueryRepository extends BaseQueryRepository<ArrivalOrmEntity
       }
     }
 
-
-    qb.orderBy('arrival.createdAt', 'DESC').skip(skip).take(limit);
-
-    const [data, total] = await qb.getManyAndCount();
-
-    const totalPages = Math.ceil(total / limit);
-    const pagination: PaginationResponse = {
-      total,
-      page,
-      limit,
-      totalPages,
-      hasNextPage: page < totalPages,
-      hasPreviousPage: page > 1,
-    };
-    return { success: true, Code: 200, message: 'Arrivals fetched successfully', results: data, pagination };
+    return fetchWithPagination({
+      qb,
+      page: options.page ?? 1,
+      search: options.search ? { kw: options.search, field: options.searchField || 'order.orderCode' } : undefined,
+      limit: options.limit ?? 10,
+      manager: manager || repo.manager,
+      sort: options.sort || SortDirection.DESC,
+    });
   }
 }

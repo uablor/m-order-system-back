@@ -1,9 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { FindOptionsWhere, Repository } from 'typeorm';
+import {  Repository } from 'typeorm';
 import { BaseQueryRepository } from '../../../common/base/repositories/base.query-repository';
 import { ArrivalItemOrmEntity } from '../entities/arrival-item.orm-entity';
-import { PaginatedResult, PaginationResponse } from '../../../common/base/interfaces/paginted.interface';
+import { fetchWithPagination } from '../../../common/utils/pagination.util';
+import { PaginatedResult } from '../../../common/base/interfaces/paginted.interface';
+import { ArrivalItemListQueryDto } from '../dto/arrival-item-list-query.dto';
+import { SortDirection } from '../../../common/base/enums/base.query.enum';
 
 @Injectable()
 export class ArrivalItemQueryRepository extends BaseQueryRepository<ArrivalItemOrmEntity> {
@@ -15,45 +18,30 @@ export class ArrivalItemQueryRepository extends BaseQueryRepository<ArrivalItemO
   }
 
   async findWithPagination(
-    options: { 
-      page?: number; 
-      limit?: number; 
-      arrivalId?: number; 
-      orderItemId?: number;
-      status?: string;
-      createdByUserId?: number;
-      statusSent?: string;
-    },
+    options: ArrivalItemListQueryDto,
     manager?: import('typeorm').EntityManager,
   ): Promise<PaginatedResult<ArrivalItemOrmEntity>> {
     const repo = this.getRepo(manager);
-    const page = Math.max(1, options.page ?? 1);
-    const limit = Math.min(100, Math.max(1, options.limit ?? 10));
-    const skip = (page - 1) * limit;
-    const where: FindOptionsWhere<ArrivalItemOrmEntity> = {};
-    if (options.arrivalId != null) where.arrival = { id: options.arrivalId };
-    if (options.orderItemId != null) where.orderItem = { id: options.orderItemId };
-    
-    // TODO: Add these filters when the fields are added to the entity
-    // if (options.status != null) where.status = options.status;
-    // if (options.createdByUserId != null) where.createdByUser = { id: options.createdByUserId };
-    // if (options.statusSent != null) where.statusSent = options.statusSent;
-    const [data, total] = await repo.findAndCount({
-      where: Object.keys(where).length ? where : undefined,
-      relations: ['arrival', 'orderItem', 'arrival.recordedByUser'],
-      order: { id: 'ASC' as const },
-      skip,
-      take: limit,
+    const qb = repo
+      .createQueryBuilder('arrivalItem')
+      .leftJoinAndSelect('arrivalItem.arrival', 'arrival')
+      .leftJoinAndSelect('arrivalItem.orderItem', 'orderItem');
+
+    if (options.arrivalId != null) {
+      qb.andWhere('arrival.id = :arrivalId', { arrivalId: options.arrivalId });
+    }
+
+    if (options.orderItemId != null) {
+      qb.andWhere('orderItem.id = :orderItemId', { orderItemId: options.orderItemId });
+    }
+
+    return fetchWithPagination({
+      qb,
+      page: options.page ?? 1,
+      limit: options.limit ?? 10,
+      search: { kw: options.search, field: options.searchField ?? 'id' },
+      manager: manager || repo.manager,
+      sort: options.sort ?? SortDirection.ASC,
     });
-    const totalPages = Math.ceil(total / limit);
-    const pagination: PaginationResponse = {
-      total,
-      page,
-      limit,
-      totalPages,
-      hasNextPage: page < totalPages,
-      hasPreviousPage: page > 1,
-    };
-    return { success: true, Code: 200, message: 'Arrival items fetched successfully', results: data, pagination };
   }
 }

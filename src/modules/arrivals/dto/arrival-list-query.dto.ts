@@ -2,7 +2,6 @@ import { IsOptional, IsInt, IsDateString, IsString, IsEnum, IsBoolean } from 'cl
 import { Type, Transform } from 'class-transformer';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { BaseQueryDto } from 'src/common/base/dtos/base.query.dto';
-import { StatusSend } from 'src/modules/notifications/enum/status-send.enum';
 
 export class ArrivalListQueryDto extends BaseQueryDto {
   @ApiPropertyOptional({ description: 'Filter by merchant ID' })
