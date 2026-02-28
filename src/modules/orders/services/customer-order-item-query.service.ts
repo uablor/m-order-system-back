@@ -48,8 +48,8 @@ export class CustomerOrderItemQueryService {
       orderItemId: entity.orderItem?.id ?? 0,
       quantity: entity.quantity,
       sellingPriceForeign: entity.sellingPriceForeign,
-      sellingTotalLak: entity.sellingTotalLak,
-      profitLak: entity.profitLak,
+      sellingTotal: entity.sellingTotal,
+      profit: entity.profit,
       createdAt: entity.createdAt,
       updatedAt: entity.updatedAt,
     };

@@ -16,8 +16,8 @@ export class CustomerOrderOrmEntity extends BaseOrmEntity {
   @JoinColumn({ name: 'customer_id' })
   customer: CustomerOrmEntity;
 
-  @Column({ name: 'total_selling_amount_lak', type: 'decimal', precision: 18, scale: 2, default: 0 })
-  totalSellingAmountLak: string;
+  @Column({ name: 'total_selling_amount', type: 'decimal', precision: 18, scale: 2, default: 0 })
+  totalSellingAmount: string;
 
   @Column({ name: 'total_paid', type: 'decimal', precision: 18, scale: 2, default: 0 })
   totalPaid: string;

@@ -17,10 +17,10 @@ class CustomerOrderItemResponseDto {
   sellingPriceForeign: string;
 
   @ApiProperty()
-  sellingTotalLak: string;
+  sellingTotal: string;
 
   @ApiProperty()
-  profitLak: string;
+  profit: string;
 }
 
 export class CustomerOrderResponseDto {
@@ -40,7 +40,7 @@ export class CustomerOrderResponseDto {
   customerToken: string;
 
   @ApiProperty()
-  totalSellingAmountLak: string;
+  totalSellingAmount: string;
 
   @ApiProperty()
   totalPaid: string;

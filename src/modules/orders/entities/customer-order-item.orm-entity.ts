@@ -19,9 +19,9 @@ export class CustomerOrderItemOrmEntity extends BaseOrmEntity {
   @Column({ name: 'selling_price_foreign', type: 'decimal', precision: 18, scale: 4, default: 0 })
   sellingPriceForeign: string;
 
-  @Column({ name: 'selling_total_lak', type: 'decimal', precision: 18, scale: 2, default: 0 })
-  sellingTotalLak: string;
+  @Column({ name: 'selling_total', type: 'decimal', precision: 18, scale: 2, default: 0 })
+  sellingTotal: string;
 
-  @Column({ name: 'profit_lak', type: 'decimal', precision: 18, scale: 2, default: 0 })
-  profitLak: string;
+  @Column({ name: 'profit', type: 'decimal', precision: 18, scale: 2, default: 0 })
+  profit: string;
 }

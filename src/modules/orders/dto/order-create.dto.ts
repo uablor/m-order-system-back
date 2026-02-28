@@ -22,9 +22,9 @@ export class OrderCreateDto {
   @IsIn(ARRIVAL_STATUSES)
   arrivalStatus?: 'NOT_ARRIVED' | 'ARRIVED';
 
-  @ApiPropertyOptional({ description: 'Total shipping cost in LAK', default: 0 })
+  @ApiPropertyOptional({ description: 'Total shipping cost', default: 0 })
   @IsOptional()
   @IsNumber()
   @Min(0)
-  totalShippingCostLak?: number;
+  totalShippingCost?: number;
 }
