@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { OrdersByArrivalStatusDto, OrdersByPaymentStatusDto } from './admin-dashboard-response.dto';
+import { OrdersByArrivalStatusDto, OrdersByPaymentStatusDto } from './common-dashboard.dto';
 
 export class LatestOrderDto {
   @ApiProperty({ example: 1 })
@@ -44,22 +44,16 @@ export class MerchantDashboardResponseDto {
   totalArrivals: number;
 
   @ApiProperty()
-  totalFinalCostLak: string;
+  totalFinalCost: string;
 
   @ApiProperty()
-  totalRevenueLak: string;
+  totalRevenue: string;
 
   @ApiProperty()
-  totalRevenueThb: string;
+  totalProfit: string;
 
   @ApiProperty()
-  totalProfitLak: string;
-
-  @ApiProperty()
-  totalProfitThb: string;
-
-  @ApiProperty()
-  totalOutstandingAmountLak: string;
+  totalOutstandingAmount: string;
 
   @ApiProperty({ type: [LatestOrderDto], description: 'Latest 5 orders with customer name' })
   latestOrders: LatestOrderDto[];

@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { DataSource } from 'typeorm';
-import { AdminDashboardResponseDto } from '../dto/admin-dashboard-response.dto';
+import { AdminDashboardDetailsResponseDto } from '../dto/admin-dashboard-details.dto';
+import { AdminDashboardSummaryResponseDto } from '../dto/admin-dashboard-summary.dto';
 import { MerchantDashboardResponseDto, LatestOrderDto } from '../dto/merchant-dashboard-response.dto';
 import { AnnualReportResponseDto, MonthlyReportDto } from '../dto/annual-report-response.dto';
 
@@ -13,83 +14,103 @@ const MONTH_NAMES = [
 export class DashboardQueryService {
   constructor(private readonly dataSource: DataSource) {}
 
-  async getAdminDashboard(): Promise<AdminDashboardResponseDto> {
+  async getAdminDashboardSummary(): Promise<AdminDashboardSummaryResponseDto> {
     const [
       merchantStats,
-      userCount,
-      customerCount,
+      adminUserStats,
+      merchantUserStats,
       orderStats,
-      orderThisMonth,
-      paymentStatusRows,
-      arrivalStatusRows,
     ] = await Promise.all([
-      this.dataSource.query<{ total: string; active: string }[]>(
-        `SELECT COUNT(*) AS total, SUM(CASE WHEN is_active = 1 THEN 1 ELSE 0 END) AS active FROM merchants`,
+      this.dataSource.query<{ total: string }[]>(
+        `SELECT COUNT(*) AS total FROM merchants`,
       ),
       this.dataSource.query<{ total: string }[]>(
-        `SELECT COUNT(*) AS total FROM users`,
+        `SELECT COUNT(*) AS total FROM users WHERE merchant_id IS NULL`,
       ),
       this.dataSource.query<{ total: string }[]>(
-        `SELECT COUNT(*) AS total FROM customers`,
+        `SELECT COUNT(*) AS total FROM users WHERE merchant_id IS NOT NULL`,
       ),
-      this.dataSource.query<{
-        orderCount: string;
-        totalFinalCostLak: string;
-        totalRevenueLak: string;
-        totalRevenueThb: string;
-        totalProfitLak: string;
-        totalProfitThb: string;
-        totalOutstandingAmountLak: string;
-      }[]>(
-        `SELECT
-          COUNT(*) AS orderCount,
-          COALESCE(SUM(total_final_cost_lak), 0) AS totalFinalCostLak,
-          COALESCE(SUM(total_selling_amount_lak), 0) AS totalRevenueLak,
-          COALESCE(SUM(total_selling_amount_thb), 0) AS totalRevenueThb,
-          COALESCE(SUM(total_profit_lak), 0) AS totalProfitLak,
-          COALESCE(SUM(total_profit_thb), 0) AS totalProfitThb,
-          COALESCE(SUM(remaining_amount), 0) AS totalOutstandingAmountLak
-        FROM orders`,
-      ),
-      this.dataSource.query<{ orderCount: string }[]>(
-        `SELECT COUNT(*) AS orderCount FROM orders
-         WHERE YEAR(order_date) = YEAR(CURDATE()) AND MONTH(order_date) = MONTH(CURDATE())`,
-      ),
-      this.dataSource.query<{ payment_status: string; cnt: string }[]>(
-        `SELECT payment_status, COUNT(*) AS cnt FROM orders GROUP BY payment_status`,
-      ),
-      this.dataSource.query<{ arrival_status: string; cnt: string }[]>(
-        `SELECT arrival_status, COUNT(*) AS cnt FROM orders GROUP BY arrival_status`,
+      this.dataSource.query<{ total: string }[]>(
+        `SELECT COUNT(*) AS total FROM orders`,
       ),
     ]);
 
-    const paymentMap = this.toStatusMap(paymentStatusRows, 'payment_status');
-    const arrivalMap = this.toStatusMap(arrivalStatusRows, 'arrival_status');
-
-    const stats = orderStats[0];
-
     return {
       totalMerchants: Number(merchantStats[0]?.total ?? 0),
-      activeMerchants: Number(merchantStats[0]?.active ?? 0),
-      totalUsers: Number(userCount[0]?.total ?? 0),
-      totalCustomers: Number(customerCount[0]?.total ?? 0),
-      totalOrders: Number(stats?.orderCount ?? 0),
-      totalOrdersThisMonth: Number(orderThisMonth[0]?.orderCount ?? 0),
-      ordersByPaymentStatus: {
-        UNPAID: Number(paymentMap['UNPAID'] ?? 0),
-        PARTIAL: Number(paymentMap['PARTIAL'] ?? 0),
-        PAID: Number(paymentMap['PAID'] ?? 0),
-      },
-      ordersByArrivalStatus: {
-        NOT_ARRIVED: Number(arrivalMap['NOT_ARRIVED'] ?? 0),
-        ARRIVED: Number(arrivalMap['ARRIVED'] ?? 0),
-      },
-      totalFinalCostLak: String(stats?.totalFinalCostLak ?? '0'),
-      totalRevenueLak: String(stats?.totalRevenueLak ?? '0'),
-      totalRevenueThb: String(stats?.totalRevenueThb ?? '0'),
-      totalProfitLak: String(stats?.totalProfitLak ?? '0'),
-      totalProfitThb: String(stats?.totalProfitThb ?? '0'),
-      totalOutstandingAmountLak: String(stats?.totalOutstandingAmountLak ?? '0'),
+      totalAdminUsers: Number(adminUserStats[0]?.total ?? 0),
+      totalMerchantUsers: Number(merchantUserStats[0]?.total ?? 0),
+      totalOrders: Number(orderStats[0]?.total ?? 0),
+    };
+  }
+
+  async getAdminDashboardDetails(): Promise<AdminDashboardDetailsResponseDto> {
+    const [topMerchantRows, recentUserRows] = await Promise.all([
+      this.dataSource.query<{
+        id: string;
+        shop_name: string;
+        total_orders: string;
+        total_revenue_lak: string;
+        total_profit_lak: string;
+      }[]>(
+        `SELECT
+          m.id,
+          m.shop_name,
+          COUNT(o.id) AS total_orders,
+          COALESCE(SUM(o.total_selling_amount), 0) AS total_revenue_lak,
+          COALESCE(SUM(o.total_profit), 0) AS total_profit_lak
+        FROM merchants m
+        LEFT JOIN orders o ON o.merchant_id = m.id
+        WHERE m.is_active = 1
+        GROUP BY m.id, m.shop_name
+        HAVING total_orders > 0
+        ORDER BY total_orders DESC, total_revenue_lak DESC
+        LIMIT 5`
+      ),
+      this.dataSource.query<{
+        id: string;
+        full_name: string;
+        email: string;
+        last_login: Date;
+        merchant_id: string;
+        merchant_shop_name: string;
+      }[]>(
+        `SELECT
+          u.id,
+          u.full_name,
+          u.email,
+          u.last_login,
+          m.id AS merchant_id,
+          m.shop_name AS merchant_shop_name
+        FROM users u
+        LEFT JOIN merchants m ON m.id = u.merchant_id
+        WHERE u.last_login IS NOT NULL
+        ORDER BY u.last_login DESC
+        LIMIT 5`
+      ),
+    ]);
+
+    const topMerchants = topMerchantRows.map(row => ({
+      id: Number(row.id),
+      shopName: row.shop_name,
+      totalOrders: Number(row.total_orders),
+      totalRevenue: String(row.total_revenue_lak),
+      totalProfit: String(row.total_profit_lak),
+    }));
+
+    const recentUserLogins = recentUserRows.map(row => ({
+      id: Number(row.id),
+      fullName: row.full_name,
+      email: row.email,
+      lastLogin: row.last_login,
+      merchant: row.merchant_id ? {
+        id: Number(row.merchant_id),
+        shopName: row.merchant_shop_name,
+      } : undefined,
+    }));
+
+    return {
+      topMerchants,
+      recentUserLogins,
     };
   }
 
@@ -110,21 +131,17 @@ export class DashboardQueryService {
       ),
       this.dataSource.query<{
         orderCount: string;
-        totalFinalCostLak: string;
-        totalRevenueLak: string;
-        totalRevenueThb: string;
-        totalProfitLak: string;
-        totalProfitThb: string;
-        totalOutstandingAmountLak: string;
+        totalFinalCost: string;
+        totalRevenue: string;
+        totalProfit: string;
+        totalOutstandingAmount: string;
       }[]>(
         `SELECT
           COUNT(*) AS orderCount,
-          COALESCE(SUM(total_final_cost_lak), 0) AS totalFinalCostLak,
-          COALESCE(SUM(total_selling_amount_lak), 0) AS totalRevenueLak,
-          COALESCE(SUM(total_selling_amount_thb), 0) AS totalRevenueThb,
-          COALESCE(SUM(total_profit_lak), 0) AS totalProfitLak,
-          COALESCE(SUM(total_profit_thb), 0) AS totalProfitThb,
-          COALESCE(SUM(remaining_amount), 0) AS totalOutstandingAmountLak
+          COALESCE(SUM(total_final_cost), 0) AS totalFinalCost,
+          COALESCE(SUM(total_selling_amount), 0) AS totalRevenue,
+          COALESCE(SUM(total_profit), 0) AS totalProfit,
+          0 AS totalOutstandingAmount
         FROM orders WHERE merchant_id = ?`,
         [merchantId],
       ),
@@ -159,14 +176,14 @@ export class DashboardQueryService {
         id: string;
         order_code: string;
         arrival_status: string;
-        total_selling_amount_lak: string;
+        total_selling_amount: string;
         customer_name: string | null;
       }[]>(
         `SELECT
           o.id,
           o.order_code,
           o.arrival_status,
-          o.total_selling_amount_lak,
+          o.total_selling_amount,
           (
             SELECT c.customer_name
             FROM customer_orders co
@@ -190,7 +207,7 @@ export class DashboardQueryService {
       id: Number(row.id),
       orderCode: row.order_code,
       arrivalStatus: row.arrival_status,
-      totalAmount: String(row.total_selling_amount_lak ?? '0'),
+      totalAmount: String(row.total_selling_amount ?? '0'),
       customerName: row.customer_name ?? null,
     }));
 
@@ -210,62 +227,28 @@ export class DashboardQueryService {
       },
       totalCustomers: Number(customerCount[0]?.total ?? 0),
       totalArrivals: Number(arrivalCount[0]?.total ?? 0),
-      totalFinalCostLak: String(stats?.totalFinalCostLak ?? '0'),
-      totalRevenueLak: String(stats?.totalRevenueLak ?? '0'),
-      totalRevenueThb: String(stats?.totalRevenueThb ?? '0'),
-      totalProfitLak: String(stats?.totalProfitLak ?? '0'),
-      totalProfitThb: String(stats?.totalProfitThb ?? '0'),
-      totalOutstandingAmountLak: String(stats?.totalOutstandingAmountLak ?? '0'),
+      totalFinalCost: String(stats?.totalFinalCost ?? '0'),
+      totalRevenue: String(stats?.totalRevenue ?? '0'),
+      totalProfit: String(stats?.totalProfit ?? '0'),
+      totalOutstandingAmount: String(stats?.totalOutstandingAmount ?? '0'),
       latestOrders,
     };
-  }
-
-  async getAdminAnnualReport(year: number): Promise<AnnualReportResponseDto> {
-    const rows = await this.dataSource.query<{
-      month: string;
-      orderCount: string;
-      finalCostLak: string;
-      revenueLak: string;
-      revenueThb: string;
-      profitLak: string;
-      profitThb: string;
-    }[]>(
-      `SELECT
-        MONTH(order_date) AS month,
-        COUNT(*) AS orderCount,
-        COALESCE(SUM(total_final_cost_lak), 0) AS finalCostLak,
-        COALESCE(SUM(total_selling_amount_lak), 0) AS revenueLak,
-        COALESCE(SUM(total_selling_amount_thb), 0) AS revenueThb,
-        COALESCE(SUM(total_profit_lak), 0) AS profitLak,
-        COALESCE(SUM(total_profit_thb), 0) AS profitThb
-      FROM orders
-      WHERE YEAR(order_date) = ?
-      GROUP BY MONTH(order_date)
-      ORDER BY MONTH(order_date)`,
-      [year],
-    );
-
-    return { year, months: this.buildMonthlyReport(rows) };
   }
 
   async getMerchantAnnualReport(year: number, merchantId: number): Promise<AnnualReportResponseDto> {
     const rows = await this.dataSource.query<{
       month: string;
       orderCount: string;
-      finalCostLak: string;
-      revenueLak: string;
-      revenueThb: string;
-      profitLak: string;
-      profitThb: string;
+      finalCost: string;
+      revenue: string;
+      profit: string;
     }[]>(
       `SELECT
         MONTH(order_date) AS month,
         COUNT(*) AS orderCount,
-        COALESCE(SUM(total_final_cost_lak), 0) AS finalCostLak,
-        COALESCE(SUM(total_selling_amount_lak), 0) AS revenueLak,
-        COALESCE(SUM(total_selling_amount_thb), 0) AS revenueThb,
-        COALESCE(SUM(total_profit_lak), 0) AS profitLak,
-        COALESCE(SUM(total_profit_thb), 0) AS profitThb
+        COALESCE(SUM(total_final_cost), 0) AS finalCost,
+        COALESCE(SUM(total_selling_amount), 0) AS revenue,
+        COALESCE(SUM(total_profit), 0) AS profit
       FROM orders
       WHERE YEAR(order_date) = ? AND merchant_id = ?
       GROUP BY MONTH(order_date)
@@ -291,11 +274,9 @@ export class DashboardQueryService {
     rows: {
       month: string;
       orderCount: string;
-      finalCostLak: string;
-      revenueLak: string;
-      revenueThb: string;
-      profitLak: string;
-      profitThb: string;
+      finalCost: string;
+      revenue: string;
+      profit: string;
     }[],
   ): MonthlyReportDto[] {
     const rowMap: Record<number, (typeof rows)[0]> = {};
@@ -310,11 +291,9 @@ export class DashboardQueryService {
         month: monthNum,
         monthName: MONTH_NAMES[i],
         orderCount: Number(row?.orderCount ?? 0),
-        finalCostLak: String(row?.finalCostLak ?? '0'),
-        revenueLak: String(row?.revenueLak ?? '0'),
-        revenueThb: String(row?.revenueThb ?? '0'),
-        profitLak: String(row?.profitLak ?? '0'),
-        profitThb: String(row?.profitThb ?? '0'),
+        finalCost: String(row?.finalCost ?? '0'),
+        revenue: String(row?.revenue ?? '0'),
+        profit: String(row?.profit ?? '0'),
       };
     });
   }

@@ -8,7 +8,8 @@ import {
   ApiOkResponseBase,
   ApiUnauthorizedBase,
 } from '../../../common/swagger/swagger.decorators';
-import { AdminDashboardResponseDto } from '../dto/admin-dashboard-response.dto';
+import { AdminDashboardDetailsResponseDto } from '../dto/admin-dashboard-details.dto';
+import { AdminDashboardSummaryResponseDto } from '../dto/admin-dashboard-summary.dto';
 import { MerchantDashboardResponseDto } from '../dto/merchant-dashboard-response.dto';
 import { AnnualReportResponseDto } from '../dto/annual-report-response.dto';
 import { createSingleResponse } from '../../../common/base/helpers/response.helper';
@@ -18,24 +19,26 @@ import { createSingleResponse } from '../../../common/base/helpers/response.help
 export class DashboardController {
   constructor(private readonly dashboardQueryService: DashboardQueryService) {}
 
-  @Get('admin')
-  @ApiOperation({ summary: 'Admin dashboard summary (ทุก merchant)' })
+  @Get('admin/summary')
+  @ApiOperation({ summary: 'Admin dashboard summary - total counts' })
   @ApiBearerAuth('BearerAuth')
-  @ApiOkResponseBase(AdminDashboardResponseDto)
+  @ApiOkResponseBase(AdminDashboardSummaryResponseDto)
   @ApiUnauthorizedBase()
-  async adminGetDashboard() {
-    const data = await this.dashboardQueryService.getAdminDashboard();
+  async adminGetDashboardSummary() {
+    const data = await this.dashboardQueryService.getAdminDashboardSummary();
     return createSingleResponse(data);
   }
 
-  @Get('admin/annual-report')
-  @ApiOperation({ summary: 'Admin annual report (all merchants) by year' })
+
+  
+
+  @Get('admin/details')
+  @ApiOperation({ summary: 'Admin dashboard details - top merchants and recent user logins' })
   @ApiBearerAuth('BearerAuth')
-  @ApiOkResponseBase(AnnualReportResponseDto)
+  @ApiOkResponseBase(AdminDashboardDetailsResponseDto)
   @ApiUnauthorizedBase()
-  async adminGetAnnualReport(@Query() query: AnnualReportQueryDto) {
-    const year = query.year ?? new Date().getFullYear();
-    const data = await this.dashboardQueryService.getAdminAnnualReport(year);
+  async adminGetDashboardDetails() {
+    const data = await this.dashboardQueryService.getAdminDashboardDetails();
     return createSingleResponse(data);
   }
 
