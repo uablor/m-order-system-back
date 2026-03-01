@@ -270,7 +270,10 @@ export class OrderCommandService {
           const sellingTotal = coItem.quantity * coItem.sellingPriceForeign;
           const costPerUnit = Number(coItem.orderItem.finalCost) / coItem.orderItem.quantity;
           const costAllocated = costPerUnit * coItem.quantity;
-          const profit = sellingTotal - costAllocated;
+          const sellingTotalTargetCurrency = convertToTargetCurrency(sellingTotal, coItem.orderItem.exchangeRateSell);
+          const costAllocatedTargetCurrency = convertToTargetCurrency(costAllocated, coItem.orderItem.exchangeRateBuy);
+          const profitTargetCurrency = Number(sellingTotalTargetCurrency) - Number(costAllocatedTargetCurrency);
+          const profit = convertToBaseCurrency(profitTargetCurrency, coItem.orderItem.exchangeRateSell);
 
           await this.customerOrderItemRepository.create(
             {
@@ -279,7 +282,7 @@ export class OrderCommandService {
               quantity: coItem.quantity,
               sellingPriceForeign: coItem.sellingPriceForeign,
               sellingTotal: sellingTotal,
-              profit: profit,
+              profit: Number(profit),
             } as Partial<CustomerOrderItemOrmEntity>,
             manager,
           );

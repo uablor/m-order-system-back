@@ -1,4 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { IsDate, IsOptional } from 'class-validator';
+import { Transform } from 'class-transformer';
 
 export class MerchantPriceCurrencySummaryDto {
   @ApiProperty({ description: 'Target currency code' })
@@ -21,4 +23,18 @@ export class MerchantPriceCurrencySummaryDto {
 
   @ApiProperty({ description: 'Total price for paid orders (converted to LAK)' })
   totalPaidConverted?: number;
+}
+
+export class MerchantGetPriceCurrencySummaryDto {
+  @ApiProperty({ description: 'Start date', required: false })
+  @IsOptional()
+  @IsDate()
+  @Transform(({ value }) => value ? new Date(value) : undefined)
+  startDate?: Date;
+  
+  @ApiProperty({ description: 'End date', required: false })
+  @IsOptional()
+  @IsDate()
+  @Transform(({ value }) => value ? new Date(value) : undefined)
+  endDate?: Date;
 }
