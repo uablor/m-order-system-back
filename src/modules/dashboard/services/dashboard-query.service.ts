@@ -2,7 +2,8 @@ import { Injectable } from '@nestjs/common';
 import { DataSource } from 'typeorm';
 import { AdminDashboardDetailsResponseDto } from '../dto/admin-dashboard-details.dto';
 import { AdminDashboardSummaryResponseDto } from '../dto/admin-dashboard-summary.dto';
-import { MerchantDashboardResponseDto, LatestOrderDto } from '../dto/merchant-dashboard-response.dto';
+import { MerchantSummaryResponseDto } from '../dto/merchant-summary.dto';
+import { MerchantPriceSummaryResponseDto } from '../dto/merchant-price-summary.dto';
 import { AnnualReportResponseDto, MonthlyReportDto } from '../dto/annual-report-response.dto';
 
 const MONTH_NAMES = [
@@ -114,50 +115,17 @@ export class DashboardQueryService {
     };
   }
 
-  async getMerchantDashboard(merchantId: number): Promise<MerchantDashboardResponseDto> {
+  async getMerchantSummary(merchantId: number): Promise<MerchantSummaryResponseDto> {
     const [
-      merchantInfo,
+      userStats,
+      customerStats,
       orderStats,
-      orderThisMonth,
-      paymentStatusRows,
-      arrivalStatusRows,
-      customerCount,
-      arrivalCount,
-      latestOrderRows,
+      paidOrderStats,
+      arrivalStats,
+      orderItemStats,
     ] = await Promise.all([
-      this.dataSource.query<{ id: number; shop_name: string }[]>(
-        `SELECT id, shop_name FROM merchants WHERE id = ?`,
-        [merchantId],
-      ),
-      this.dataSource.query<{
-        orderCount: string;
-        totalFinalCost: string;
-        totalRevenue: string;
-        totalProfit: string;
-        totalOutstandingAmount: string;
-      }[]>(
-        `SELECT
-          COUNT(*) AS orderCount,
-          COALESCE(SUM(total_final_cost), 0) AS totalFinalCost,
-          COALESCE(SUM(total_selling_amount), 0) AS totalRevenue,
-          COALESCE(SUM(total_profit), 0) AS totalProfit,
-          0 AS totalOutstandingAmount
-        FROM orders WHERE merchant_id = ?`,
-        [merchantId],
-      ),
-      this.dataSource.query<{ orderCount: string }[]>(
-        `SELECT COUNT(*) AS orderCount FROM orders
-         WHERE merchant_id = ?
-           AND YEAR(order_date) = YEAR(CURDATE())
-           AND MONTH(order_date) = MONTH(CURDATE())`,
-        [merchantId],
-      ),
-      this.dataSource.query<{ payment_status: string; cnt: string }[]>(
-        `SELECT payment_status, COUNT(*) AS cnt FROM orders WHERE merchant_id = ? GROUP BY payment_status`,
-        [merchantId],
-      ),
-      this.dataSource.query<{ arrival_status: string; cnt: string }[]>(
-        `SELECT arrival_status, COUNT(*) AS cnt FROM orders WHERE merchant_id = ? GROUP BY arrival_status`,
+      this.dataSource.query<{ total: string }[]>(
+        `SELECT COUNT(*) AS total FROM users WHERE merchant_id = ?`,
         [merchantId],
       ),
       this.dataSource.query<{ total: string }[]>(
@@ -169,73 +137,150 @@ export class DashboardQueryService {
         [merchantId],
       ),
       this.dataSource.query<{ total: string }[]>(
+        `SELECT COUNT(*) AS total FROM orders WHERE merchant_id = ?`,
+        [merchantId],
+      ),
+      this.dataSource.query<{ total: string }[]>(
+        `SELECT COUNT(*) AS total FROM orders WHERE merchant_id = ? AND payment_status = 'PAID'`,
+        [merchantId],
+      ),
+      this.dataSource.query<{ total: string }[]>(
         `SELECT COUNT(*) AS total FROM arrivals WHERE merchant_id = ?`,
         [merchantId],
       ),
-      this.dataSource.query<{
-        id: string;
-        order_code: string;
-        arrival_status: string;
-        total_selling_amount: string;
-        customer_name: string | null;
-      }[]>(
-        `SELECT
-          o.id,
-          o.order_code,
-          o.arrival_status,
-          o.total_selling_amount,
-          (
-            SELECT c.customer_name
-            FROM customer_orders co
-            INNER JOIN customers c ON c.id = co.customer_id
-            WHERE co.order_id = o.id
-            LIMIT 1
-          ) AS customer_name
-        FROM orders o
-        WHERE o.merchant_id = ?
-        ORDER BY o.created_at DESC
-        LIMIT 5`,
+      this.dataSource.query<{ total: string }[]>(
+        `SELECT COUNT(*) AS total FROM order_items WHERE order_id IN (
+          SELECT id FROM orders WHERE merchant_id = ?
+        )`,
         [merchantId],
       ),
     ]);
 
-    const paymentMap = this.toStatusMap(paymentStatusRows, 'payment_status');
-    const arrivalMap = this.toStatusMap(arrivalStatusRows, 'arrival_status');
-    const stats = orderStats[0];
-
-    const latestOrders: LatestOrderDto[] = latestOrderRows.map((row) => ({
-      id: Number(row.id),
-      orderCode: row.order_code,
-      arrivalStatus: row.arrival_status,
-      totalAmount: String(row.total_selling_amount ?? '0'),
-      customerName: row.customer_name ?? null,
-    }));
-
     return {
-      merchantId,
-      shopName: merchantInfo[0]?.shop_name ?? '',
-      totalOrders: Number(stats?.orderCount ?? 0),
-      totalOrdersThisMonth: Number(orderThisMonth[0]?.orderCount ?? 0),
-      ordersByPaymentStatus: {
-        UNPAID: Number(paymentMap['UNPAID'] ?? 0),
-        PARTIAL: Number(paymentMap['PARTIAL'] ?? 0),
-        PAID: Number(paymentMap['PAID'] ?? 0),
-      },
-      ordersByArrivalStatus: {
-        NOT_ARRIVED: Number(arrivalMap['NOT_ARRIVED'] ?? 0),
-        ARRIVED: Number(arrivalMap['ARRIVED'] ?? 0),
-      },
-      totalCustomers: Number(customerCount[0]?.total ?? 0),
-      totalArrivals: Number(arrivalCount[0]?.total ?? 0),
-      totalFinalCost: String(stats?.totalFinalCost ?? '0'),
-      totalRevenue: String(stats?.totalRevenue ?? '0'),
-      totalProfit: String(stats?.totalProfit ?? '0'),
-      totalOutstandingAmount: String(stats?.totalOutstandingAmount ?? '0'),
-      latestOrders,
+      totalUsers: Number(userStats[0]?.total ?? 0),
+      totalCustomers: Number(customerStats[0]?.total ?? 0),
+      totalOrders: Number(orderStats[0]?.total ?? 0),
+      totalPaidOrders: Number(paidOrderStats[0]?.total ?? 0),
+      totalArrivals: Number(arrivalStats[0]?.total ?? 0),
+      totalOrderItems: Number(orderItemStats[0]?.total ?? 0),
     };
   }
 
-  async getMerchantAnnualReport(year: number, merchantId: number): Promise<AnnualReportResponseDto> {
+  async getMerchantPriceSummary(merchantId: number): Promise<MerchantPriceSummaryResponseDto> {
+    const [
+      totalOrderItemsPrice,
+      unpaidOrderItemsPrice,
+      paidOrderItemsPrice,
+      paidOrderItemsFinalCost,
+      totalPaymentsPrice,
+      rejectedPaymentsPrice,
+      pendingVerifiedPaymentsPrice,
+      pendingRejectedPaymentsPrice,
+      totalFinalCost,
+      totalShippingPrice,
+      totalPaidFinalCost,
+      totalPaidShippingPrice,
+    ] = await Promise.all([
+      // Total price in order items
+      this.dataSource.query<{ total: string }[]>(
+        `SELECT COALESCE(SUM(purchase_total), 0) AS total FROM order_items WHERE order_id IN (
+          SELECT id FROM orders WHERE merchant_id = ?
+        )`,
+        [merchantId],
+      ),
+      // Total price of unpaid order items
+      this.dataSource.query<{ total: string }[]>(
+        `SELECT COALESCE(SUM(oi.purchase_total), 0) AS total 
+         FROM order_items oi
+         INNER JOIN orders o ON o.id = oi.order_id
+         WHERE o.merchant_id = ? AND o.payment_status = 'UNPAID'`,
+        [merchantId],
+      ),
+      // Total price of paid order items
+      this.dataSource.query<{ total: string }[]>(
+        `SELECT COALESCE(SUM(oi.purchase_total), 0) AS total 
+         FROM order_items oi
+         INNER JOIN orders o ON o.id = oi.order_id
+         WHERE o.merchant_id = ? AND o.payment_status = 'PAID'`,
+        [merchantId],
+      ),
+      // Total final cost of paid order items
+      this.dataSource.query<{ total: string }[]>(
+        `SELECT COALESCE(SUM(oi.total_cost_before_discount), 0) AS total 
+         FROM order_items oi
+         INNER JOIN orders o ON o.id = oi.order_id
+         WHERE o.merchant_id = ? AND o.payment_status = 'PAID'`,
+        [merchantId],
+      ),
+      // Total price in payments (all statuses)
+      this.dataSource.query<{ total: string }[]>(
+        `SELECT COALESCE(SUM(amount), 0) AS total FROM payments WHERE merchant_id = ?`,
+        [merchantId],
+      ),
+      // Total price of rejected payments
+      this.dataSource.query<{ total: string }[]>(
+        `SELECT COALESCE(SUM(amount), 0) AS total FROM payments WHERE merchant_id = ? AND status = 'REJECTED'`,
+        [merchantId],
+      ),
+      // Total price of pending verified payments
+      this.dataSource.query<{ total: string }[]>(
+        `SELECT COALESCE(SUM(amount), 0) AS total FROM payments WHERE merchant_id = ? AND status = 'PENDING_VERIFIED'`,
+        [merchantId],
+      ),
+      // Total price of pending rejected payments
+      this.dataSource.query<{ total: string }[]>(
+        `SELECT COALESCE(SUM(amount), 0) AS total FROM payments WHERE merchant_id = ? AND status = 'PENDING_REJECTED'`,
+        [merchantId],
+      ),
+      // Total final cost
+      this.dataSource.query<{ total: string }[]>(
+        `SELECT COALESCE(SUM(total_cost_before_discount), 0) AS total FROM order_items WHERE order_id IN (
+          SELECT id FROM orders WHERE merchant_id = ?
+        )`,
+        [merchantId],
+      ),
+      // Total shipping price
+      this.dataSource.query<{ total: string }[]>(
+        `SELECT COALESCE(SUM(shipping_price), 0) AS total FROM order_items WHERE order_id IN (
+          SELECT id FROM orders WHERE merchant_id = ?
+        )`,
+        [merchantId],
+      ),
+      // Total final cost of paid items
+      this.dataSource.query<{ total: string }[]>(
+        `SELECT COALESCE(SUM(oi.total_cost_before_discount), 0) AS total 
+         FROM order_items oi
+         INNER JOIN orders o ON o.id = oi.order_id
+         WHERE o.merchant_id = ? AND o.payment_status = 'PAID'`,
+        [merchantId],
+      ),
+      // Total shipping price of paid items
+      this.dataSource.query<{ total: string }[]>(
+        `SELECT COALESCE(SUM(oi.shipping_price), 0) AS total 
+         FROM order_items oi
+         INNER JOIN orders o ON o.id = oi.order_id
+         WHERE o.merchant_id = ? AND o.payment_status = 'PAID'`,
+        [merchantId],
+      ),
+    ]);
+
+    return {
+      totalOrderItemsPrice: Number(totalOrderItemsPrice[0]?.total ?? 0),
+      totalUnpaidOrderItemsPrice: Number(unpaidOrderItemsPrice[0]?.total ?? 0),
+      totalPaidOrderItemsPrice: Number(paidOrderItemsPrice[0]?.total ?? 0),
+      totalPaidOrderItemsFinalCost: Number(paidOrderItemsFinalCost[0]?.total ?? 0),
+      totalPaymentsPrice: Number(totalPaymentsPrice[0]?.total ?? 0),
+      totalRejectedPaymentsPrice: Number(rejectedPaymentsPrice[0]?.total ?? 0),
+      totalPendingVerifiedPaymentsPrice: Number(pendingVerifiedPaymentsPrice[0]?.total ?? 0),
+      totalPendingRejectedPaymentsPrice: Number(pendingRejectedPaymentsPrice[0]?.total ?? 0),
+      totalFinalCost: Number(totalFinalCost[0]?.total ?? 0),
+      totalShippingPrice: Number(totalShippingPrice[0]?.total ?? 0),
+      totalPaidFinalCost: Number(totalPaidFinalCost[0]?.total ?? 0),
+      totalPaidShippingPrice: Number(totalPaidShippingPrice[0]?.total ?? 0),
+    };
+  }
+
+  async getAdminAnnualReport(year: number): Promise<AnnualReportResponseDto> {
     const rows = await this.dataSource.query<{
       month: string;
       orderCount: string;
@@ -250,10 +295,10 @@ export class DashboardQueryService {
         COALESCE(SUM(total_selling_amount), 0) AS revenue,
         COALESCE(SUM(total_profit), 0) AS profit
       FROM orders
-      WHERE YEAR(order_date) = ? AND merchant_id = ?
+      WHERE YEAR(order_date) = ?
       GROUP BY MONTH(order_date)
       ORDER BY MONTH(order_date)`,
-      [year, merchantId],
+      [year],
     );
 
     return { year, months: this.buildMonthlyReport(rows) };

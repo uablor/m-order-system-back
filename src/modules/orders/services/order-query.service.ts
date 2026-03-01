@@ -278,6 +278,9 @@ export class OrderQueryService {
           quantity: item.quantity,
           sellingTotal: item.sellingTotal.toString(),
           profit: item.profit.toString(),
+
+          targetCurrencySellingTotal: item.targetCurrencySellingTotal.toString(),
+          targetCurrencyProfit: item.targetCurrencyProfit.toString(),
           createdAt: item.createdAt,
           updatedAt: item.updatedAt,
         })),
