@@ -10,11 +10,11 @@ export class TopMerchantDto {
   @ApiProperty({ description: 'Total orders count' })
   totalOrders: number;
 
-  @ApiProperty({ description: 'Total revenue' })
-  totalRevenue: string;
+  @ApiProperty({ description: 'Owner user name' })
+  ownerUser: string;
 
-  @ApiProperty({ description: 'Total profit' })
-  totalProfit: string;
+  @ApiProperty({ description: 'Owner user email' })
+  ownerUserEmail: string;
 }
 
 export class RecentUserDto {

@@ -3,6 +3,7 @@ import { BaseOrmEntity } from '../../../common/base/enities/base.orm-entities';
 import { OrderOrmEntity } from './order.orm-entity';
 import { CustomerOrderItemOrmEntity } from './customer-order-item.orm-entity';
 import { ExchangeRateOrmEntity } from 'src/modules/exchange-rates/entities/exchange-rate.orm-entity';
+import { ImageOrmEntity } from 'src/modules/images/entities/image.orm-entity';
 
 export type DiscountType = 'PERCENT' | 'FIX';
 @Entity('order_items')
@@ -12,6 +13,14 @@ export class OrderItemOrmEntity extends BaseOrmEntity {
   @ManyToOne(() => OrderOrmEntity, (o) => o.orderItems, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'order_id' })
   order: OrderOrmEntity;
+
+  // รูปสินค้า
+  @Column({ name: 'image_id', type: 'int', nullable: true })
+  imageId: number | null;
+
+  @ManyToOne(() => ImageOrmEntity, { onDelete: 'SET NULL', nullable: true })
+  @JoinColumn({ name: 'image_id' })
+  image: ImageOrmEntity | null;
 
   // ลำดับสินค้าในออเดอร์ (ใช้สำหรับเรียงสินค้า)
   @Column({ name: 'order_item_index', type: 'int', nullable: true })
