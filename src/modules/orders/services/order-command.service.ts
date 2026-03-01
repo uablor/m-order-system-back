@@ -15,9 +15,9 @@ import { OrderItemOrmEntity } from '../entities/order-item.orm-entity';
 import { CustomerOrderOrmEntity } from '../entities/customer-order.orm-entity';
 import { CustomerOrderItemOrmEntity } from '../entities/customer-order-item.orm-entity';
 import { CurrentUserPayload } from 'src/common/decorators/current-user.decorator';
-import { ArrivalStatusEnum } from '../enum/enum.entities';
+import { ArrivalStatusEnum, PaymentStatusEnum } from '../enum/enum.entities';
 
-const ZERO = '0';
+const ZERO = 0;
 
 function toDecimal(v: number): string {
   return String(Number(v.toFixed(4)));
@@ -62,7 +62,7 @@ export class OrderCommandService {
           orderCode: dto.orderCode,
           orderDate,
           arrivalStatus: dto.arrivalStatus ?? 'NOT_ARRIVED',
-          totalShippingCost: toDecimal2(shippingCost),
+          totalShippingCost: shippingCost,
           totalPurchaseCost: ZERO,
           totalCostBeforeDiscount: ZERO,
           totalDiscount: ZERO,
@@ -86,7 +86,7 @@ export class OrderCommandService {
       if (dto.orderDate !== undefined) updateData.orderDate = new Date(dto.orderDate);
       if (dto.arrivedAt !== undefined) updateData.arrivedAt = dto.arrivedAt ? new Date(dto.arrivedAt) : null;
       if (dto.notifiedAt !== undefined) updateData.notifiedAt = dto.notifiedAt ? new Date(dto.notifiedAt) : null;
-      if (dto.totalShippingCost !== undefined) updateData.totalShippingCost = toDecimal2(dto.totalShippingCost);
+      if (dto.totalShippingCost !== undefined) updateData.totalShippingCost = (dto.totalShippingCost);
       await this.orderRepository.update(id, updateData, manager);
     });
   }
@@ -113,15 +113,11 @@ export class OrderCommandService {
       const { buy: buyRateEntity, sell: sellRateEntity } =
         await this.exchangeRateQueryRepository.findTodayRates(currentUser.merchantId!);
       if (!buyRateEntity) {
-        throw new BadRequestException('ยังไม่มี BUY exchange rate สำหรับวันนี้ กรุณาตั้งค่าอัตราแลกเปลี่ยนก่อน');
+        throw new BadRequestException('BUY exchange rate not found');
       }
       if (!sellRateEntity) {
-        throw new BadRequestException('ยังไม่มี SELL exchange rate สำหรับวันนี้ กรุณาตั้งค่าอัตราแลกเปลี่ยนก่อน');
+        throw new BadRequestException('SELL exchange rate not found');
       }
-      const buyRate = Number(buyRateEntity.rate);
-      const sellRate = Number(sellRateEntity.rate);
-      const purchaseCurrency = buyRateEntity.baseCurrency;
-
       // 1) สร้าง Order header (totals จะ update ทีหลัง)
       const order = await this.orderRepository.create(
         {
@@ -129,6 +125,10 @@ export class OrderCommandService {
           createdByUser: currentUser ? { id: currentUser.userId } : null,
           orderCode: dto.orderCode,
           orderDate,
+          exchangeRateBuy: buyRateEntity,
+          exchangeRateSell: sellRateEntity,
+          exchangeRateBuyValue: Number(buyRateEntity.rate),
+          exchangeRateSellValue: Number(sellRateEntity.rate),
           arrivalStatus: ArrivalStatusEnum.NOT_ARRIVED,
           totalPurchaseCost: ZERO,
           totalShippingCost: ZERO,
@@ -137,7 +137,7 @@ export class OrderCommandService {
           totalFinalCost: ZERO,
           totalSellingAmount: ZERO,
           totalProfit: ZERO,
-          paymentStatus: 'UNPAID',
+          paymentStatus: PaymentStatusEnum.UNPAID,
         } as Partial<OrderOrmEntity>,
         manager,
       );
@@ -148,41 +148,25 @@ export class OrderCommandService {
         const it = dto.items[i];
         const shippingPriceInput = it.shippingPrice ?? 0;
 
-        // step 1: total_buy_lak = buy_price × quantity × buy_exchange_rate
-        const totalBuyLak = it.purchasePrice * it.quantity * buyRate;
-
-        // step 2: shipping_lak = shipping_price × buy_exchange_rate
-        const shippingLak = shippingPriceInput * buyRate;
-
-        // step 3: subtotal_lak = total_buy_lak + shipping_lak
-        const subtotalLak = totalBuyLak + shippingLak;
-
-        // step 4: discount
-        let discountLak = 0;
+        // Use values directly from DTO without exchange rate calculations
+        const purchaseTotal = it.purchasePrice * it.quantity;
+        const shippingTotal = shippingPriceInput * it.quantity;
+        const subtotal = purchaseTotal + shippingTotal;
+        
+        // Calculate discount based on DTO values
+        let discount = 0;
         if (it.discountType && it.discountValue != null) {
           if (it.discountType === 'percent') {
-            // discount_lak = subtotal_lak × (discount_value / 100)
-            discountLak = subtotalLak * (it.discountValue / 100);
+            discount = subtotal * (it.discountValue / 100);
           } else {
-            // cash: discount_lak = discount_value × buy_exchange_rate
-            discountLak = it.discountValue * buyRate;
+            discount = it.discountValue * it.quantity;
           }
         }
+        
+        const finalCost = subtotal - discount;
+        const sellPrice = it.sellingPriceForeign * it.quantity;
+        const profit = sellPrice - finalCost;
 
-        // step 5: final_buy_lak = subtotal_lak - discount_lak
-        const finalCostLak = subtotalLak - discountLak;
-
-        // step 6: final_buy_thb = final_buy_lak / buy_exchange_rate
-        const finalCostThb = buyRate > 0 ? finalCostLak / buyRate : 0;
-
-        // step 7: sell_price_lak = sell_price × quantity × sell_exchange_rate
-        const sellPriceLak = it.sellingPriceForeign * it.quantity * sellRate;
-
-        // step 8: profit_lak = sell_price_lak - final_buy_lak
-        const profitLak = sellPriceLak - finalCostLak;
-
-        // step 9: profit_thb = profit_lak / sell_exchange_rate
-        const profitThb = sellRate > 0 ? profitLak / sellRate : 0;
 
         // map discountType: 'percent' → 'PERCENT', 'cash' → 'FIX'
         const entityDiscountType = it.discountType === 'percent' ? 'PERCENT' : it.discountType === 'cash' ? 'FIX' : null;
@@ -194,19 +178,21 @@ export class OrderCommandService {
             productName: it.productName,
             variant: it.variant ?? null,
             quantity: it.quantity,
-            exchangeRateBuyValue: toDecimal(buyRate),
-            exchangeRateSellValue: toDecimal(sellRate),
-            purchasePrice: toDecimal(it.purchasePrice),
-            purchaseTotal: toDecimal2(totalBuyLak),
-            shippingPrice: toDecimal(shippingPriceInput),
-            totalCostBeforeDiscount: toDecimal2(subtotalLak),
-            discountType: entityDiscountType,
-            discountValue: it.discountValue != null ? toDecimal(it.discountValue) : null,
-            discountAmount: toDecimal2(discountLak),
-            finalCost: toDecimal2(finalCostLak),
-            sellingPriceForeign: toDecimal(it.sellingPriceForeign),
-            sellingTotalLak: toDecimal2(sellPriceLak),
-            profit: toDecimal2(profitLak),
+            exchangeRateBuy: buyRateEntity,
+            exchangeRateSell: sellRateEntity,
+            exchangeRateBuyValue: Number(buyRateEntity.rate),
+            exchangeRateSellValue: Number(sellRateEntity.rate),
+            purchasePrice: Number(it.purchasePrice),
+            purchaseTotal: Number(purchaseTotal),
+            shippingPrice: Number(shippingPriceInput),
+            totalCostBeforeDiscount: Number(subtotal),
+            discountType: entityDiscountType, // 'PERCENT' or 'FIX'
+            discountValue: it.discountValue != null ? it.discountValue : null,
+            discountAmount: Number(discount),
+            finalCost: Number(finalCost),
+            sellingPriceForeign: Number(it.sellingPriceForeign),
+            sellingTotal: Number(sellPrice),
+            profit: Number(profit),
           } as Partial<OrderItemOrmEntity>,
           manager,
         );
@@ -239,39 +225,36 @@ export class OrderCommandService {
         const customer = await this.customerRepository.findOneById(coDto.customerId, manager);
         if (!customer) throw new NotFoundException(`Customer not found: ${coDto.customerId}`);
 
-        let totalSellingAmountLak = 0;
+        let totalSellingAmount = 0;
         const coItemsToCreate: {
           orderItem: OrderItemOrmEntity;
           quantity: number;
           sellingPriceForeign: number;
-          sellRate: number;
         }[] = [];
 
         for (const coItemDto of coDto.items) {
           const orderItem = orderItems[coItemDto.orderItemIndex];
-          const sellRate = Number(orderItem.exchangeRateSell);
           const sellingPrice = coItemDto.sellingPriceForeign ?? Number(orderItem.sellingPriceForeign);
-          const lineTotalLak = coItemDto.quantity * sellingPrice * sellRate;
-          totalSellingAmountLak += lineTotalLak;
+          const lineTotal = coItemDto.quantity * sellingPrice;
+          totalSellingAmount += lineTotal;
           coItemsToCreate.push({
             orderItem,
             quantity: coItemDto.quantity,
             sellingPriceForeign: sellingPrice,
-            sellRate,
           });
         }
 
         const totalPaid = 0;
-        const remaining = totalSellingAmountLak - totalPaid;
-        const paymentStatus = calcPaymentStatus(totalSellingAmountLak, totalPaid);
+        const remaining = totalSellingAmount - totalPaid;
+        const paymentStatus = calcPaymentStatus(totalSellingAmount, totalPaid);
 
         const customerOrder = await this.customerOrderRepository.create(
           {
             order,
             customer,
-            totalSellingAmount: toDecimal2(totalSellingAmountLak),
-            totalPaid: toDecimal2(totalPaid),
-            remainingAmount: toDecimal2(remaining),
+            totalSellingAmount: totalSellingAmount,
+            totalPaid: totalPaid,
+            remainingAmount: remaining,
             paymentStatus,
           } as Partial<CustomerOrderOrmEntity>,
           manager,
@@ -279,19 +262,19 @@ export class OrderCommandService {
         customerOrders.push(customerOrder);
 
         for (const coItem of coItemsToCreate) {
-          const sellingTotalLak = coItem.quantity * coItem.sellingPriceForeign * coItem.sellRate;
+          const sellingTotal = coItem.quantity * coItem.sellingPriceForeign;
           const costPerUnit = Number(coItem.orderItem.finalCost) / coItem.orderItem.quantity;
           const costAllocated = costPerUnit * coItem.quantity;
-          const profitLak = sellingTotalLak - costAllocated;
+          const profit = sellingTotal - costAllocated;
 
           await this.customerOrderItemRepository.create(
             {
               customerOrder,
               orderItem: coItem.orderItem,
               quantity: coItem.quantity,
-              sellingPriceForeign: toDecimal(coItem.sellingPriceForeign),
-              sellingTotal: toDecimal2(sellingTotalLak),
-              profit: toDecimal2(profitLak),
+              sellingPriceForeign: coItem.sellingPriceForeign,
+              sellingTotal: sellingTotal,
+              profit: profit,
             } as Partial<CustomerOrderItemOrmEntity>,
             manager,
           );
@@ -311,11 +294,11 @@ export class OrderCommandService {
 
       for (const oi of orderItems) {
         totalPurchaseCost += Number(oi.purchaseTotal);
-        totalShippingCost += Number(oi.shippingPrice) * Number(oi.exchangeRateBuyValue || 0);
+        totalShippingCost += Number(oi.shippingPrice) * oi.quantity;
         totalCostBeforeDiscount += Number(oi.totalCostBeforeDiscount);
         totalDiscount += Number(oi.discountAmount);
         totalFinalCost += Number(oi.finalCost);
-        totalSellingAmount += Number(oi.sellingTotalLak);
+        totalSellingAmount += Number(oi.sellingTotal);
         totalProfit += Number(oi.profit);
       }
 
@@ -329,13 +312,13 @@ export class OrderCommandService {
       await this.orderRepository.update(
         order.id,
         {
-          totalPurchaseCost: toDecimal2(totalPurchaseCost),
-          totalShippingCost: toDecimal2(totalShippingCost),
-          totalCostBeforeDiscount: toDecimal2(totalCostBeforeDiscount),
-          totalDiscount: toDecimal2(totalDiscount),
-          totalFinalCost: toDecimal2(totalFinalCost),
-          totalSellingAmount: toDecimal2(totalSellingAmount),
-          totalProfit: toDecimal2(totalProfit),
+          totalPurchaseCost: totalPurchaseCost,
+          totalShippingCost: totalShippingCost,
+          totalCostBeforeDiscount: totalCostBeforeDiscount,
+          totalDiscount: totalDiscount,
+          totalFinalCost: totalFinalCost,
+          totalSellingAmount: totalSellingAmount,
+          totalProfit: totalProfit,
           paymentStatus: orderPaymentStatus,
         } as Partial<OrderOrmEntity>,
         manager,

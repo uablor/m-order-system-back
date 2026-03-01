@@ -51,39 +51,39 @@ export class OrderOrmEntity extends BaseOrmEntity {
 
   // อัตราแลกเปลี่ยนซื้อ (สกุลเงินต่างประเทศ -> กีบ)
   @Column({ name: 'exchange_rate_buy', type: 'decimal', precision: 18, scale: 6, nullable: true })
-  exchangeRateBuyValue: string | null;
+  exchangeRateBuyValue: number | null;
 
   // อัตราแลกเปลี่ยนขาย (กีบ -> สกุลเงินต่างประเทศ)
   @Column({ name: 'exchange_rate_sell', type: 'decimal', precision: 18, scale: 6, nullable: true })
-  exchangeRateSellValue: string | null;
+  exchangeRateSellValue: number | null;
 
   // ต้นทุนราคาซื้อรวมทั้งหมด (หน่วย: กีบ)
   @Column({ name: 'total_purchase_cost', type: 'decimal', precision: 18, scale: 2, default: 0 })
-  totalPurchaseCost: string;
+  totalPurchaseCost: number;
 
   // ต้นทุนค่าขนส่งรวมทั้งหมด (หน่วย: กีบ)
   @Column({ name: 'total_shipping_cost', type: 'decimal', precision: 18, scale: 2, default: 0 })
-  totalShippingCost: string;
+  totalShippingCost: number;
 
   // ต้นทุนรวมก่อนหักส่วนลด (หน่วย: กีบ)
   @Column({ name: 'total_cost_before_discount', type: 'decimal', precision: 18, scale: 2, default: 0 })
-  totalCostBeforeDiscount: string;
+  totalCostBeforeDiscount: number;
 
   // จำนวนเงินส่วนลดรวมทั้งหมด (หน่วย: กีบ)
   @Column({ name: 'total_discount', type: 'decimal', precision: 18, scale: 2, default: 0 })
-  totalDiscount: string;
+  totalDiscount: number;
 
   // ต้นทุนสุทธิหลังหักส่วนลดแล้ว
   @Column({ name: 'total_final_cost', type: 'decimal', precision: 18, scale: 2, default: 0 })
-  totalFinalCost: string;
+  totalFinalCost: number;
 
   // ยอดขายรวมทั้งหมด
   @Column({ name: 'total_selling_amount', type: 'decimal', precision: 18, scale: 2, default: 0 })
-  totalSellingAmount: string;
+  totalSellingAmount: number;
 
   // กำไรรวมทั้งหมด 
   @Column({ name: 'total_profit', type: 'decimal', precision: 18, scale: 2, default: 0 })
-  totalProfit: string;
+  totalProfit: number;
 
   // สถานะการชำระเงิน (เช่น ยังไม่จ่าย, จ่ายบางส่วน, จ่ายครบแล้ว)
   @Column({ name: 'payment_status', type: 'varchar', length: 20, default: 'UNPAID' })

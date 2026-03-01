@@ -100,7 +100,7 @@ export class ExchangeRateQueryService {
       baseCurrency: entity.baseCurrency,
       targetCurrency: entity.targetCurrency,
       rateType: entity.rateType,
-      rate: entity.rate,
+      rate: entity.rate.toString(),
       isActive: entity.isActive,
       rateDate,
       createdBy: entity.createdByUser?.id ?? null,

@@ -41,59 +41,59 @@ export class OrderItemOrmEntity extends BaseOrmEntity {
 
   // อัตราแลกเปลี่ยนซื้อ (สกุลเงินต่างประเทศ -> กีบ)
   @Column({ name: 'exchange_rate_buy', type: 'decimal', precision: 18, scale: 6, nullable: true })
-  exchangeRateBuyValue: string | null;
+  exchangeRateBuyValue: number | null;
 
   // อัตราแลกเปลี่ยนขาย (กีบ -> สกุลเงินต่างประเทศ)
   @Column({ name: 'exchange_rate_sell', type: 'decimal', precision: 18, scale: 6, nullable: true })
-  exchangeRateSellValue: string | null;
+  exchangeRateSellValue: number | null;
 
   // ราคาซื้อของสินค้าต่อหน่วย (ตาม exchangeRateBuy)
   @Column({ name: 'purchase_price', type: 'decimal', precision: 18, scale: 4, default: 0 })
-  purchasePrice: string;
+  purchasePrice: number;
 
   // ต้นทุนซื้อรวมทั้งหมดแปลงเป็น LAK
   // purchase_price * quantity * exchange_rate
   @Column({ name: 'purchase_total', type: 'decimal', precision: 18, scale: 2, default: 0 })
-  purchaseTotal: string;
+  purchaseTotal: number;
 
   // ค่าขนส่งต่อหน่วย (อาจเป็น foreign currency)
   @Column({ name: 'shipping_price', type: 'decimal', precision: 18, scale: 4, default: 0, nullable: true })
-  shippingPrice: string | null;
+  shippingPrice: number | null;
 
   // ต้นทุนรวมก่อนหักส่วนลด (purchase + shipping)
   @Column({ name: 'total_cost_before_discount', type: 'decimal', precision: 18, scale: 2, default: 0 })
-  totalCostBeforeDiscount: string;
+  totalCostBeforeDiscount: number;
 
   // ประเภทส่วนลด
   // PERCENT = ลด %
-  // FIX = ลดเป็นจำนวนเงิน
+  // FIX = ลดจำนวนเงิน
   @Column({ name: 'discount_type', type: 'varchar', length: 10, nullable: true })
   discountType: DiscountType | null;
 
   // ค่าส่วนลด (% หรือ จำนวนเงิน)
   @Column({ name: 'discount_value', type: 'decimal', precision: 18, scale: 4, nullable: true })
-  discountValue: string | null;
+  discountValue: number | null;
 
-  // จำนวนเงินส่วนลดรวม
+  // จำนวนเงินส่วนลดรวมทั้งหมด
   @Column({ name: 'discount_amount', type: 'decimal', precision: 18, scale: 2, default: 0 })
-  discountAmount: string;
+  discountAmount: number;
 
   // ต้นทุนสุทธิหลังหักส่วนลด (หน่วย)
   @Column({ name: 'final_cost', type: 'decimal', precision: 18, scale: 2, default: 0 })
-  finalCost: string;
+  finalCost: number;
 
   // ราคาขายต่อหน่วยในสกุลเงินต่างประเทศ
   @Column({ name: 'selling_price_foreign', type: 'decimal', precision: 18, scale: 4, default: 0 })
-  sellingPriceForeign: string;
+  sellingPriceForeign: number;
 
-  // ยอดขายรวมทั้งหมดแปลงเป็น LAK
-  @Column({ name: 'selling_total_lak', type: 'decimal', precision: 18, scale: 2, default: 0 })
-  sellingTotalLak: string;
+  // ยอดขายรวมทั้งหมด
+  @Column({ name: 'selling_total', type: 'decimal', precision: 18, scale: 2, default: 0 })
+  sellingTotal: number;
 
   // กำไรรวมทั้งหมด (หน่วย LAK)
-  // selling_total_lak - final_cost_lak
+  // selling_total - final_cost
   @Column({ name: 'profit', type: 'decimal', precision: 18, scale: 2, default: 0 })
-  profit: string;
+  profit: number;
 
   // รายการขายสินค้าชิ้นนี้ให้ลูกค้า (1 order item → many customer orders)
   @OneToMany(() => CustomerOrderItemOrmEntity, (coi) => coi.orderItem)

@@ -1,5 +1,23 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
+// ข้อมูลสรุปทางการเงินแยกตาม baseCurrency
+export class MerchantFinancialByCurrencyDto {
+  @ApiProperty({ description: 'Base currency code (e.g. THB, USD, CNY)' })
+  baseCurrency: string;
+
+  @ApiProperty({ description: 'Number of orders using this currency' })
+  totalOrders: number;
+
+  @ApiProperty({ description: 'Total income in LAK (selling amount)' })
+  totalIncomeLak: number;
+
+  @ApiProperty({ description: 'Total expense in LAK (final cost)' })
+  totalExpenseLak: number;
+
+  @ApiProperty({ description: 'Total profit in LAK' })
+  totalProfitLak: number;
+}
+
 export class MerchantDetailUserDto {
   @ApiProperty()
   id: number;
@@ -39,29 +57,35 @@ export class MerchantDetailFinancialDto {
   @ApiProperty({ description: 'Orders with PAID status' })
   ordersPaid: number;
 
-  @ApiProperty({ description: 'Total income (selling amount LAK)' })
+  @ApiProperty({ description: 'Total income in LAK (sum of total_selling_amount)' })
   totalIncomeLak: number;
 
-  @ApiProperty({ description: 'Total income (selling amount THB)' })
+  @ApiProperty({ description: 'Total income in THB (always 0 — reserved)' })
   totalIncomeThb: number;
 
-  @ApiProperty({ description: 'Total expenses / cost (final cost LAK)' })
+  @ApiProperty({ description: 'Total expense in LAK (sum of total_final_cost)' })
   totalExpenseLak: number;
 
-  @ApiProperty({ description: 'Total expenses / cost (final cost THB)' })
+  @ApiProperty({ description: 'Total expense in THB (always 0 — reserved)' })
   totalExpenseThb: number;
 
-  @ApiProperty({ description: 'Total profit LAK (income - expense)' })
+  @ApiProperty({ description: 'Total profit in LAK' })
   totalProfitLak: number;
 
-  @ApiProperty({ description: 'Total profit THB' })
+  @ApiProperty({ description: 'Total profit in THB (always 0 — reserved)' })
   totalProfitThb: number;
 
-  @ApiProperty({ description: 'Total paid amount' })
+  @ApiProperty({ description: 'Total paid amount across all customer orders' })
   totalPaidAmount: number;
 
   @ApiProperty({ description: 'Total remaining / outstanding amount' })
   totalRemainingAmount: number;
+
+  @ApiProperty({
+    type: [MerchantFinancialByCurrencyDto],
+    description: 'Financial breakdown grouped by baseCurrency of the buy exchange rate',
+  })
+  byCurrency: MerchantFinancialByCurrencyDto[];
 }
 
 export class MerchantDetailSummaryDto {
@@ -133,3 +157,48 @@ export class MerchantDetailResponseDto {
   @ApiProperty({ type: MerchantDetailSummaryDto })
   summary: MerchantDetailSummaryDto;
 }
+
+
+
+export class MerchantResponseDto {
+  @ApiProperty()
+  id: number;
+
+  @ApiProperty()
+  ownerUserId: number;
+
+  @ApiProperty()
+  shopName: string;
+
+  @ApiPropertyOptional({ nullable: true })
+  shopLogoUrl: string | null;
+
+  @ApiPropertyOptional({ nullable: true })
+  shopAddress: string | null;
+
+  @ApiPropertyOptional({ nullable: true })
+  contactPhone: string | null;
+
+  @ApiPropertyOptional({ nullable: true })
+  contactEmail: string | null;
+
+  @ApiPropertyOptional({ nullable: true })
+  contactFacebook: string | null;
+
+  @ApiPropertyOptional({ nullable: true })
+  contactLine: string | null;
+
+  @ApiPropertyOptional({ nullable: true })
+  contactWhatsapp: string | null;
+
+  @ApiProperty()
+  defaultCurrency: string;
+
+  @ApiProperty()
+  isActive: boolean;
+
+  @ApiProperty()
+  createdAt: Date;
+
+  @ApiProperty()
+  updatedAt: Date;}

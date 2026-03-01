@@ -6,6 +6,7 @@ import { OrderResponseDto, CustomerOrderResponseDto } from '../dto/order-respons
 import type { ResponseInterface, ResponseWithPaginationInterface } from '../../../common/base/interfaces/response.interface';
 import { createSingleResponse } from '../../../common/base/helpers/response.helper';
 import { DEFAULT_SUCCESS_CODE, DEFAULT_SUCCESS_MESSAGE } from '../../../common/base/helpers/response.helper';
+import { ExchangeRateOrmEntity } from '../../exchange-rates/entities/exchange-rate.orm-entity';
 
 @Injectable()
 export class OrderQueryService {
@@ -115,6 +116,34 @@ export class OrderQueryService {
     };
   }
 
+  private convertToTargetCurrency(amount: number, exchangeRate: ExchangeRateOrmEntity | null): string {
+    if (!exchangeRate) {
+      console.log('No exchange rate provided, returning original amount:', amount);
+      return amount.toString();
+    }
+    
+    // If base currency is already the target currency, no conversion needed
+    if (exchangeRate.baseCurrency === exchangeRate.targetCurrency) {
+      console.log('Base and target currency are the same:', exchangeRate.baseCurrency);
+      return amount.toString();
+    }
+    
+    // Convert based on rate type
+    if (exchangeRate.rateType === 'BUY') {
+      // BUY rate: foreign currency -> base currency (LAK)
+      // To convert from base to foreign: amount / rate
+      const converted = amount / exchangeRate.rate;
+      console.log(`BUY conversion: ${amount} / ${exchangeRate.rate} = ${converted}`);
+      return converted.toString();
+    } else {
+      // SELL rate: base currency (LAK) -> foreign currency  
+      // To convert from base to foreign: amount * rate
+      const converted = amount * exchangeRate.rate;
+      console.log(`SELL conversion: ${amount} * ${exchangeRate.rate} = ${converted}`);
+      return converted.toString();
+    }
+  }
+
   private toResponse(entity: import('../entities/order.orm-entity').OrderOrmEntity): OrderResponseDto {
     return {
       id: entity.id,
@@ -139,7 +168,7 @@ export class OrderQueryService {
         id: entity.exchangeRateBuy.id,
         baseCurrency: entity.exchangeRateBuy.baseCurrency,
         targetCurrency: entity.exchangeRateBuy.targetCurrency,
-        rate: entity.exchangeRateBuy.rate,
+        rate: entity.exchangeRateBuy.rate.toString(),
         rateType: entity.exchangeRateBuy.rateType,
         rateDate: entity.exchangeRateBuy.rateDate,
         isActive: entity.exchangeRateBuy.isActive,
@@ -148,22 +177,34 @@ export class OrderQueryService {
         id: entity.exchangeRateSell.id,
         baseCurrency: entity.exchangeRateSell.baseCurrency,
         targetCurrency: entity.exchangeRateSell.targetCurrency,
-        rate: entity.exchangeRateSell.rate,
+        rate: entity.exchangeRateSell.rate.toString(),
         rateType: entity.exchangeRateSell.rateType,
         rateDate: entity.exchangeRateSell.rateDate,
         isActive: entity.exchangeRateSell.isActive,
       } : null,
-      exchangeRateBuyValue: entity.exchangeRateBuyValue,
-      exchangeRateSellValue: entity.exchangeRateSellValue,
-      totalPurchaseCost: entity.totalPurchaseCost,
-      totalShippingCost: entity.totalShippingCost,
-      totalCostBeforeDiscount: entity.totalCostBeforeDiscount,
-      totalDiscount: entity.totalDiscount,
-      totalFinalCost: entity.totalFinalCost,
-      totalSellingAmount: entity.totalSellingAmount,
-      totalProfit: entity.totalProfit,
+      exchangeRateBuyValue: entity.exchangeRateBuyValue?.toString() || null,
+      exchangeRateSellValue: entity.exchangeRateSellValue?.toString() || null,
+      totalPurchaseCost: entity.totalPurchaseCost.toString(),
+      totalShippingCost: entity.totalShippingCost.toString(),
+      totalCostBeforeDiscount: entity.totalCostBeforeDiscount.toString(),
+      totalDiscount: entity.totalDiscount.toString(),
+      totalFinalCost: entity.totalFinalCost.toString() ,
+      totalSellingAmount: entity.totalSellingAmount.toString() ,
+      totalProfit: entity.totalProfit.toString() ,
       paymentStatus: entity.paymentStatus,
-      orderItems: (entity.orderItems ?? []).map((item) => ({
+
+      targetCurrencyTotalPurchaseCost: this.convertToTargetCurrency(entity.totalPurchaseCost, entity.exchangeRateSell),
+      targetCurrencyTotalShippingCost: this.convertToTargetCurrency(entity.totalShippingCost, entity.exchangeRateSell),
+      targetCurrencyTotalCostBeforeDiscount: this.convertToTargetCurrency(entity.totalCostBeforeDiscount, entity.exchangeRateSell),
+      targetCurrencyTotalDiscount: this.convertToTargetCurrency(entity.totalDiscount, entity.exchangeRateSell),
+      targetCurrencyTotalFinalCost: this.convertToTargetCurrency(entity.totalFinalCost, entity.exchangeRateSell),
+      targetCurrencyTotalSellingAmount: this.convertToTargetCurrency(entity.totalSellingAmount, entity.exchangeRateSell),
+      targetCurrencyTotalProfit: this.convertToTargetCurrency(entity.totalProfit, entity.exchangeRateSell),
+     
+      orderItems: (entity.orderItems ?? []).map((item) => {
+      console.log('Order Item Exchange Rate Sell:', item.exchangeRateSell);
+      console.log('Order Item Exchange Rate Buy:', item.exchangeRateBuy);
+      return {
         id: item.id,
         orderId: item.order?.id ?? 0,
         productName: item.productName,
@@ -173,7 +214,7 @@ export class OrderQueryService {
           id: item.exchangeRateBuy.id,
           baseCurrency: item.exchangeRateBuy.baseCurrency,
           targetCurrency: item.exchangeRateBuy.targetCurrency,
-          rate: item.exchangeRateBuy.rate,
+          rate: item.exchangeRateBuy.rate.toString(),
           rateType: item.exchangeRateBuy.rateType,
           rateDate: item.exchangeRateBuy.rateDate,
           isActive: item.exchangeRateBuy.isActive,
@@ -182,27 +223,41 @@ export class OrderQueryService {
           id: item.exchangeRateSell.id,
           baseCurrency: item.exchangeRateSell.baseCurrency,
           targetCurrency: item.exchangeRateSell.targetCurrency,
-          rate: item.exchangeRateSell.rate,
+          rate: item.exchangeRateSell.rate.toString(),
           rateType: item.exchangeRateSell.rateType,
           rateDate: item.exchangeRateSell.rateDate,
           isActive: item.exchangeRateSell.isActive,
         } : null,
-        exchangeRateBuyValue: item.exchangeRateBuyValue,
-        exchangeRateSellValue: item.exchangeRateSellValue,
-        purchasePrice: item.purchasePrice,
-        purchaseTotal: item.purchaseTotal,
-        shippingPrice: item.shippingPrice,
-        totalCostBeforeDiscount: item.totalCostBeforeDiscount,
+        exchangeRateBuyValue: item.exchangeRateBuyValue?.toString() || null,
+        exchangeRateSellValue: item.exchangeRateSellValue?.toString() || null,
+        purchasePrice: item.purchasePrice.toString(),
+        purchaseTotal: item.purchaseTotal.toString(),
+        shippingPrice: item.shippingPrice?.toString() || null,
+        totalCostBeforeDiscount: item.totalCostBeforeDiscount.toString(),
         discountType: item.discountType,
-        discountValue: item.discountValue,
-        discountAmount: item.discountAmount,
-        finalCost: item.finalCost,
-        sellingPriceForeign: item.sellingPriceForeign,
-        sellingTotalLak: item.sellingTotalLak,
-        profit: item.profit,
+        discountValue: item.discountValue?.toString() || null,
+        discountAmount: item.discountAmount.toString(),
+        finalCost: item.finalCost.toString(),
+        sellingPriceForeign: item.sellingPriceForeign.toString(),
+        sellingTotal: item.sellingTotal.toString(),
+        profit: item.profit.toString(),
+
+        targetCurrencyPurchasePrice: this.convertToTargetCurrency(item.purchasePrice, item.exchangeRateSell),
+        targetCurrencyPurchaseTotal: this.convertToTargetCurrency(item.purchaseTotal, item.exchangeRateSell),
+        targetCurrencyShippingPrice: item.shippingPrice ? this.convertToTargetCurrency(item.shippingPrice, item.exchangeRateSell) : null,
+        targetCurrencyTotalCostBeforeDiscount: this.convertToTargetCurrency(item.totalCostBeforeDiscount, item.exchangeRateSell),
+        targetCurrencyDiscountType: item.discountType,
+        targetCurrencyDiscountValue: item.discountValue ? this.convertToTargetCurrency(item.discountValue, item.exchangeRateSell) : null,
+        targetCurrencyDiscountAmount: this.convertToTargetCurrency(item.discountAmount, item.exchangeRateSell),
+        targetCurrencyFinalCost: this.convertToTargetCurrency(item.finalCost, item.exchangeRateSell),
+        targetCurrencySellingPriceForeign: this.convertToTargetCurrency(item.sellingPriceForeign, item.exchangeRateSell),
+        targetCurrencySellingTotal: this.convertToTargetCurrency(item.sellingTotal, item.exchangeRateSell),
+        targetCurrencyProfit: this.convertToTargetCurrency(item.profit, item.exchangeRateSell),
+        
         createdAt: item.createdAt,
         updatedAt: item.updatedAt,
-      })),
+      };
+    }),
       customerOrders: (entity.customerOrders ?? []).map((customerOrder): CustomerOrderResponseDto => ({
         id: customerOrder.id,
         orderId: customerOrder.order?.id ?? 0,
@@ -214,9 +269,9 @@ export class OrderQueryService {
               customerType: customerOrder.customer.customerType,
             }
           : null,
-        totalSellingAmount: customerOrder.totalSellingAmount,
-        paidAmount: customerOrder.totalPaid,
-        remainingAmount: customerOrder.remainingAmount,
+        totalSellingAmount: customerOrder.totalSellingAmount.toString(),
+        paidAmount: customerOrder.totalPaid.toString(),
+        remainingAmount: customerOrder.remainingAmount.toString(),
         paymentStatus: customerOrder.paymentStatus,
         customerOrderItems: (customerOrder.customerOrderItems ?? []).map((item) => ({
           id: item.id,
@@ -226,8 +281,8 @@ export class OrderQueryService {
           productName: item.orderItem?.productName ?? null,
           variant: item.orderItem?.variant ?? null,
           quantity: item.quantity,
-          sellingTotal: item.sellingTotal,
-          profit: item.profit,
+          sellingTotal: item.sellingTotal.toString(),
+          profit: item.profit.toString(),
           createdAt: item.createdAt,
           updatedAt: item.updatedAt,
         })),

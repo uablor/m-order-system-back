@@ -54,6 +54,7 @@ export interface SendArrivalNotificationsParams {
     contactLine?: string | null;
     contactWhatsapp?: string | null;
     preferredContactMethod?: PreferredContactMethod | null;
+    token: string;
   }>;
   messageContent: string;
   notificationLinkPath: string;
@@ -65,21 +66,22 @@ export class NotificationSendService {
     private readonly notificationRepository: NotificationRepository,
     private readonly facebookMessengerService: FacebookMessengerService,
     private readonly configService: ConfigService,
-  ) {}
+  ) { }
 
   async sendArrivalNotifications(
     manager: EntityManager,
     params: SendArrivalNotificationsParams,
   ): Promise<NotificationOrmEntity[]> {
     const { merchant, orderId, customers, messageContent, notificationLinkPath } = params;
-    const frontendUrl =
-      this.configService.get<string>('facebook.frontendUrl', { infer: true }) ??
-      'http://localhost:3000';
-    const fullNotificationLink = buildFullUrl(frontendUrl, notificationLinkPath);
 
     const notifications: NotificationOrmEntity[] = [];
 
     for (const customer of customers) {
+      const frontendUrl =
+        this.configService.get<string>('FRONTEND_URL', { infer: true }) ??
+        `${this.configService.get<string>('FRONTEND_URL', { infer: true })?.replace(/\/$/, '')}/?token=${customer.token}`;
+      const fullNotificationLink = buildFullUrl(frontendUrl, notificationLinkPath);
+
       const channel = preferredToChannel(customer.preferredContactMethod ?? null);
       const recipientContact = channel
         ? getRecipientContact(customer, channel)

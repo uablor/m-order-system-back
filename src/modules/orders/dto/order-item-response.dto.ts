@@ -72,10 +72,43 @@ export class OrderItemResponseDto {
   sellingPriceForeign: string;
 
   @ApiProperty()
-  sellingTotalLak: string;
+  sellingTotal: string;
 
   @ApiProperty()
   profit: string;
+
+  @ApiProperty()
+  targetCurrencyPurchasePrice: string;
+
+  @ApiProperty()
+  targetCurrencyPurchaseTotal: string;
+
+  @ApiPropertyOptional({ nullable: true })
+  targetCurrencyShippingPrice: string | null;
+
+  @ApiProperty()
+  targetCurrencyTotalCostBeforeDiscount: string;
+
+  @ApiPropertyOptional({ nullable: true })
+  targetCurrencyDiscountType: string | null;
+
+  @ApiPropertyOptional({ nullable: true })
+  targetCurrencyDiscountValue: string | null;
+
+  @ApiProperty()
+  targetCurrencyDiscountAmount: string;
+
+  @ApiProperty()
+  targetCurrencyFinalCost: string;
+
+  @ApiProperty()
+  targetCurrencySellingPriceForeign: string;
+
+  @ApiProperty()
+  targetCurrencySellingTotal: string;
+
+  @ApiProperty()
+  targetCurrencyProfit: string;
 
   @ApiProperty()
   createdAt: Date;

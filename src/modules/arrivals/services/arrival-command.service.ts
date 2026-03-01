@@ -140,6 +140,7 @@ export class ArrivalCommandService {
         contactLine?: string | null;
         contactWhatsapp?: string | null;
         preferredContactMethod?: 'PHONE' | 'FACEBOOK' | 'WHATSAPP' | 'LINE' | null;
+        token: string;
       }> = [];
       for (const co of customerOrders) {
         const customer = co.customer;
@@ -151,6 +152,7 @@ export class ArrivalCommandService {
           contactLine: customer.contactLine,
           contactWhatsapp: customer.contactWhatsapp,
           preferredContactMethod: customer.preferredContactMethod,
+          token: customer.uniqueToken,
         });
       }
 

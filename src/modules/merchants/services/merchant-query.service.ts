@@ -8,6 +8,7 @@ import {
   MerchantDetailUserDto,
   MerchantDetailSummaryDto,
   MerchantDetailFinancialDto,
+  MerchantFinancialByCurrencyDto,
 } from '../dto/merchant-detail-response.dto';
 import type {
   ResponseInterface,
@@ -80,12 +81,22 @@ export class MerchantQueryService {
       const merchant = await this.merchantQueryRepository.findByIdWithOwner(id, manager);
       if (!merchant) throw new NotFoundException('Merchant not found');
 
-      const [customers, financialRaw] = await Promise.all([
+      const [customers, financialRaw, currencyRows] = await Promise.all([
         this.merchantQueryRepository.findCustomersByMerchantId(id, manager),
         this.merchantQueryRepository.getFinancialSummaryByMerchantId(id, manager),
+        this.merchantQueryRepository.getFinancialByCurrency(id, manager),
       ]);
 
       const activeCustomers = customers.filter((c) => c.isActive).length;
+
+      // แปลง currency rows เป็น DTO
+      const byCurrency: MerchantFinancialByCurrencyDto[] = currencyRows.map((r) => ({
+        baseCurrency: r.baseCurrency,
+        totalOrders: r.totalOrders,
+        totalIncomeLak: r.totalIncomeLak,
+        totalExpenseLak: r.totalExpenseLak,
+        totalProfitLak: r.totalProfitLak,
+      }));
 
       const financial: MerchantDetailFinancialDto = {
         totalOrders: financialRaw.totalOrders,
@@ -93,13 +104,14 @@ export class MerchantQueryService {
         ordersPartial: financialRaw.ordersPartial,
         ordersPaid: financialRaw.ordersPaid,
         totalIncomeLak: financialRaw.totalIncomeLak,
-        totalIncomeThb: financialRaw.totalIncomeThb,
+        totalIncomeThb: 0,
         totalExpenseLak: financialRaw.totalExpenseLak,
-        totalExpenseThb: financialRaw.totalExpenseThb,
+        totalExpenseThb: 0,
         totalProfitLak: financialRaw.totalProfitLak,
-        totalProfitThb: financialRaw.totalProfitThb,
+        totalProfitThb: 0,
         totalPaidAmount: financialRaw.totalPaidAmount,
         totalRemainingAmount: financialRaw.totalRemainingAmount,
+        byCurrency,
       };
 
       const summary: MerchantDetailSummaryDto = {

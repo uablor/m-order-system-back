@@ -17,13 +17,13 @@ export class CustomerOrderOrmEntity extends BaseOrmEntity {
   customer: CustomerOrmEntity;
 
   @Column({ name: 'total_selling_amount', type: 'decimal', precision: 18, scale: 2, default: 0 })
-  totalSellingAmount: string;
+  totalSellingAmount: number;
 
   @Column({ name: 'total_paid', type: 'decimal', precision: 18, scale: 2, default: 0 })
-  totalPaid: string;
+  totalPaid: number;
 
   @Column({ name: 'remaining_amount', type: 'decimal', precision: 18, scale: 2, default: 0 })
-  remainingAmount: string;
+  remainingAmount: number;
 
   @Column({ name: 'payment_status', type: 'varchar', length: 20, default: 'UNPAID' })
   paymentStatus: CustomerOrderPaymentStatus;

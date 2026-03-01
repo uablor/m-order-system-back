@@ -25,7 +25,6 @@ import {
 
 @ApiTags('Role Permissions')
 @Controller('role-permissions')
-@UseGuards(RolesGuard)
 export class RolePermissionController {
   constructor(
     private readonly commandService: RolePermissionCommandService,
@@ -33,7 +32,6 @@ export class RolePermissionController {
   ) {}
 
   @Post('assign')
-  @Roles(ADMIN_ROLE)
   @ApiOperation({ summary: 'Assign permission to role (ADMIN only)' })
   @ApiBearerAuth('BearerAuth')
   @ApiCreatedResponseBase()

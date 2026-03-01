@@ -8,7 +8,7 @@ export class PaymentResponseDto {
   customerOrderId: number;
 
   @ApiProperty()
-  paymentAmount: string;
+  paymentAmount: number;
 
   @ApiProperty()
   paymentDate: Date;

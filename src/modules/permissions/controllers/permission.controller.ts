@@ -31,8 +31,6 @@ export class PermissionController {
   }
 
   @Post('generate')
-  @UseGuards(RolesGuard)
-  @Roles(ADMIN_ROLE)
   @ApiBearerAuth('BearerAuth')
   @ApiOperation({
     summary: 'Generate permissions from controller class and method names',

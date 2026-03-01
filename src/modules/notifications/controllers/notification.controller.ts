@@ -3,8 +3,11 @@ import { ApiTags, ApiOperation, ApiParam, ApiBearerAuth } from '@nestjs/swagger'
 import { NotificationCommandService } from '../services/notification-command.service';
 import { NotificationQueryService } from '../services/notification-query.service';
 import { NotificationUpdateDto } from '../dto/notification-update.dto';
+import { NotificationStatusUpdateDto } from '../dto/notification-status-update.dto';
 import { NotificationListQueryDto } from '../dto/notification-list-query.dto';
 import { NotificationResponseDto } from '../dto/notification-response.dto';
+import { CurrentUser } from 'src/common/decorators/current-user.decorator';
+import type { CurrentUserPayload } from 'src/common/decorators/current-user.decorator';
 import {
   ApiOkResponseBase,
   ApiBadRequestBase,
@@ -25,8 +28,8 @@ export class NotificationController {
   @ApiBearerAuth('BearerAuth')
   @ApiOkResponseBase()
   @ApiUnauthorizedBase()
-  async merchantGetList(@Query() query: NotificationListQueryDto) {
-    return this.notificationQueryService.getList(query);
+  async merchantGetList(@Query() query: NotificationListQueryDto, @CurrentUser() user: CurrentUserPayload) {
+    return this.notificationQueryService.getList(query, user);
   }
 
   @Get(':id')
@@ -53,6 +56,21 @@ export class NotificationController {
     @Body() dto: NotificationUpdateDto,
   ) {
     return this.notificationCommandService.update(id, dto);
+  }
+
+  @Patch(':id/status')
+  @ApiOperation({ summary: 'Update notification send status' })
+  @ApiBearerAuth('BearerAuth')
+  @ApiParam({ name: 'id', description: 'Notification ID' })
+  @ApiOkResponseBase()
+  @ApiBadRequestBase()
+  @ApiNotFoundBase()
+  @ApiUnauthorizedBase()
+  async updateStatusSent(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: NotificationStatusUpdateDto,
+  ) {
+    return this.notificationCommandService.updateStatusSent(id, dto);
   }
 
   @Delete(':id')
