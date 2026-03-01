@@ -120,14 +120,20 @@ export class MerchantQueryRepository extends BaseQueryRepository<MerchantOrmEnti
       .addSelect(`SUM(CASE WHEN o.payment_status = 'UNPAID' THEN 1 ELSE 0 END)`, 'ordersUnpaid')
       .addSelect(`SUM(CASE WHEN o.payment_status = 'PARTIAL' THEN 1 ELSE 0 END)`, 'ordersPartial')
       .addSelect(`SUM(CASE WHEN o.payment_status = 'PAID' THEN 1 ELSE 0 END)`, 'ordersPaid')
-      .addSelect('COALESCE(SUM(o.total_selling_amount_lak), 0)', 'totalIncomeLak')
-      .addSelect('COALESCE(SUM(o.total_selling_amount_thb), 0)', 'totalIncomeThb')
-      .addSelect('COALESCE(SUM(o.total_final_cost_lak), 0)', 'totalExpenseLak')
-      .addSelect('COALESCE(SUM(o.total_final_cost_thb), 0)', 'totalExpenseThb')
-      .addSelect('COALESCE(SUM(o.total_profit_lak), 0)', 'totalProfitLak')
-      .addSelect('COALESCE(SUM(o.total_profit_thb), 0)', 'totalProfitThb')
-      .addSelect('COALESCE(SUM(o.paid_amount), 0)', 'totalPaidAmount')
-      .addSelect('COALESCE(SUM(o.remaining_amount), 0)', 'totalRemainingAmount')
+      .addSelect('COALESCE(SUM(o.total_selling_amount), 0)', 'totalIncomeLak')
+      .addSelect('0', 'totalIncomeThb')
+      .addSelect('COALESCE(SUM(o.total_final_cost), 0)', 'totalExpenseLak')
+      .addSelect('0', 'totalExpenseThb')
+      .addSelect('COALESCE(SUM(o.total_profit), 0)', 'totalProfitLak')
+      .addSelect('0', 'totalProfitThb')
+      .addSelect(
+        `(SELECT COALESCE(SUM(co.total_paid), 0) FROM customer_orders co INNER JOIN orders o2 ON o2.id = co.order_id WHERE o2.merchant_id = :merchantId)`,
+        'totalPaidAmount',
+      )
+      .addSelect(
+        `(SELECT COALESCE(SUM(co.remaining_amount), 0) FROM customer_orders co INNER JOIN orders o2 ON o2.id = co.order_id WHERE o2.merchant_id = :merchantId)`,
+        'totalRemainingAmount',
+      )
       .where('o.merchant_id = :merchantId', { merchantId })
       .getRawOne();
 

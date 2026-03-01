@@ -106,11 +106,11 @@ export class OrderQueryRepository extends BaseQueryRepository<OrderOrmEntity> {
       .leftJoin('order.customerOrders', 'customerOrders')
       .leftJoin('customerOrders.customer', 'customer')
       .select('COUNT(DISTINCT order.id)', 'totalOrders')
-      .addSelect('COALESCE(SUM(order.totalFinalCostLak), 0)', 'totalFinalCostLak')
-      .addSelect('COALESCE(SUM(order.totalSellingAmountLak), 0)', 'totalSellingAmountLak')
-      .addSelect('COALESCE(SUM(order.totalProfitLak), 0)', 'totalProfitLak')
-      .addSelect('COALESCE(SUM(order.paidAmount), 0)', 'totalPaidAmount')
-      .addSelect('COALESCE(SUM(order.remainingAmount), 0)', 'totalRemainingAmount');
+      .addSelect('COALESCE(SUM(order.totalFinalCost), 0)', 'totalFinalCostLak')
+      .addSelect('COALESCE(SUM(order.totalSellingAmount), 0)', 'totalSellingAmountLak')
+      .addSelect('COALESCE(SUM(order.totalProfit), 0)', 'totalProfitLak')
+      .addSelect('COALESCE(SUM(customerOrders.totalPaid), 0)', 'totalPaidAmount')
+      .addSelect('COALESCE(SUM(customerOrders.remainingAmount), 0)', 'totalRemainingAmount');
 
     buildFilters(aggQb);
     const aggRaw = await aggQb.getRawOne<Record<string, string>>();

@@ -36,19 +36,15 @@ export class DashboardQueryService {
         orderCount: string;
         totalFinalCostLak: string;
         totalRevenueLak: string;
-        totalRevenueThb: string;
         totalProfitLak: string;
-        totalProfitThb: string;
         totalOutstandingAmountLak: string;
       }[]>(
         `SELECT
           COUNT(*) AS orderCount,
-          COALESCE(SUM(total_final_cost_lak), 0) AS totalFinalCostLak,
-          COALESCE(SUM(total_selling_amount_lak), 0) AS totalRevenueLak,
-          COALESCE(SUM(total_selling_amount_thb), 0) AS totalRevenueThb,
-          COALESCE(SUM(total_profit_lak), 0) AS totalProfitLak,
-          COALESCE(SUM(total_profit_thb), 0) AS totalProfitThb,
-          COALESCE(SUM(remaining_amount), 0) AS totalOutstandingAmountLak
+          COALESCE(SUM(total_final_cost), 0) AS totalFinalCostLak,
+          COALESCE(SUM(total_selling_amount), 0) AS totalRevenueLak,
+          COALESCE(SUM(total_profit), 0) AS totalProfitLak,
+          (SELECT COALESCE(SUM(remaining_amount), 0) FROM customer_orders) AS totalOutstandingAmountLak
         FROM orders`,
       ),
       this.dataSource.query<{ orderCount: string }[]>(
@@ -86,9 +82,9 @@ export class DashboardQueryService {
       },
       totalFinalCostLak: String(stats?.totalFinalCostLak ?? '0'),
       totalRevenueLak: String(stats?.totalRevenueLak ?? '0'),
-      totalRevenueThb: String(stats?.totalRevenueThb ?? '0'),
+      totalRevenueThb: '0',
       totalProfitLak: String(stats?.totalProfitLak ?? '0'),
-      totalProfitThb: String(stats?.totalProfitThb ?? '0'),
+      totalProfitThb: '0',
       totalOutstandingAmountLak: String(stats?.totalOutstandingAmountLak ?? '0'),
     };
   }
@@ -112,21 +108,20 @@ export class DashboardQueryService {
         orderCount: string;
         totalFinalCostLak: string;
         totalRevenueLak: string;
-        totalRevenueThb: string;
         totalProfitLak: string;
-        totalProfitThb: string;
         totalOutstandingAmountLak: string;
       }[]>(
         `SELECT
           COUNT(*) AS orderCount,
-          COALESCE(SUM(total_final_cost_lak), 0) AS totalFinalCostLak,
-          COALESCE(SUM(total_selling_amount_lak), 0) AS totalRevenueLak,
-          COALESCE(SUM(total_selling_amount_thb), 0) AS totalRevenueThb,
-          COALESCE(SUM(total_profit_lak), 0) AS totalProfitLak,
-          COALESCE(SUM(total_profit_thb), 0) AS totalProfitThb,
-          COALESCE(SUM(remaining_amount), 0) AS totalOutstandingAmountLak
+          COALESCE(SUM(total_final_cost), 0) AS totalFinalCostLak,
+          COALESCE(SUM(total_selling_amount), 0) AS totalRevenueLak,
+          COALESCE(SUM(total_profit), 0) AS totalProfitLak,
+          (SELECT COALESCE(SUM(co.remaining_amount), 0)
+           FROM customer_orders co
+           INNER JOIN orders o2 ON o2.id = co.order_id
+           WHERE o2.merchant_id = ?) AS totalOutstandingAmountLak
         FROM orders WHERE merchant_id = ?`,
-        [merchantId],
+        [merchantId, merchantId],
       ),
       this.dataSource.query<{ orderCount: string }[]>(
         `SELECT COUNT(*) AS orderCount FROM orders
@@ -159,14 +154,14 @@ export class DashboardQueryService {
         id: string;
         order_code: string;
         arrival_status: string;
-        total_selling_amount_lak: string;
+        total_selling_amount: string;
         customer_name: string | null;
       }[]>(
         `SELECT
           o.id,
           o.order_code,
           o.arrival_status,
-          o.total_selling_amount_lak,
+          o.total_selling_amount,
           (
             SELECT c.customer_name
             FROM customer_orders co
@@ -190,7 +185,7 @@ export class DashboardQueryService {
       id: Number(row.id),
       orderCode: row.order_code,
       arrivalStatus: row.arrival_status,
-      totalAmount: String(row.total_selling_amount_lak ?? '0'),
+      totalAmount: String(row.total_selling_amount ?? '0'),
       customerName: row.customer_name ?? null,
     }));
 
@@ -212,9 +207,9 @@ export class DashboardQueryService {
       totalArrivals: Number(arrivalCount[0]?.total ?? 0),
       totalFinalCostLak: String(stats?.totalFinalCostLak ?? '0'),
       totalRevenueLak: String(stats?.totalRevenueLak ?? '0'),
-      totalRevenueThb: String(stats?.totalRevenueThb ?? '0'),
+      totalRevenueThb: '0',
       totalProfitLak: String(stats?.totalProfitLak ?? '0'),
-      totalProfitThb: String(stats?.totalProfitThb ?? '0'),
+      totalProfitThb: '0',
       totalOutstandingAmountLak: String(stats?.totalOutstandingAmountLak ?? '0'),
       latestOrders,
     };
@@ -226,18 +221,14 @@ export class DashboardQueryService {
       orderCount: string;
       finalCostLak: string;
       revenueLak: string;
-      revenueThb: string;
       profitLak: string;
-      profitThb: string;
     }[]>(
       `SELECT
         MONTH(order_date) AS month,
         COUNT(*) AS orderCount,
-        COALESCE(SUM(total_final_cost_lak), 0) AS finalCostLak,
-        COALESCE(SUM(total_selling_amount_lak), 0) AS revenueLak,
-        COALESCE(SUM(total_selling_amount_thb), 0) AS revenueThb,
-        COALESCE(SUM(total_profit_lak), 0) AS profitLak,
-        COALESCE(SUM(total_profit_thb), 0) AS profitThb
+        COALESCE(SUM(total_final_cost), 0) AS finalCostLak,
+        COALESCE(SUM(total_selling_amount), 0) AS revenueLak,
+        COALESCE(SUM(total_profit), 0) AS profitLak
       FROM orders
       WHERE YEAR(order_date) = ?
       GROUP BY MONTH(order_date)
@@ -254,18 +245,14 @@ export class DashboardQueryService {
       orderCount: string;
       finalCostLak: string;
       revenueLak: string;
-      revenueThb: string;
       profitLak: string;
-      profitThb: string;
     }[]>(
       `SELECT
         MONTH(order_date) AS month,
         COUNT(*) AS orderCount,
-        COALESCE(SUM(total_final_cost_lak), 0) AS finalCostLak,
-        COALESCE(SUM(total_selling_amount_lak), 0) AS revenueLak,
-        COALESCE(SUM(total_selling_amount_thb), 0) AS revenueThb,
-        COALESCE(SUM(total_profit_lak), 0) AS profitLak,
-        COALESCE(SUM(total_profit_thb), 0) AS profitThb
+        COALESCE(SUM(total_final_cost), 0) AS finalCostLak,
+        COALESCE(SUM(total_selling_amount), 0) AS revenueLak,
+        COALESCE(SUM(total_profit), 0) AS profitLak
       FROM orders
       WHERE YEAR(order_date) = ? AND merchant_id = ?
       GROUP BY MONTH(order_date)
@@ -293,9 +280,7 @@ export class DashboardQueryService {
       orderCount: string;
       finalCostLak: string;
       revenueLak: string;
-      revenueThb: string;
       profitLak: string;
-      profitThb: string;
     }[],
   ): MonthlyReportDto[] {
     const rowMap: Record<number, (typeof rows)[0]> = {};
@@ -312,9 +297,9 @@ export class DashboardQueryService {
         orderCount: Number(row?.orderCount ?? 0),
         finalCostLak: String(row?.finalCostLak ?? '0'),
         revenueLak: String(row?.revenueLak ?? '0'),
-        revenueThb: String(row?.revenueThb ?? '0'),
+        revenueThb: '0',
         profitLak: String(row?.profitLak ?? '0'),
-        profitThb: String(row?.profitThb ?? '0'),
+        profitThb: '0',
       };
     });
   }

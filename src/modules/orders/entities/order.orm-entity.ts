@@ -5,77 +5,95 @@ import { UserOrmEntity } from '../../users/entities/user.orm-entity';
 import { OrderItemOrmEntity } from './order-item.orm-entity';
 import { CustomerOrderOrmEntity } from './customer-order.orm-entity';
 import { ArrivalStatusEnum, PaymentStatusEnum } from '../enum/enum.entities';
+import { ExchangeRateOrmEntity } from 'src/modules/exchange-rates/entities/exchange-rate.orm-entity';
 
 @Entity('orders')
 export class OrderOrmEntity extends BaseOrmEntity {
+  // ร้านค้าที่เป็นเจ้าของออเดอร์นี้ (ถ้าลบร้าน จะลบออเดอร์ทั้งหมดด้วย)
   @ManyToOne(() => MerchantOrmEntity, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'merchant_id' })
   merchant: MerchantOrmEntity;
 
+  // ผู้ใช้ที่เป็นคนสร้างออเดอร์ (ถ้าลบ user จะ set เป็น null)
   @ManyToOne(() => UserOrmEntity, { onDelete: 'SET NULL', nullable: true })
   @JoinColumn({ name: 'created_by' })
   createdByUser: UserOrmEntity | null;
 
+  // รหัสออเดอร์ ใช้สำหรับอ้างอิง
   @Column({ name: 'order_code', type: 'varchar', length: 100 })
   orderCode: string;
 
+  // วันที่ทำรายการสั่งซื้อ
   @Column({ name: 'order_date', type: 'date' })
   orderDate: Date;
 
+  // สถานะการมาถึงของสินค้า (เช่น ยังไม่ถึง, ถึงแล้ว)
   @Column({ name: 'arrival_status', type: 'varchar', length: 20, default: ArrivalStatusEnum.NOT_ARRIVED })
   arrivalStatus: ArrivalStatusEnum;
 
+  // วันเวลาที่สินค้ามาถึงจริง
   @Column({ name: 'arrived_at', type: 'datetime', nullable: true })
   arrivedAt: Date | null;
 
+  // วันเวลาที่มีการแจ้งลูกค้าว่าสินค้ามาถึงแล้ว
   @Column({ name: 'notified_at', type: 'datetime', nullable: true })
   notifiedAt: Date | null;
 
-  @Column({ name: 'total_purchase_cost_lak', type: 'decimal', precision: 18, scale: 2, default: 0 })
-  totalPurchaseCostLak: string;
+  // อัตราแลกเปลี่ยนสำหรับการซื้อ (สกุลเงินต่างประเทศ -> กีบ)
+  @ManyToOne(() => ExchangeRateOrmEntity, { nullable: true })
+  @JoinColumn({ name: 'exchange_rate_buy_id' })
+  exchangeRateBuy: ExchangeRateOrmEntity | null;
 
-  @Column({ name: 'total_shipping_cost_lak', type: 'decimal', precision: 18, scale: 2, default: 0 })
-  totalShippingCostLak: string;
+  // อัตราแลกเปลี่ยนสำหรับการขาย (กีบ -> สกุลเงินต่างประเทศ)
+  @ManyToOne(() => ExchangeRateOrmEntity, { nullable: true })
+  @JoinColumn({ name: 'exchange_rate_sell_id' })
+  exchangeRateSell: ExchangeRateOrmEntity | null;
 
-  @Column({ name: 'total_cost_before_discount_lak', type: 'decimal', precision: 18, scale: 2, default: 0 })
-  totalCostBeforeDiscountLak: string;
+  // อัตราแลกเปลี่ยนซื้อ (สกุลเงินต่างประเทศ -> กีบ)
+  @Column({ name: 'exchange_rate_buy', type: 'decimal', precision: 18, scale: 6, nullable: true })
+  exchangeRateBuyValue: string | null;
 
-  @Column({ name: 'total_discount_lak', type: 'decimal', precision: 18, scale: 2, default: 0 })
-  totalDiscountLak: string;
+  // อัตราแลกเปลี่ยนขาย (กีบ -> สกุลเงินต่างประเทศ)
+  @Column({ name: 'exchange_rate_sell', type: 'decimal', precision: 18, scale: 6, nullable: true })
+  exchangeRateSellValue: string | null;
 
-  @Column({ name: 'total_final_cost_lak', type: 'decimal', precision: 18, scale: 2, default: 0 })
-  totalFinalCostLak: string;
+  // ต้นทุนราคาซื้อรวมทั้งหมด (หน่วย: กีบ)
+  @Column({ name: 'total_purchase_cost', type: 'decimal', precision: 18, scale: 2, default: 0 })
+  totalPurchaseCost: string;
 
-  @Column({ name: 'total_final_cost_thb', type: 'decimal', precision: 18, scale: 2, default: 0 })
-  totalFinalCostThb: string;
+  // ต้นทุนค่าขนส่งรวมทั้งหมด (หน่วย: กีบ)
+  @Column({ name: 'total_shipping_cost', type: 'decimal', precision: 18, scale: 2, default: 0 })
+  totalShippingCost: string;
 
-  @Column({ name: 'total_selling_amount_lak', type: 'decimal', precision: 18, scale: 2, default: 0 })
-  totalSellingAmountLak: string;
+  // ต้นทุนรวมก่อนหักส่วนลด (หน่วย: กีบ)
+  @Column({ name: 'total_cost_before_discount', type: 'decimal', precision: 18, scale: 2, default: 0 })
+  totalCostBeforeDiscount: string;
 
-  @Column({ name: 'total_selling_amount_thb', type: 'decimal', precision: 18, scale: 2, default: 0 })
-  totalSellingAmountThb: string;
+  // จำนวนเงินส่วนลดรวมทั้งหมด (หน่วย: กีบ)
+  @Column({ name: 'total_discount', type: 'decimal', precision: 18, scale: 2, default: 0 })
+  totalDiscount: string;
 
-  @Column({ name: 'total_profit_lak', type: 'decimal', precision: 18, scale: 2, default: 0 })
-  totalProfitLak: string;
+  // ต้นทุนสุทธิหลังหักส่วนลดแล้ว
+  @Column({ name: 'total_final_cost', type: 'decimal', precision: 18, scale: 2, default: 0 })
+  totalFinalCost: string;
 
-  @Column({ name: 'total_profit_thb', type: 'decimal', precision: 18, scale: 2, default: 0 })
-  totalProfitThb: string;
+  // ยอดขายรวมทั้งหมด
+  @Column({ name: 'total_selling_amount', type: 'decimal', precision: 18, scale: 2, default: 0 })
+  totalSellingAmount: string;
 
-  @Column({ name: 'deposit_amount', type: 'decimal', precision: 18, scale: 2, default: 0 })
-  depositAmount: string;
+  // กำไรรวมทั้งหมด 
+  @Column({ name: 'total_profit', type: 'decimal', precision: 18, scale: 2, default: 0 })
+  totalProfit: string;
 
-  @Column({ name: 'paid_amount', type: 'decimal', precision: 18, scale: 2, default: 0 })
-  paidAmount: string;
-
-  @Column({ name: 'remaining_amount', type: 'decimal', precision: 18, scale: 2, default: 0 })
-  remainingAmount: string;
-
+  // สถานะการชำระเงิน (เช่น ยังไม่จ่าย, จ่ายบางส่วน, จ่ายครบแล้ว)
   @Column({ name: 'payment_status', type: 'varchar', length: 20, default: 'UNPAID' })
   paymentStatus: PaymentStatusEnum;
 
+  // รายการสินค้าในออเดอร์นี้ (1 ออเดอร์ มีหลายสินค้า)
   @OneToMany(() => OrderItemOrmEntity, (item) => item.order)
   orderItems: OrderItemOrmEntity[];
 
+  // ความสัมพันธ์ระหว่างออเดอร์กับลูกค้า (1 ออเดอร์ อาจมีหลายลูกค้า)
   @OneToMany(() => CustomerOrderOrmEntity, (co) => co.order)
   customerOrders: CustomerOrderOrmEntity[];
 }

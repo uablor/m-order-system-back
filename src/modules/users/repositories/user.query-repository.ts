@@ -21,7 +21,10 @@ export class UserQueryRepository extends BaseQueryRepository<UserOrmEntity> {
     manager: import('typeorm').EntityManager,
   ): Promise<PaginatedResult<UserOrmEntity>> {
     const repo = this.getRepo(manager);
-    const qb = repo.createQueryBuilder('entity');
+    const qb = repo.createQueryBuilder('entity')
+      .leftJoinAndSelect('entity.role', 'role')
+      .andWhere('role.roleName != :superadmin', { superadmin: 'superadmin' });
+
     if (options.isActive !== undefined && options.isActive !== null) {
       qb.andWhere('entity.isActive = :isActive', {
         isActive: options.isActive,
@@ -46,7 +49,6 @@ export class UserQueryRepository extends BaseQueryRepository<UserOrmEntity> {
 
     return fetchWithPagination<UserOrmEntity>({
       qb,
-
       sort: options.sort,
       search: options.search
         ? { kw: options.search, field: options.searchField || 'fullName' }
@@ -67,6 +69,8 @@ export class UserQueryRepository extends BaseQueryRepository<UserOrmEntity> {
   }> {
     const repo = this.getRepo(manager);
     const qb = repo.createQueryBuilder('entity')
+      .leftJoin('entity.role', 'role')
+      .andWhere('role.roleName != :superadmin', { superadmin: 'superadmin' })
       .select('COUNT(entity.id)', 'totalUsers')
       .addSelect(`SUM(CASE WHEN entity.isActive = true THEN 1 ELSE 0 END)`, 'totalActive')
       .addSelect(`SUM(CASE WHEN entity.isActive = false THEN 1 ELSE 0 END)`, 'totalInactive');

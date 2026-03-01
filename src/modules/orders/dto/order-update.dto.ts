@@ -35,22 +35,5 @@ export class OrderUpdateDto {
   @IsOptional()
   @IsNumber()
   @Min(0)
-  totalShippingCostLak?: number;
-
-  @ApiPropertyOptional({ enum: PAYMENT_STATUSES })
-  @IsOptional()
-  @IsIn(PAYMENT_STATUSES)
-  paymentStatus?: 'UNPAID' | 'PARTIAL' | 'PAID';
-
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsNumber()
-  @Min(0)
-  depositAmount?: number;
-
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsNumber()
-  @Min(0)
-  paidAmount?: number;
+  totalShippingCost?: number;
 }

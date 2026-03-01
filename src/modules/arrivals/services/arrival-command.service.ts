@@ -121,13 +121,7 @@ export class ArrivalCommandService {
         );
         arrivalItems.push(arrivalItem);
 
-        const newRemaining =
-          orderItem.quantityRemaining + itemDto.arrivedQuantity;
-        await this.orderItemRepository.update(
-          orderItem.id,
-          { quantityRemaining: newRemaining } as Partial<OrderItemOrmEntity>,
-          manager,
-        );
+        // Stock management removed - quantityRemaining field no longer exists
       }
 
       // 3) Build message and get distinct customers

@@ -26,13 +26,10 @@ export class CustomerOrderItemResponseDto {
   quantity: number;
 
   @ApiProperty()
-  sellingPriceForeign: string;
+  sellingTotal: string;
 
   @ApiProperty()
-  sellingTotalLak: string;
-
-  @ApiProperty()
-  profitLak: string;
+  profit: string;
 
   @ApiProperty()
   createdAt: Date;
@@ -67,7 +64,7 @@ export class CustomerOrderResponseDto {
   customer: CustomerSnapshotDto | null;
 
   @ApiProperty()
-  totalSellingAmountLak: string;
+  totalSellingAmount: string;
 
   @ApiProperty()
   paidAmount: string;
@@ -114,44 +111,54 @@ export class OrderResponseDto {
   @ApiPropertyOptional({ nullable: true })
   notifiedAt: Date | null;
 
-  @ApiProperty()
-  totalPurchaseCostLak: string;
+  @ApiPropertyOptional({ nullable: true })
+  exchangeRateBuy: {
+    id: number;
+    baseCurrency: string;
+    targetCurrency: string;
+    rate: string;
+    rateType: string;
+    rateDate: Date;
+    isActive: boolean;
+  } | null;
+
+  @ApiPropertyOptional({ nullable: true })
+  exchangeRateSell: {
+    id: number;
+    baseCurrency: string;
+    targetCurrency: string;
+    rate: string;
+    rateType: string;
+    rateDate: Date;
+    isActive: boolean;
+  } | null;
 
   @ApiProperty()
-  totalShippingCostLak: string;
+  exchangeRateBuyValue: string | null;
+
+  @ApiPropertyOptional({ nullable: true })
+  exchangeRateSellValue: string | null;
 
   @ApiProperty()
-  totalCostBeforeDiscountLak: string;
+  totalPurchaseCost: string;
 
   @ApiProperty()
-  totalDiscountLak: string;
+  totalShippingCost: string;
 
   @ApiProperty()
-  totalFinalCostLak: string;
+  totalCostBeforeDiscount: string;
 
   @ApiProperty()
-  totalFinalCostThb: string;
+  totalDiscount: string;
 
   @ApiProperty()
-  totalSellingAmountLak: string;
+  totalFinalCost: string;
 
   @ApiProperty()
-  totalSellingAmountThb: string;
+  totalSellingAmount: string;
 
   @ApiProperty()
-  totalProfitLak: string;
-
-  @ApiProperty()
-  totalProfitThb: string;
-
-  @ApiProperty()
-  depositAmount: string;
-
-  @ApiProperty()
-  paidAmount: string;
-
-  @ApiProperty()
-  remainingAmount: string;
+  totalProfit: string;
 
   @ApiProperty()
   paymentStatus: string;

@@ -54,7 +54,7 @@ export class OrderCommandService {
       const merchant = await this.merchantRepository.findOneById(dto.merchantId, manager);
       if (!merchant) throw new NotFoundException('Merchant not found');
       const orderDate = new Date(dto.orderDate);
-      const shippingLak = dto.totalShippingCostLak ?? 0;
+      const shippingCost = dto.totalShippingCost ?? 0;
       const entity = await this.orderRepository.create(
         {
           merchant,
@@ -62,19 +62,13 @@ export class OrderCommandService {
           orderCode: dto.orderCode,
           orderDate,
           arrivalStatus: dto.arrivalStatus ?? 'NOT_ARRIVED',
-          totalShippingCostLak: toDecimal2(shippingLak),
-          totalPurchaseCostLak: ZERO,
-          totalCostBeforeDiscountLak: ZERO,
-          totalDiscountLak: ZERO,
-          totalFinalCostLak: ZERO,
-          totalFinalCostThb: ZERO,
-          totalSellingAmountLak: ZERO,
-          totalSellingAmountThb: ZERO,
-          totalProfitLak: ZERO,
-          totalProfitThb: ZERO,
-          depositAmount: ZERO,
-          paidAmount: ZERO,
-          remainingAmount: ZERO,
+          totalShippingCost: toDecimal2(shippingCost),
+          totalPurchaseCost: ZERO,
+          totalCostBeforeDiscount: ZERO,
+          totalDiscount: ZERO,
+          totalFinalCost: ZERO,
+          totalSellingAmount: ZERO,
+          totalProfit: ZERO,
           paymentStatus: 'UNPAID',
         } as Partial<OrderOrmEntity>,
         manager,
@@ -92,14 +86,7 @@ export class OrderCommandService {
       if (dto.orderDate !== undefined) updateData.orderDate = new Date(dto.orderDate);
       if (dto.arrivedAt !== undefined) updateData.arrivedAt = dto.arrivedAt ? new Date(dto.arrivedAt) : null;
       if (dto.notifiedAt !== undefined) updateData.notifiedAt = dto.notifiedAt ? new Date(dto.notifiedAt) : null;
-      if (dto.totalShippingCostLak !== undefined) updateData.totalShippingCostLak = toDecimal2(dto.totalShippingCostLak);
-      if (dto.depositAmount !== undefined) updateData.depositAmount = toDecimal2(dto.depositAmount);
-      if (dto.paidAmount !== undefined) {
-        updateData.paidAmount = toDecimal2(dto.paidAmount);
-        const totalSelling = Number(existing.totalSellingAmountLak);
-        const paid = dto.paidAmount;
-        updateData.remainingAmount = toDecimal2(Math.max(0, totalSelling - paid));
-      }
+      if (dto.totalShippingCost !== undefined) updateData.totalShippingCost = toDecimal2(dto.totalShippingCost);
       await this.orderRepository.update(id, updateData, manager);
     });
   }
@@ -143,19 +130,13 @@ export class OrderCommandService {
           orderCode: dto.orderCode,
           orderDate,
           arrivalStatus: ArrivalStatusEnum.NOT_ARRIVED,
-          totalPurchaseCostLak: ZERO,
-          totalShippingCostLak: ZERO,
-          totalCostBeforeDiscountLak: ZERO,
-          totalDiscountLak: ZERO,
-          totalFinalCostLak: ZERO,
-          totalFinalCostThb: ZERO,
-          totalSellingAmountLak: ZERO,
-          totalSellingAmountThb: ZERO,
-          totalProfitLak: ZERO,
-          totalProfitThb: ZERO,
-          depositAmount: ZERO,
-          paidAmount: ZERO,
-          remainingAmount: ZERO,
+          totalPurchaseCost: ZERO,
+          totalShippingCost: ZERO,
+          totalCostBeforeDiscount: ZERO,
+          totalDiscount: ZERO,
+          totalFinalCost: ZERO,
+          totalSellingAmount: ZERO,
+          totalProfit: ZERO,
           paymentStatus: 'UNPAID',
         } as Partial<OrderOrmEntity>,
         manager,
@@ -213,24 +194,19 @@ export class OrderCommandService {
             productName: it.productName,
             variant: it.variant ?? null,
             quantity: it.quantity,
-            quantityRemaining: it.quantity,
-            purchaseCurrency: purchaseCurrency,
+            exchangeRateBuyValue: toDecimal(buyRate),
+            exchangeRateSellValue: toDecimal(sellRate),
             purchasePrice: toDecimal(it.purchasePrice),
-            purchaseExchangeRate: toDecimal(buyRate),
-            purchaseTotalLak: toDecimal2(totalBuyLak),
+            purchaseTotal: toDecimal2(totalBuyLak),
             shippingPrice: toDecimal(shippingPriceInput),
-            shippingLak: toDecimal2(shippingLak),
-            totalCostBeforeDiscountLak: toDecimal2(subtotalLak),
+            totalCostBeforeDiscount: toDecimal2(subtotalLak),
             discountType: entityDiscountType,
             discountValue: it.discountValue != null ? toDecimal(it.discountValue) : null,
-            discountAmountLak: toDecimal2(discountLak),
-            finalCostLak: toDecimal2(finalCostLak),
-            finalCostThb: toDecimal2(finalCostThb),
+            discountAmount: toDecimal2(discountLak),
+            finalCost: toDecimal2(finalCostLak),
             sellingPriceForeign: toDecimal(it.sellingPriceForeign),
-            sellingExchangeRate: toDecimal(sellRate),
             sellingTotalLak: toDecimal2(sellPriceLak),
-            profitLak: toDecimal2(profitLak),
-            profitThb: toDecimal2(profitThb),
+            profit: toDecimal2(profitLak),
           } as Partial<OrderItemOrmEntity>,
           manager,
         );
@@ -273,7 +249,7 @@ export class OrderCommandService {
 
         for (const coItemDto of coDto.items) {
           const orderItem = orderItems[coItemDto.orderItemIndex];
-          const sellRate = Number(orderItem.sellingExchangeRate);
+          const sellRate = Number(orderItem.exchangeRateSell);
           const sellingPrice = coItemDto.sellingPriceForeign ?? Number(orderItem.sellingPriceForeign);
           const lineTotalLak = coItemDto.quantity * sellingPrice * sellRate;
           totalSellingAmountLak += lineTotalLak;
@@ -293,7 +269,7 @@ export class OrderCommandService {
           {
             order,
             customer,
-            totalSellingAmountLak: toDecimal2(totalSellingAmountLak),
+            totalSellingAmount: toDecimal2(totalSellingAmountLak),
             totalPaid: toDecimal2(totalPaid),
             remainingAmount: toDecimal2(remaining),
             paymentStatus,
@@ -304,7 +280,7 @@ export class OrderCommandService {
 
         for (const coItem of coItemsToCreate) {
           const sellingTotalLak = coItem.quantity * coItem.sellingPriceForeign * coItem.sellRate;
-          const costPerUnit = Number(coItem.orderItem.finalCostLak) / coItem.orderItem.quantity;
+          const costPerUnit = Number(coItem.orderItem.finalCost) / coItem.orderItem.quantity;
           const costAllocated = costPerUnit * coItem.quantity;
           const profitLak = sellingTotalLak - costAllocated;
 
@@ -314,71 +290,52 @@ export class OrderCommandService {
               orderItem: coItem.orderItem,
               quantity: coItem.quantity,
               sellingPriceForeign: toDecimal(coItem.sellingPriceForeign),
-              sellingTotalLak: toDecimal2(sellingTotalLak),
-              profitLak: toDecimal2(profitLak),
+              sellingTotal: toDecimal2(sellingTotalLak),
+              profit: toDecimal2(profitLak),
             } as Partial<CustomerOrderItemOrmEntity>,
             manager,
           );
 
-          // ลด stock
-          const newRemaining = coItem.orderItem.quantityRemaining - coItem.quantity;
-          await this.orderItemRepository.update(
-            coItem.orderItem.id,
-            { quantityRemaining: newRemaining } as Partial<OrderItemOrmEntity>,
-            manager,
-          );
-          coItem.orderItem.quantityRemaining = newRemaining;
+          // Remove stock management logic since quantityRemaining no longer exists
         }
       }
 
       // 5) คำนวณ order-level totals โดย sum จาก items (ไม่ต้อง DB rate lookup)
-      let totalPurchaseCostLak = 0;
-      let totalShippingCostLak = 0;
-      let totalCostBeforeDiscountLak = 0;
-      let totalDiscountLak = 0;
-      let totalFinalCostLak = 0;
-      let totalFinalCostThb = 0;
-      let totalSellingAmountLak = 0;
-      let totalSellingAmountThb = 0;
-      let totalProfitLak = 0;
-      let totalProfitThb = 0;
+      let totalPurchaseCost = 0;
+      let totalShippingCost = 0;
+      let totalCostBeforeDiscount = 0;
+      let totalDiscount = 0;
+      let totalFinalCost = 0;
+      let totalSellingAmount = 0;
+      let totalProfit = 0;
 
       for (const oi of orderItems) {
-        totalPurchaseCostLak += Number(oi.purchaseTotalLak);
-        totalShippingCostLak += Number(oi.shippingLak);
-        totalCostBeforeDiscountLak += Number(oi.totalCostBeforeDiscountLak);
-        totalDiscountLak += Number(oi.discountAmountLak);
-        totalFinalCostLak += Number(oi.finalCostLak);
-        totalFinalCostThb += Number(oi.finalCostThb);
-        totalSellingAmountLak += Number(oi.sellingTotalLak);
-        const sellRate = Number(oi.sellingExchangeRate);
-        totalSellingAmountThb += sellRate > 0 ? Number(oi.sellingTotalLak) / sellRate : 0;
-        totalProfitLak += Number(oi.profitLak);
-        totalProfitThb += Number(oi.profitThb);
+        totalPurchaseCost += Number(oi.purchaseTotal);
+        totalShippingCost += Number(oi.shippingPrice) * Number(oi.exchangeRateBuyValue || 0);
+        totalCostBeforeDiscount += Number(oi.totalCostBeforeDiscount);
+        totalDiscount += Number(oi.discountAmount);
+        totalFinalCost += Number(oi.finalCost);
+        totalSellingAmount += Number(oi.sellingTotalLak);
+        totalProfit += Number(oi.profit);
       }
 
       let paidAmount = 0;
       for (const co of customerOrders) {
         paidAmount += Number(co.totalPaid);
       }
-      const remainingAmount = totalSellingAmountLak - paidAmount;
-      const orderPaymentStatus = calcPaymentStatus(totalSellingAmountLak, paidAmount);
+      const remainingAmount = totalSellingAmount - paidAmount;
+      const orderPaymentStatus = calcPaymentStatus(totalSellingAmount, paidAmount);
 
       await this.orderRepository.update(
         order.id,
         {
-          totalPurchaseCostLak: toDecimal2(totalPurchaseCostLak),
-          totalShippingCostLak: toDecimal2(totalShippingCostLak),
-          totalCostBeforeDiscountLak: toDecimal2(totalCostBeforeDiscountLak),
-          totalDiscountLak: toDecimal2(totalDiscountLak),
-          totalFinalCostLak: toDecimal2(totalFinalCostLak),
-          totalFinalCostThb: toDecimal2(totalFinalCostThb),
-          totalSellingAmountLak: toDecimal2(totalSellingAmountLak),
-          totalSellingAmountThb: toDecimal2(totalSellingAmountThb),
-          totalProfitLak: toDecimal2(totalProfitLak),
-          totalProfitThb: toDecimal2(totalProfitThb),
-          paidAmount: toDecimal2(paidAmount),
-          remainingAmount: toDecimal2(remainingAmount),
+          totalPurchaseCost: toDecimal2(totalPurchaseCost),
+          totalShippingCost: toDecimal2(totalShippingCost),
+          totalCostBeforeDiscount: toDecimal2(totalCostBeforeDiscount),
+          totalDiscount: toDecimal2(totalDiscount),
+          totalFinalCost: toDecimal2(totalFinalCost),
+          totalSellingAmount: toDecimal2(totalSellingAmount),
+          totalProfit: toDecimal2(totalProfit),
           paymentStatus: orderPaymentStatus,
         } as Partial<OrderOrmEntity>,
         manager,

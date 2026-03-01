@@ -17,10 +17,10 @@ export class CustomerOrderItemResponseDto {
   sellingPriceForeign: string;
 
   @ApiProperty()
-  sellingTotalLak: string;
+  sellingTotal: string;
 
   @ApiProperty()
-  profitLak: string;
+  profit: string;
 
   @ApiProperty()
   createdAt: Date;

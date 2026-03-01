@@ -16,29 +16,45 @@ export class OrderItemResponseDto {
   @ApiProperty()
   quantity: number;
 
-  @ApiProperty()
-  quantityRemaining: number;
+  @ApiPropertyOptional({ nullable: true })
+  exchangeRateBuy: {
+    id: number;
+    baseCurrency: string;
+    targetCurrency: string;
+    rate: string;
+    rateType: string;
+    rateDate: Date;
+    isActive: boolean;
+  } | null;
+
+  @ApiPropertyOptional({ nullable: true })
+  exchangeRateSell: {
+    id: number;
+    baseCurrency: string;
+    targetCurrency: string;
+    rate: string;
+    rateType: string;
+    rateDate: Date;
+    isActive: boolean;
+  } | null;
 
   @ApiProperty()
-  purchaseCurrency: string;
+  exchangeRateBuyValue: string | null;
+
+  @ApiPropertyOptional({ nullable: true })
+  exchangeRateSellValue: string | null;
 
   @ApiProperty()
   purchasePrice: string;
 
   @ApiProperty()
-  purchaseExchangeRate: string;
-
-  @ApiProperty()
-  purchaseTotalLak: string;
+  purchaseTotal: string;
 
   @ApiPropertyOptional({ nullable: true })
   shippingPrice: string | null;
 
   @ApiProperty()
-  shippingLak: string;
-
-  @ApiProperty()
-  totalCostBeforeDiscountLak: string;
+  totalCostBeforeDiscount: string;
 
   @ApiPropertyOptional({ nullable: true })
   discountType: string | null;
@@ -47,28 +63,19 @@ export class OrderItemResponseDto {
   discountValue: string | null;
 
   @ApiProperty()
-  discountAmountLak: string;
+  discountAmount: string;
 
   @ApiProperty()
-  finalCostLak: string;
-
-  @ApiProperty()
-  finalCostThb: string;
+  finalCost: string;
 
   @ApiProperty()
   sellingPriceForeign: string;
 
   @ApiProperty()
-  sellingExchangeRate: string;
-
-  @ApiProperty()
   sellingTotalLak: string;
 
   @ApiProperty()
-  profitLak: string;
-
-  @ApiProperty()
-  profitThb: string;
+  profit: string;
 
   @ApiProperty()
   createdAt: Date;

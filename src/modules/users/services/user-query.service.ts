@@ -64,7 +64,10 @@ export class UserQueryService {
         },
         manager,
       );
-      const paginated = createPaginatedResponse(result.results, result.pagination);
+      const paginated = createPaginatedResponse(
+        result.results.map((e) => this.toResponse(e)),
+        result.pagination,
+      );
       return { ...paginated, summary };
     });
   }
