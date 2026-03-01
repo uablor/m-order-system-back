@@ -105,6 +105,7 @@ import { ImageModule } from './modules/images/image.module';
     ExchangeRateModule,
     DashboardModule,
     PaymentModule,
+    ImageModule,
   ],
   providers: [
     // {

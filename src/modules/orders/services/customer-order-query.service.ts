@@ -5,6 +5,7 @@ import { CustomerOrderListQueryDto } from '../dto/customer-order-list-query.dto'
 import { CustomerOrderResponseDto } from '../dto/customer-order-response.dto';
 import type { ResponseInterface, ResponseWithPaginationInterface } from '../../../common/base/interfaces/response.interface';
 import { createPaginatedResponse, createSingleResponse } from '../../../common/base/helpers/response.helper';
+import { ExchangeRateOrmEntity } from '../../exchange-rates/entities/exchange-rate.orm-entity';
 
 @Injectable()
 export class CustomerOrderQueryService {
@@ -16,7 +17,7 @@ export class CustomerOrderQueryService {
   async getById(id: number): Promise<CustomerOrderResponseDto | null> {
     const entity = await this.customerOrderQueryRepository.repository.findOne({
       where: { id },
-      relations: ['order', 'customer', 'customerOrderItems', 'customerOrderItems.orderItem'],
+      relations: ['order', 'order.exchangeRateSell', 'customer', 'customerOrderItems', 'customerOrderItems.orderItem', 'payments'],
     });
     if (!entity) return null;
     return this.toResponse(entity);
@@ -45,7 +46,20 @@ export class CustomerOrderQueryService {
     );
   }
 
+  private convertToTargetCurrency(amount: number, exchangeRate: ExchangeRateOrmEntity | null): string {
+    if (!exchangeRate) return amount.toString();
+    if (exchangeRate.baseCurrency === exchangeRate.targetCurrency) return amount.toString();
+    if (exchangeRate.rateType === 'BUY') {
+      return (amount * exchangeRate.rate).toString();
+    }
+    return (amount * exchangeRate.rate).toString();
+  }
+
   private toResponse(entity: import('../entities/customer-order.orm-entity').CustomerOrderOrmEntity): CustomerOrderResponseDto {
+    const exchangeRateSell = entity.order?.exchangeRateSell ?? null;
+    const targetCurrency = exchangeRateSell?.targetCurrency ?? null;
+    const hasPendingPayment = (entity.payments ?? []).some((p) => p.status === 'PENDING');
+
     return {
       id: entity.id,
       orderId: entity.order?.id ?? 0,
@@ -56,13 +70,20 @@ export class CustomerOrderQueryService {
       totalPaid: entity.totalPaid.toString(),
       remainingAmount: entity.remainingAmount.toString(),
       paymentStatus: entity.paymentStatus,
+      targetCurrency,
+      targetCurrencyTotalSellingAmount: targetCurrency ? this.convertToTargetCurrency(entity.totalSellingAmount, exchangeRateSell) : null,
+      targetCurrencyTotalPaid: targetCurrency ? this.convertToTargetCurrency(entity.totalPaid, exchangeRateSell) : null,
+      targetCurrencyRemainingAmount: targetCurrency ? this.convertToTargetCurrency(entity.remainingAmount, exchangeRateSell) : null,
+      hasPendingPayment,
       customerOrderItems: entity.customerOrderItems?.map(item => ({
         id: item.id,
         orderId: item.orderItem?.id ?? 0,
         productName: item.orderItem?.productName || '',
+        variant: item.orderItem?.variant ?? null,
         quantity: item.quantity,
         sellingPriceForeign: item.sellingPriceForeign.toString(),
         sellingTotal: item.sellingTotal.toString(),
+        targetCurrencySellingTotal: targetCurrency ? this.convertToTargetCurrency(item.sellingTotal, exchangeRateSell) : null,
         profit: item.profit.toString(),
       })) || [],
       createdAt: entity.createdAt,

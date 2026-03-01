@@ -64,6 +64,36 @@ export class ImageCommandService {
     return results;
   }
 
+  /** สร้าง image จาก upload สำหรับ customer (ไม่มี JWT) ใช้ merchantId จาก customer */
+  async createFromUploadForCustomer(
+    files: Array<{ originalname: string; key: string; size: number; mimetype: string; url?: string | null }>,
+    merchantId: number,
+  ): Promise<ImageResponseDto[]> {
+    const results: ImageResponseDto[] = [];
+
+    for (const file of files) {
+      const createDto: ImageCreateDto = {
+        originalName: file.originalname,
+        fileName: file.originalname,
+        filePath: '',
+        fileKey: file.key,
+        fileSize: file.size,
+        mimeType: file.mimetype,
+        publicUrl: file.url ?? undefined,
+      };
+
+      const saved = await this.imageRepository.create({
+        ...createDto,
+        merchant: { id: merchantId } as any,
+        uploadedByUser: null,
+      });
+
+      results.push(this.toResponse(saved));
+    }
+
+    return results;
+  }
+
   async update(
     id: number,
     updateDto: ImageUpdateDto,

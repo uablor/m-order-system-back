@@ -12,9 +12,10 @@ export class PaymentCreateDto {
   @IsNumber()
   paymentAmount: number;
 
-  @ApiProperty({ description: 'Payment proof image ID', required: false })
+  @ApiProperty({ description: 'Payment proof image ID (from upload/files-v2-public)', required: false })
+  @IsOptional()
   @IsNumber()
-  paymentProofImageId: number;
+  paymentProofImageId?: number;
 
   @ApiProperty({ description: 'Message from customer', required: false })
   @IsOptional()

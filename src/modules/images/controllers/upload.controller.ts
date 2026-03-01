@@ -6,6 +6,7 @@ import {
   UploadedFiles,
   UseInterceptors,
   BadRequestException,
+  NotFoundException,
 } from '@nestjs/common';
 import { FilesInterceptor } from '@nestjs/platform-express';
 import { ApiTags, ApiOperation, ApiConsumes, ApiResponse, ApiBearerAuth, ApiBody } from '@nestjs/swagger';
@@ -14,9 +15,10 @@ import { ImageCommandService } from '../services/image-command.service';
 import { DeleteFileResponseDto, UploadFilesDto } from '../dto/upload-response.dto';
 import { CurrentUser } from 'src/common/decorators/current-user.decorator';
 import type { CurrentUserPayload } from 'src/common/decorators/current-user.decorator';
+import { Public } from 'src/common/decorators/public.decorator';
 import { File } from 'multer';
-import { ImageOrmEntity } from '../entities/image.orm-entity';
 import { ImageResponseDto } from '../dto/image-response.dto';
+import { CustomerRepository } from '../../customers/repositories/customer.repository';
 
 @ApiTags('Upload')
 @Controller('upload')
@@ -24,6 +26,7 @@ export class UploadController {
   constructor(
     private readonly uploadService: UploadService,
     private readonly imageCommandService: ImageCommandService,
+    private readonly customerRepository: CustomerRepository,
   ) {}
 
   @Post('files')
@@ -138,5 +141,70 @@ export class UploadController {
     }
 
     return this.uploadService.deleteFile_v2(deleteDto.key);
+  }
+
+  @Post('files-v2-public')
+  @Public()
+  @UseInterceptors(FilesInterceptor('files'))
+  @ApiOperation({ summary: 'Upload files (public — for customer payment slip, requires customerToken)' })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    description: 'Files + customerToken (form-data)',
+    schema: {
+      type: 'object',
+      properties: {
+        files: { type: 'array', items: { type: 'string', format: 'binary' } },
+        customerToken: { type: 'string', description: 'Customer unique token from URL' },
+      },
+    },
+  })
+  @ApiResponse({ status: 200, description: 'Files uploaded successfully', type: [ImageResponseDto] })
+  async uploadFilesV2Public(
+    @UploadedFiles() files: File[],
+    @Body() body: { customerToken?: string },
+  ): Promise<ImageResponseDto[]> {
+    if (!files || files.length === 0) {
+      throw new BadRequestException('No files provided');
+    }
+    const customerToken = (body?.customerToken ?? '').trim();
+    if (!customerToken) {
+      throw new BadRequestException('customerToken is required');
+    }
+
+    const customer = await this.customerRepository.findOneBy(
+      { uniqueToken: customerToken },
+      undefined,
+      { relations: ['merchant'] },
+    );
+    if (!customer) {
+      throw new NotFoundException('Customer not found for the provided token');
+    }
+    const merchantId = customer.merchant?.id;
+    if (!merchantId) {
+      throw new BadRequestException('Customer has no associated merchant');
+    }
+
+    const uploadedFiles = await this.uploadService.uploadFiles_v2(files);
+    const images: ImageResponseDto[] = [];
+
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      const uploadedFile = uploadedFiles.uploaded?.[i];
+      if (uploadedFile) {
+        const imageRecord = await this.imageCommandService.createFromUploadForCustomer(
+          [{
+            originalname: file.originalname,
+            key: uploadedFile.key,
+            size: file.size,
+            mimetype: file.mimetype,
+            url: uploadedFile.url,
+          }],
+          merchantId,
+        );
+        images.push(...imageRecord);
+      }
+    }
+
+    return images;
   }
 }

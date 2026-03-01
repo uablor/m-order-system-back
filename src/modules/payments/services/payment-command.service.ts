@@ -31,7 +31,9 @@ export class PaymentCommandService {
       });
 
     
-      const image = await this.imageQueryRepository.findByIdWithRelations(dto.paymentProofImageId, manager);
+      const image = dto.paymentProofImageId != null
+        ? await this.imageQueryRepository.findByIdWithRelations(dto.paymentProofImageId, manager)
+        : null;
 
       if (!customerOrder) {
         throw new NotFoundException('Customer order not found');

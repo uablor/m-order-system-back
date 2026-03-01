@@ -41,7 +41,7 @@ export class CustomerOrderQueryRepository extends BaseQueryRepository<CustomerOr
     
     const [data, total] = await repo.findAndCount({
       where: Object.keys(where).length ? where : undefined,
-      relations: ['order', 'customer', 'customerOrderItems', 'customerOrderItems.orderItem'],
+      relations: ['order', 'order.exchangeRateSell', 'customer', 'customerOrderItems', 'customerOrderItems.orderItem', 'payments'],
       order: { id: 'ASC' as const },
       skip,
       take: limit,

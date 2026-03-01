@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { MerchantOrmEntity } from './entities/merchant.orm-entity';
 import { MerchantRepository } from './repositories/merchant.repository';
@@ -12,7 +12,7 @@ import { ImageModule } from '../images/image.module';
 @Module({
   imports: [
     TypeOrmModule.forFeature([MerchantOrmEntity]),
-    ImageModule,
+    forwardRef(() => ImageModule),
   ],
   controllers: [MerchantController],
   providers: [

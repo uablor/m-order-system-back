@@ -3,6 +3,7 @@ import { BaseOrmEntity } from '../../../common/base/enities/base.orm-entities';
 import { OrderOrmEntity } from './order.orm-entity';
 import { CustomerOrmEntity } from '../../customers/entities/customer.orm-entity';
 import { CustomerOrderItemOrmEntity } from './customer-order-item.orm-entity';
+import { PaymentOrmEntity } from '../../payments/entities/payment.orm-entity';
 
 export type CustomerOrderPaymentStatus = 'UNPAID' | 'PARTIAL' | 'PAID';
 
@@ -30,4 +31,7 @@ export class CustomerOrderOrmEntity extends BaseOrmEntity {
 
   @OneToMany(() => CustomerOrderItemOrmEntity, (coi) => coi.customerOrder)
   customerOrderItems: CustomerOrderItemOrmEntity[];
+
+  @OneToMany(() => PaymentOrmEntity, (p) => p.customerOrder)
+  payments: PaymentOrmEntity[];
 }
