@@ -413,17 +413,18 @@ async getTopCustomersByBuyOrder(merchantId: number): Promise<TopCustomersRespons
       u.id as customerId,
       u.full_name as customerName,
       u.email as customerEmail,
-      COALESCE(SUM(o.total_final_cost), 0) as totalBuyAmount,
+      COALESCE(SUM(o.total_final_cost * erb.rate), 0) as totalBuyAmountLak,
       COUNT(o.id) as orderCount,
-      COALESCE(AVG(o.total_final_cost), 0) as averageOrderAmount
+      COALESCE(AVG(o.total_final_cost * erb.rate), 0) as averageOrderAmountLak
     FROM users u
     INNER JOIN customer_orders co ON co.customer_id = u.id
     INNER JOIN orders o ON o.id = co.order_id
+    LEFT JOIN exchange_rates erb ON erb.id = o.exchange_rate_buy_id
     WHERE o.merchant_id = ?
       AND o.payment_status = 'PAID'
     GROUP BY u.id, u.full_name, u.email
-    HAVING totalBuyAmount > 0
-    ORDER BY totalBuyAmount DESC
+    HAVING totalBuyAmountLak > 0
+    ORDER BY totalBuyAmountLak DESC
     LIMIT 5
   `;
 
@@ -431,24 +432,19 @@ async getTopCustomersByBuyOrder(merchantId: number): Promise<TopCustomersRespons
     customerId: number;
     customerName: string;
     customerEmail: string;
-    totalBuyAmount: string;
+    totalBuyAmountLak: string;
     orderCount: string;
-    averageOrderAmount: string;
+    averageOrderAmountLak: string;
   }[]>(query, [merchantId]);
 
-  // Get LAK exchange rate for conversion
-  const lakRateQuery = await this.dataSource.query<{ rate: string }[]>(
-    `SELECT rate FROM exchange_rates WHERE target_currency = 'LAK' AND is_active = 1 ORDER BY created_at DESC LIMIT 1`
-  );
-  const lakRate = Number(lakRateQuery[0]?.rate ?? 1);
-
-  const customers: TopCustomerDto[] = results.map(result => ({
+  const customers: TopCustomerDto[] = results.map((result, index) => ({
+    rank: index + 1,
     customerId: result.customerId,
     customerName: result.customerName,
     customerEmail: result.customerEmail,
-    totalBuyAmount: Number(result.totalBuyAmount) * lakRate,
+    totalBuyAmountLak: Number(result.totalBuyAmountLak),
     orderCount: Number(result.orderCount),
-    averageOrderAmount: Number(result.averageOrderAmount) * lakRate,
+    averageOrderAmountLak: Number(result.averageOrderAmountLak),
   }));
 
   return { customers };

@@ -1,6 +1,9 @@
 import { ApiProperty } from '@nestjs/swagger';
 
 export class TopCustomerDto {
+  @ApiProperty({ description: 'Customer rank (1-5)' })
+  rank: number;
+
   @ApiProperty({ description: 'Customer ID' })
   customerId: number;
 
@@ -11,13 +14,13 @@ export class TopCustomerDto {
   customerEmail: string;
 
   @ApiProperty({ description: 'Total buy amount (in LAK)' })
-  totalBuyAmount: number;
+  totalBuyAmountLak: number;
 
   @ApiProperty({ description: 'Number of orders' })
   orderCount: number;
 
   @ApiProperty({ description: 'Average order amount (in LAK)' })
-  averageOrderAmount: number;
+  averageOrderAmountLak: number;
 }
 
 export class TopCustomersResponseDto {
