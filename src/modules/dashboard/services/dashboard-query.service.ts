@@ -4,6 +4,7 @@ import { AdminDashboardDetailsResponseDto } from '../dto/admin-dashboard-details
 import { AdminDashboardSummaryResponseDto } from '../dto/admin-dashboard-summary.dto';
 import { MerchantSummaryResponseDto } from '../dto/merchant-summary.dto';
 import { MerchantPriceSummaryResponseDto } from '../dto/merchant-price-summary.dto';
+import { MerchantPriceListResponseDto } from '../dto/merchant-price-list.dto';
 import { AnnualReportResponseDto, MonthlyReportDto } from '../dto/annual-report-response.dto';
 
 const MONTH_NAMES = [
@@ -168,115 +169,198 @@ export class DashboardQueryService {
 
   async getMerchantPriceSummary(merchantId: number): Promise<MerchantPriceSummaryResponseDto> {
     const [
-      totalOrderItemsPrice,
-      unpaidOrderItemsPrice,
-      paidOrderItemsPrice,
-      paidOrderItemsFinalCost,
-      totalPaymentsPrice,
-      rejectedPaymentsPrice,
-      pendingVerifiedPaymentsPrice,
-      pendingRejectedPaymentsPrice,
+      orderItemsAll,
+      orderItemsUnpaid,
+      orderItemsPaid,
+      orderItemsFinalCostPaid,
+      paymentsAll,
+      paymentsRejected,
+      paymentsPendingVerified,
+      paymentsPendingRejected,
       totalFinalCost,
       totalShippingPrice,
-      totalPaidFinalCost,
-      totalPaidShippingPrice,
+      finalCostPaid,
+      shippingPricePaid,
+      exchangeRate,
     ] = await Promise.all([
-      // Total price in order items
+      // Order items price calculations
       this.dataSource.query<{ total: string }[]>(
-        `SELECT COALESCE(SUM(purchase_total), 0) AS total FROM order_items WHERE order_id IN (
-          SELECT id FROM orders WHERE merchant_id = ?
-        )`,
+        `SELECT COALESCE(SUM(oi.selling_price * oi.quantity), 0) AS total
+         FROM order_items oi
+         INNER JOIN orders o ON o.id = oi.order_id
+         WHERE o.merchant_id = ?`,
         [merchantId],
       ),
-      // Total price of unpaid order items
       this.dataSource.query<{ total: string }[]>(
-        `SELECT COALESCE(SUM(oi.purchase_total), 0) AS total 
+        `SELECT COALESCE(SUM(oi.selling_price * oi.quantity), 0) AS total
          FROM order_items oi
          INNER JOIN orders o ON o.id = oi.order_id
          WHERE o.merchant_id = ? AND o.payment_status = 'UNPAID'`,
         [merchantId],
       ),
-      // Total price of paid order items
       this.dataSource.query<{ total: string }[]>(
-        `SELECT COALESCE(SUM(oi.purchase_total), 0) AS total 
+        `SELECT COALESCE(SUM(oi.selling_price * oi.quantity), 0) AS total
          FROM order_items oi
          INNER JOIN orders o ON o.id = oi.order_id
          WHERE o.merchant_id = ? AND o.payment_status = 'PAID'`,
         [merchantId],
       ),
-      // Total final cost of paid order items
       this.dataSource.query<{ total: string }[]>(
-        `SELECT COALESCE(SUM(oi.total_cost_before_discount), 0) AS total 
+        `SELECT COALESCE(SUM(oi.total_cost_before_discount), 0) AS total
          FROM order_items oi
          INNER JOIN orders o ON o.id = oi.order_id
          WHERE o.merchant_id = ? AND o.payment_status = 'PAID'`,
         [merchantId],
       ),
-      // Total price in payments (all statuses)
+      // Payments price calculations
       this.dataSource.query<{ total: string }[]>(
-        `SELECT COALESCE(SUM(amount), 0) AS total FROM payments WHERE merchant_id = ?`,
+        `SELECT COALESCE(SUM(amount), 0) AS total
+         FROM payments p
+         INNER JOIN orders o ON o.id = p.order_id
+         WHERE o.merchant_id = ?`,
         [merchantId],
       ),
-      // Total price of rejected payments
       this.dataSource.query<{ total: string }[]>(
-        `SELECT COALESCE(SUM(amount), 0) AS total FROM payments WHERE merchant_id = ? AND status = 'REJECTED'`,
+        `SELECT COALESCE(SUM(amount), 0) AS total
+         FROM payments p
+         INNER JOIN orders o ON o.id = p.order_id
+         WHERE o.merchant_id = ? AND p.status = 'REJECTED'`,
         [merchantId],
       ),
-      // Total price of pending verified payments
       this.dataSource.query<{ total: string }[]>(
-        `SELECT COALESCE(SUM(amount), 0) AS total FROM payments WHERE merchant_id = ? AND status = 'PENDING_VERIFIED'`,
+        `SELECT COALESCE(SUM(amount), 0) AS total
+         FROM payments p
+         INNER JOIN orders o ON o.id = p.order_id
+         WHERE o.merchant_id = ? AND p.status = 'PENDING VERIFIED'`,
         [merchantId],
       ),
-      // Total price of pending rejected payments
       this.dataSource.query<{ total: string }[]>(
-        `SELECT COALESCE(SUM(amount), 0) AS total FROM payments WHERE merchant_id = ? AND status = 'PENDING_REJECTED'`,
+        `SELECT COALESCE(SUM(amount), 0) AS total
+         FROM payments p
+         INNER JOIN orders o ON o.id = p.order_id
+         WHERE o.merchant_id = ? AND p.status = 'PENDING REJECTED'`,
         [merchantId],
       ),
-      // Total final cost
+      // Final cost and shipping price calculations
       this.dataSource.query<{ total: string }[]>(
-        `SELECT COALESCE(SUM(total_cost_before_discount), 0) AS total FROM order_items WHERE order_id IN (
-          SELECT id FROM orders WHERE merchant_id = ?
-        )`,
+        `SELECT COALESCE(SUM(oi.total_cost_before_discount), 0) AS total
+         FROM order_items oi
+         INNER JOIN orders o ON o.id = oi.order_id
+         WHERE o.merchant_id = ?`,
         [merchantId],
       ),
-      // Total shipping price
       this.dataSource.query<{ total: string }[]>(
-        `SELECT COALESCE(SUM(shipping_price), 0) AS total FROM order_items WHERE order_id IN (
-          SELECT id FROM orders WHERE merchant_id = ?
-        )`,
+        `SELECT COALESCE(SUM(oi.shipping_price * oi.quantity), 0) AS total
+         FROM order_items oi
+         INNER JOIN orders o ON o.id = oi.order_id
+         WHERE o.merchant_id = ?`,
         [merchantId],
       ),
-      // Total final cost of paid items
       this.dataSource.query<{ total: string }[]>(
-        `SELECT COALESCE(SUM(oi.total_cost_before_discount), 0) AS total 
+        `SELECT COALESCE(SUM(oi.total_cost_before_discount), 0) AS total
          FROM order_items oi
          INNER JOIN orders o ON o.id = oi.order_id
          WHERE o.merchant_id = ? AND o.payment_status = 'PAID'`,
         [merchantId],
       ),
-      // Total shipping price of paid items
       this.dataSource.query<{ total: string }[]>(
-        `SELECT COALESCE(SUM(oi.shipping_price), 0) AS total 
+        `SELECT COALESCE(SUM(oi.shipping_price * oi.quantity), 0) AS total
          FROM order_items oi
          INNER JOIN orders o ON o.id = oi.order_id
          WHERE o.merchant_id = ? AND o.payment_status = 'PAID'`,
         [merchantId],
+      ),
+      // Get exchange rate for LAK
+      this.dataSource.query<{ rate: string }[]>(
+        `SELECT rate FROM exchange_rates WHERE target_currency = 'LAK' ORDER BY created_at DESC LIMIT 1`,
       ),
     ]);
 
+    const lakRate = Number(exchangeRate[0]?.rate ?? 1);
+
     return {
-      totalOrderItemsPrice: Number(totalOrderItemsPrice[0]?.total ?? 0),
-      totalUnpaidOrderItemsPrice: Number(unpaidOrderItemsPrice[0]?.total ?? 0),
-      totalPaidOrderItemsPrice: Number(paidOrderItemsPrice[0]?.total ?? 0),
-      totalPaidOrderItemsFinalCost: Number(paidOrderItemsFinalCost[0]?.total ?? 0),
-      totalPaymentsPrice: Number(totalPaymentsPrice[0]?.total ?? 0),
-      totalRejectedPaymentsPrice: Number(rejectedPaymentsPrice[0]?.total ?? 0),
-      totalPendingVerifiedPaymentsPrice: Number(pendingVerifiedPaymentsPrice[0]?.total ?? 0),
-      totalPendingRejectedPaymentsPrice: Number(pendingRejectedPaymentsPrice[0]?.total ?? 0),
-      totalFinalCost: Number(totalFinalCost[0]?.total ?? 0),
-      totalShippingPrice: Number(totalShippingPrice[0]?.total ?? 0),
-      totalPaidFinalCost: Number(totalPaidFinalCost[0]?.total ?? 0),
-      totalPaidShippingPrice: Number(totalPaidShippingPrice[0]?.total ?? 0),
+      totalOrderItemsPrice: Number(orderItemsAll[0]?.total ?? 0) * lakRate,
+      totalOrderItemsPriceUnpaid: Number(orderItemsUnpaid[0]?.total ?? 0) * lakRate,
+      totalOrderItemsPricePaid: Number(orderItemsPaid[0]?.total ?? 0) * lakRate,
+      totalOrderItemsFinalCostPaid: Number(orderItemsFinalCostPaid[0]?.total ?? 0) * lakRate,
+      totalPaymentsPrice: Number(paymentsAll[0]?.total ?? 0) * lakRate,
+      totalPaymentsPriceRejected: Number(paymentsRejected[0]?.total ?? 0) * lakRate,
+      totalPaymentsPricePendingVerified: Number(paymentsPendingVerified[0]?.total ?? 0) * lakRate,
+      totalPaymentsPricePendingRejected: Number(paymentsPendingRejected[0]?.total ?? 0) * lakRate,
+      totalFinalCost: Number(totalFinalCost[0]?.total ?? 0) * lakRate,
+      totalShippingPrice: Number(totalShippingPrice[0]?.total ?? 0) * lakRate,
+      totalFinalCostPaid: Number(finalCostPaid[0]?.total ?? 0) * lakRate,
+      totalShippingPricePaid: Number(shippingPricePaid[0]?.total ?? 0) * lakRate,
+    };
+  }
+
+  async getMerchantPriceList(merchantId: number): Promise<MerchantPriceListResponseDto> {
+    const [
+      orderItemsAll,
+      orderItemsUnpaid,
+      orderItemsPaid,
+      usdtRate,
+      thbRate,
+      lakRate,
+    ] = await Promise.all([
+      // Order items price calculations
+      this.dataSource.query<{ total: string }[]>(
+        `SELECT COALESCE(SUM(oi.selling_price * oi.quantity), 0) AS total
+         FROM order_items oi
+         INNER JOIN orders o ON o.id = oi.order_id
+         WHERE o.merchant_id = ?`,
+        [merchantId],
+      ),
+      this.dataSource.query<{ total: string }[]>(
+        `SELECT COALESCE(SUM(oi.selling_price * oi.quantity), 0) AS total
+         FROM order_items oi
+         INNER JOIN orders o ON o.id = oi.order_id
+         WHERE o.merchant_id = ? AND o.payment_status = 'UNPAID'`,
+        [merchantId],
+      ),
+      this.dataSource.query<{ total: string }[]>(
+        `SELECT COALESCE(SUM(oi.selling_price * oi.quantity), 0) AS total
+         FROM order_items oi
+         INNER JOIN orders o ON o.id = oi.order_id
+         WHERE o.merchant_id = ? AND o.payment_status = 'PAID'`,
+        [merchantId],
+      ),
+      // Get exchange rates for all currencies
+      this.dataSource.query<{ rate: string }[]>(
+        `SELECT rate FROM exchange_rates WHERE target_currency = 'USDT' ORDER BY created_at DESC LIMIT 1`,
+      ),
+      this.dataSource.query<{ rate: string }[]>(
+        `SELECT rate FROM exchange_rates WHERE target_currency = 'THB' ORDER BY created_at DESC LIMIT 1`,
+      ),
+      this.dataSource.query<{ rate: string }[]>(
+        `SELECT rate FROM exchange_rates WHERE target_currency = 'LAK' ORDER BY created_at DESC LIMIT 1`,
+      ),
+    ]);
+
+    const usdtExchangeRate = Number(usdtRate[0]?.rate ?? 1);
+    const thbExchangeRate = Number(thbRate[0]?.rate ?? 1);
+    const lakExchangeRate = Number(lakRate[0]?.rate ?? 1);
+
+    const baseTotal = Number(orderItemsAll[0]?.total ?? 0);
+    const baseUnpaid = Number(orderItemsUnpaid[0]?.total ?? 0);
+    const basePaid = Number(orderItemsPaid[0]?.total ?? 0);
+
+    return {
+      usdt: {
+        totalPrice: baseTotal * usdtExchangeRate,
+        totalPriceUnpaid: baseUnpaid * usdtExchangeRate,
+        totalPricePaid: basePaid * usdtExchangeRate,
+      },
+      thb: {
+        totalPrice: baseTotal * thbExchangeRate,
+        totalPriceUnpaid: baseUnpaid * thbExchangeRate,
+        totalPricePaid: basePaid * thbExchangeRate,
+      },
+      lak: {
+        totalPrice: baseTotal * lakExchangeRate,
+        totalPriceUnpaid: baseUnpaid * lakExchangeRate,
+        totalPricePaid: basePaid * lakExchangeRate,
+      },
     };
   }
 

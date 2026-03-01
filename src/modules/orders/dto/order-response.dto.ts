@@ -59,6 +59,15 @@ export class CustomerOrderResponseDto {
 
   @ApiProperty()
   remainingAmount: string;
+  
+  @ApiProperty()
+  targetCurrencyTotalSellingAmount: string;
+  
+  @ApiProperty()
+  targetCurrencyPaidAmount: string;
+  
+  @ApiProperty()
+  targetCurrencyRemainingAmount: string;
 
   @ApiProperty()
   paymentStatus: string;
