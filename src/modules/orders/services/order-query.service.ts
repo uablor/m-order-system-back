@@ -145,6 +145,8 @@ export class OrderQueryService {
   }
 
   private toResponse(entity: import('../entities/order.orm-entity').OrderOrmEntity): OrderResponseDto {
+
+
     return {
       id: entity.id,
       merchantId: entity.merchant?.id ?? 0,
@@ -272,6 +274,10 @@ export class OrderQueryService {
         totalSellingAmount: customerOrder.totalSellingAmount.toString(),
         paidAmount: customerOrder.totalPaid.toString(),
         remainingAmount: customerOrder.remainingAmount.toString(),
+        
+        targetCurrencyTotalSellingAmount: this.convertToTargetCurrency(customerOrder.totalSellingAmount, entity.exchangeRateSell),
+        targetCurrencyPaidAmount: this.convertToTargetCurrency(customerOrder.totalPaid, entity.exchangeRateSell),
+        targetCurrencyRemainingAmount: this.convertToTargetCurrency(customerOrder.remainingAmount, entity.exchangeRateSell),
         paymentStatus: customerOrder.paymentStatus,
         customerOrderItems: (customerOrder.customerOrderItems ?? []).map((item) => ({
           id: item.id,
@@ -284,7 +290,7 @@ export class OrderQueryService {
           sellingTotal: item.sellingTotal.toString(),
           profit: item.profit.toString(),
 
-          targetCurrencySellingTotal: this.convertToTargetCurrency(item.sellingTotal, entity.exchangeRateSell),
+          targetCurrencySellingTotal:  this.convertToTargetCurrency(item.sellingTotal, entity.exchangeRateSell),
           targetCurrencyProfit: this.convertToTargetCurrency(item.profit, entity.exchangeRateSell),
           createdAt: item.createdAt,
           updatedAt: item.updatedAt,
