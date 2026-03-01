@@ -4,8 +4,8 @@ export class UpdateSchema1772337364719 implements MigrationInterface {
     name = 'UpdateSchema1772337364719'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
-        await queryRunner.query(`ALTER TABLE \`merchants\` CHANGE \`shop_logo_url\` \`shop_logo_url_id\` text NULL DEFAULT 'NULL'`);
-        await queryRunner.query(`ALTER TABLE \`payments\` CHANGE \`payment_proof_url\` \`payment_proof_image_id\` text NULL DEFAULT 'NULL'`);
+        await queryRunner.query(`ALTER TABLE \`merchants\` CHANGE \`shop_logo_url\` \`shop_logo_url_id\` text NULL`);
+        await queryRunner.query(`ALTER TABLE \`payments\` CHANGE \`payment_proof_url\` \`payment_proof_image_id\` text NULL`);
         await queryRunner.query(`CREATE TABLE \`images\` (\`id\` int NOT NULL AUTO_INCREMENT, \`created_at\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), \`updated_at\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6), \`original_name\` varchar(255) NOT NULL, \`file_name\` varchar(255) NOT NULL, \`file_path\` varchar(500) NOT NULL, \`file_key\` varchar(500) NOT NULL, \`file_size\` bigint NOT NULL, \`mime_type\` varchar(100) NOT NULL, \`public_url\` varchar(500) NULL, \`is_active\` tinyint NOT NULL DEFAULT 1, \`tags\` json NULL, \`description\` text NULL, \`merchant_id\` int NULL, \`uploaded_by\` int NULL, UNIQUE INDEX \`IDX_932c7c986f598d25111c5bc692\` (\`file_key\`), PRIMARY KEY (\`id\`)) ENGINE=InnoDB`);
         await queryRunner.query(`ALTER TABLE \`permissions\` CHANGE \`description\` \`description\` varchar(500) NULL`);
         await queryRunner.query(`ALTER TABLE \`roles\` CHANGE \`description\` \`description\` varchar(500) NULL`);

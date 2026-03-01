@@ -11,19 +11,13 @@ export class MonthlyReportDto {
   orderCount: number;
 
   @ApiProperty()
-  finalCostLak: string;
+  finalCost: string;
 
   @ApiProperty()
-  revenueLak: string;
+  revenue: string;
 
   @ApiProperty()
-  revenueThb: string;
-
-  @ApiProperty()
-  profitLak: string;
-
-  @ApiProperty()
-  profitThb: string;
+  profit: string;
 }
 
 export class AnnualReportResponseDto {
