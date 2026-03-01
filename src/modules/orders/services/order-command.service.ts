@@ -150,7 +150,7 @@ export class OrderCommandService {
 
         // Use values directly from DTO without exchange rate calculations
         const purchaseTotal = it.purchasePrice * it.quantity;
-        const shippingTotal = shippingPriceInput * it.quantity;
+        const shippingTotal = shippingPriceInput;
         const subtotal = purchaseTotal + shippingTotal;
         
         // Calculate discount based on DTO values
@@ -159,7 +159,7 @@ export class OrderCommandService {
           if (it.discountType === 'percent') {
             discount = subtotal * (it.discountValue / 100);
           } else {
-            discount = it.discountValue * it.quantity;
+            discount = it.discountValue;
           }
         }
         
@@ -294,7 +294,7 @@ export class OrderCommandService {
 
       for (const oi of orderItems) {
         totalPurchaseCost += Number(oi.purchaseTotal);
-        totalShippingCost += Number(oi.shippingPrice) * oi.quantity;
+        totalShippingCost += Number(oi.shippingPrice);
         totalCostBeforeDiscount += Number(oi.totalCostBeforeDiscount);
         totalDiscount += Number(oi.discountAmount);
         totalFinalCost += Number(oi.finalCost);
