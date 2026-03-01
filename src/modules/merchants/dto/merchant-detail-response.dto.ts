@@ -1,4 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { ImageOrmEntity } from 'src/modules/images/entities/image.orm-entity';
 
 export class MerchantDetailUserDto {
   @ApiProperty()
@@ -94,8 +95,8 @@ export class MerchantDetailResponseDto {
   @ApiProperty()
   shopName: string;
 
-  @ApiPropertyOptional({ nullable: true })
-  shopLogoUrl: string | null;
+  @ApiPropertyOptional({ nullable: true, type: () => ImageOrmEntity })
+  shopLogoUrl: ImageOrmEntity | null;
 
   @ApiPropertyOptional({ nullable: true })
   shopAddress: string | null;

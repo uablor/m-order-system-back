@@ -11,7 +11,12 @@ export class MerchantResponseDto {
   shopName: string;
 
   @ApiPropertyOptional({ nullable: true })
-  shopLogoUrl: string | null;
+  shopLogoUrl: {
+    id: number;
+    fileKey: string;
+    originalName: string;
+    publicUrl: string | null;
+  } | null;
 
   @ApiPropertyOptional({ nullable: true })
   shopAddress: string | null;

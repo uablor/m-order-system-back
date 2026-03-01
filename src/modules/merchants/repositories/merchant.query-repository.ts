@@ -9,7 +9,6 @@ import { OrderOrmEntity } from '../../orders/entities/order.orm-entity';
 import { PaginatedResult } from '../../../common/base/interfaces/paginted.interface';
 import {
   MerchantListOptionsQueryDto,
-  MerchantListQueryDto,
 } from '../dto/merchant-list-query.dto';
 import { fetchWithPagination } from 'src/common/utils/pagination.util';
 

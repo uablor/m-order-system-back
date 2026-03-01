@@ -66,7 +66,7 @@ async function ensureMerchant(
   const created = await merchantRepository.create({
     ownerUserId: params.ownerUserId,
     shopName: params.shopName,
-    shopLogoUrl: null,
+    shopLogoUrl: undefined, // Changed from null to undefined to match ImageOrmEntity | undefined type
     shopAddress: params.shopAddress ?? null,
     contactPhone: params.contactPhone ?? null,
     contactEmail: params.contactEmail ?? null,

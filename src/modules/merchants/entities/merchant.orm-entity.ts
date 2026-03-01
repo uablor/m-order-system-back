@@ -6,6 +6,7 @@ import {
 } from 'typeorm';
 import { BaseOrmEntity } from '../../../common/base/enities/base.orm-entities';
 import { UserOrmEntity } from '../../users/entities/user.orm-entity';
+import { ImageOrmEntity } from '../../images/entities/image.orm-entity';
 
 export type DefaultCurrency = 'THB' | 'USD' | 'LAK';
 
@@ -21,8 +22,12 @@ export class MerchantOrmEntity extends BaseOrmEntity {
   @Column({ name: 'shop_name', type: 'varchar', length: 255 })
   shopName: string;
 
-  @Column({ name: 'shop_logo_url', type: 'text', nullable: true })
-  shopLogoUrl: string | null;
+  @Column({ name: 'shop_logo_url_id', type: 'int', nullable: true })
+  shopLogoUrlId: number | null;
+
+  @ManyToOne(() => ImageOrmEntity, { onDelete: 'SET NULL' })
+  @JoinColumn({ name: 'shop_logo_url_id' })
+  shopLogoUrl: ImageOrmEntity;
 
   @Column({ name: 'shop_address', type: 'text', nullable: true })
   shopAddress: string | null;

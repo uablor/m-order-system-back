@@ -7,9 +7,13 @@ import { MerchantCommandService } from './services/merchant-command.service';
 import { MerchantQueryService } from './services/merchant-query.service';
 import { MerchantController } from './controllers/merchant.controller';
 import { TransactionService } from '../../common/transaction/transaction.service';
+import { ImageModule } from '../images/image.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([MerchantOrmEntity])],
+  imports: [
+    TypeOrmModule.forFeature([MerchantOrmEntity]),
+    ImageModule,
+  ],
   controllers: [MerchantController],
   providers: [
     MerchantRepository,

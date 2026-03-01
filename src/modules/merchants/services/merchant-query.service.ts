@@ -154,7 +154,14 @@ export class MerchantQueryService {
       id: entity.id,
       ownerUserId: entity.ownerUserId,
       shopName: entity.shopName,
-      shopLogoUrl: entity.shopLogoUrl,
+      shopLogoUrl: entity.shopLogoUrl 
+    ? {
+        id: entity.shopLogoUrl.id,
+        fileKey: entity.shopLogoUrl.fileKey,
+        originalName: entity.shopLogoUrl.originalName,
+        publicUrl: entity.shopLogoUrl.publicUrl || `${process.env.R2_PUBLIC_URL}/${entity.shopLogoUrl.fileKey}`,
+      }
+    : null,
       shopAddress: entity.shopAddress,
       contactPhone: entity.contactPhone,
       contactEmail: entity.contactEmail,
