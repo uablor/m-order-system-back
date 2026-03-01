@@ -13,7 +13,7 @@ import { AdminDashboardSummaryResponseDto } from '../dto/admin-dashboard-summary
 import { createSingleResponse } from '../../../common/base/helpers/response.helper';
 import { MerchantSummaryResponseDto } from '../dto/merchant-summary.dto';
 import { MerchantPriceSummaryResponseDto } from '../dto/merchant-price-summary.dto';
-import { MerchantPriceListResponseDto } from '../dto/merchant-price-list.dto';
+import { MerchantPriceCurrencySummaryDto } from '../dto/merchant-price-currency-summary.dto';
 import { AnnualReportResponseDto } from '../dto/annual-report-response.dto';
 
 @ApiTags('Dashboard')
@@ -61,13 +61,13 @@ export class DashboardController {
     return createSingleResponse(data);
   }
 
-  @Get('merchant/price-list')
-  @ApiOperation({ summary: 'Merchant price list - current merchant prices in multiple currencies' })
+  @Get('merchant/price-currency-summary')
+  @ApiOperation({ summary: 'Merchant price currency summary - grouped by target currency' })
   @ApiBearerAuth('BearerAuth')
-  @ApiOkResponseBase(MerchantPriceListResponseDto)
+  @ApiOkResponseBase(MerchantPriceCurrencySummaryDto)
   @ApiUnauthorizedBase()
-  async merchantGetPriceList(@CurrentUser() currentUser: CurrentUserPayload) {
-    const data = await this.dashboardQueryService.getMerchantPriceList(currentUser.merchantId!);
+  async merchantGetPriceCurrencySummary(@CurrentUser() currentUser: CurrentUserPayload) {
+    const data = await this.dashboardQueryService.getMerchantPriceCurrencySummary(currentUser.merchantId!);
     return createSingleResponse(data);
   }
 }
