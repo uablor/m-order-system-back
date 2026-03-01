@@ -94,4 +94,9 @@ export class ArrivalController {
   async adminDelete(@Param('id', ParseIntPipe) id: number) {
     return this.arrivalCommandService.delete(id);
   }
+
+
+
+  
+  
 }

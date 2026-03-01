@@ -283,6 +283,9 @@ export class OrderQueryService {
           quantity: item.quantity,
           sellingTotal: item.sellingTotal.toString(),
           profit: item.profit.toString(),
+
+          targetCurrencySellingTotal: this.convertToTargetCurrency(item.sellingTotal, entity.exchangeRateSell),
+          targetCurrencyProfit: this.convertToTargetCurrency(item.profit, entity.exchangeRateSell),
           createdAt: item.createdAt,
           updatedAt: item.updatedAt,
         })),

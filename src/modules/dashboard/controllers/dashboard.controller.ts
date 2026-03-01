@@ -10,9 +10,10 @@ import {
 } from '../../../common/swagger/swagger.decorators';
 import { AdminDashboardDetailsResponseDto } from '../dto/admin-dashboard-details.dto';
 import { AdminDashboardSummaryResponseDto } from '../dto/admin-dashboard-summary.dto';
-import { MerchantDashboardResponseDto } from '../dto/merchant-dashboard-response.dto';
-import { AnnualReportResponseDto } from '../dto/annual-report-response.dto';
 import { createSingleResponse } from '../../../common/base/helpers/response.helper';
+import { MerchantSummaryResponseDto } from '../dto/merchant-summary.dto';
+import { MerchantPriceSummaryResponseDto } from '../dto/merchant-price-summary.dto';
+import { AnnualReportResponseDto } from '../dto/annual-report-response.dto';
 
 @ApiTags('Dashboard')
 @Controller('dashboard')
@@ -29,9 +30,6 @@ export class DashboardController {
     return createSingleResponse(data);
   }
 
-
-  
-
   @Get('admin/details')
   @ApiOperation({ summary: 'Admin dashboard details - top merchants and recent user logins' })
   @ApiBearerAuth('BearerAuth')
@@ -42,27 +40,23 @@ export class DashboardController {
     return createSingleResponse(data);
   }
 
-  @Get('merchant')
-  @ApiOperation({ summary: 'Merchant dashboard (กรองด้วย merchantId จาก JWT อัตโนมัติ)' })
+  @Get('merchant/summary')
+  @ApiOperation({ summary: 'Merchant summary - current merchant stats' })
   @ApiBearerAuth('BearerAuth')
-  @ApiOkResponseBase(MerchantDashboardResponseDto)
+  @ApiOkResponseBase(MerchantSummaryResponseDto)
   @ApiUnauthorizedBase()
-  async merchantGetDashboard(@CurrentUser() currentUser: CurrentUserPayload) {
-    const data = await this.dashboardQueryService.getMerchantDashboard(currentUser.merchantId!);
+  async merchantGetSummary(@CurrentUser() currentUser: CurrentUserPayload) {
+    const data = await this.dashboardQueryService.getMerchantSummary(currentUser.merchantId!);
     return createSingleResponse(data);
   }
 
-  @Get('merchant/annual-report')
-  @ApiOperation({ summary: 'Merchant annual report by year (กรองด้วย merchantId จาก JWT อัตโนมัติ)' })
+  @Get('merchant/price-summary')
+  @ApiOperation({ summary: 'Merchant price summary - current merchant price stats' })
   @ApiBearerAuth('BearerAuth')
-  @ApiOkResponseBase(AnnualReportResponseDto)
+  @ApiOkResponseBase(MerchantPriceSummaryResponseDto)
   @ApiUnauthorizedBase()
-  async merchantGetAnnualReport(
-    @Query() query: AnnualReportQueryDto,
-    @CurrentUser() currentUser: CurrentUserPayload,
-  ) {
-    const year = query.year ?? new Date().getFullYear();
-    const data = await this.dashboardQueryService.getMerchantAnnualReport(year, currentUser.merchantId!);
+  async merchantGetPriceSummary(@CurrentUser() currentUser: CurrentUserPayload) {
+    const data = await this.dashboardQueryService.getMerchantPriceSummary(currentUser.merchantId!);
     return createSingleResponse(data);
   }
 }
