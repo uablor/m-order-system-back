@@ -16,6 +16,7 @@ import { CustomerOrderOrmEntity } from '../entities/customer-order.orm-entity';
 import { CustomerOrderItemOrmEntity } from '../entities/customer-order-item.orm-entity';
 import { CurrentUserPayload } from 'src/common/decorators/current-user.decorator';
 import { ArrivalStatusEnum, PaymentStatusEnum } from '../enum/enum.entities';
+import { convertToBaseCurrency, convertToTargetCurrency } from 'src/common/utils/convert-to-target-currency';
 
 const ZERO = 0;
 
@@ -165,7 +166,11 @@ export class OrderCommandService {
         
         const finalCost = subtotal - discount;
         const sellPrice = it.sellingPriceForeign * it.quantity;
-        const profit = sellPrice - finalCost;
+
+        const finalCostTotargetCurrency = convertToTargetCurrency(finalCost, buyRateEntity);
+        const sellPriceTotargetCurrency = convertToTargetCurrency(sellPrice, sellRateEntity);
+        const profitTotargetCurrency = Number(sellPriceTotargetCurrency) - Number(finalCostTotargetCurrency);
+        const profit = convertToBaseCurrency(profitTotargetCurrency, sellRateEntity);
 
 
         // map discountType: 'percent' → 'PERCENT', 'cash' → 'FIX'
