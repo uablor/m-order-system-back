@@ -8,6 +8,8 @@ import { TransactionService } from '../../../common/transaction/transaction.serv
 import { CurrentUserPayload } from '../../../common/decorators/current-user.decorator';
 import { createSingleResponse } from '../../../common/base/helpers/response.helper';
 import { ImageQueryRepository } from 'src/modules/images/repositories/image.query-repository';
+import { OrderOrmEntity } from 'src/modules/orders/entities/order.orm-entity';
+import { PaymentStatusEnum } from 'src/modules/orders/enum/enum.entities';
 
 @Injectable()
 export class PaymentCommandService {
@@ -119,7 +121,7 @@ export class PaymentCommandService {
     return this.transactionService.run(async (manager) => {
       // อัปเดต payment
       const paymentRepo = manager.getRepository(PaymentOrmEntity);
-      await this.paymentRepository.update(
+      const payment = await this.paymentRepository.update(
         id,
         {
           status: 'VERIFIED' as PaymentStatus,
@@ -133,6 +135,7 @@ export class PaymentCommandService {
       const customerOrderRepo = manager.getRepository(CustomerOrderOrmEntity);
       const customerOrder = await customerOrderRepo.findOne({
         where: { id: payment.customerOrderId },
+        relations: ['order'],
       });
 
       if (customerOrder) {
@@ -147,15 +150,17 @@ export class PaymentCommandService {
           paymentStatus: remainingAmount <= 0 ? 'PAID' : 'PARTIAL',
         });
       }
-
-      const verifiedPayment = await paymentRepo.findOne({
-        where: { id },
-        relations: ['customerOrder', 'customerOrder.order', 'customerOrder.customer', 'verifiedBy', 'rejectedBy'],
+      const order = manager.getRepository(OrderOrmEntity);
+      const orderEntity = await order.findOne({
+        where: { id: customerOrder?.order.id },
       });
-      if (!verifiedPayment) {
-        throw new Error('Payment verification failed');
+
+      if (orderEntity) {
+        await order.update(orderEntity.id, {
+          paymentStatus: PaymentStatusEnum.PAID,
+        });
       }
-      return verifiedPayment;
+      return payment;
     });
   }
 
