@@ -50,21 +50,22 @@ export class DashboardQueryService {
         id: string;
         shop_name: string;
         total_orders: string;
-        total_revenue_lak: string;
-        total_profit_lak: string;
+        owner_user: string;
+        owner_user_email: string;
       }[]>(
         `SELECT
           m.id,
           m.shop_name,
           COUNT(o.id) AS total_orders,
-          COALESCE(SUM(o.total_selling_amount), 0) AS total_revenue_lak,
-          COALESCE(SUM(o.total_profit), 0) AS total_profit_lak
+          u.full_name AS owner_user,
+          u.email AS owner_user_email
         FROM merchants m
+        INNER JOIN users u ON u.id = m.owner_user_id
         LEFT JOIN orders o ON o.merchant_id = m.id
         WHERE m.is_active = 1
-        GROUP BY m.id, m.shop_name
+        GROUP BY m.id, m.shop_name, u.full_name, u.email
         HAVING total_orders > 0
-        ORDER BY total_orders DESC, total_revenue_lak DESC
+        ORDER BY total_orders DESC, owner_user ASC
         LIMIT 5`
       ),
       this.dataSource.query<{
@@ -94,8 +95,8 @@ export class DashboardQueryService {
       id: Number(row.id),
       shopName: row.shop_name,
       totalOrders: Number(row.total_orders),
-      totalRevenue: String(row.total_revenue_lak),
-      totalProfit: String(row.total_profit_lak),
+      ownerUser: row.owner_user,
+      ownerUserEmail: row.owner_user_email,
     }));
 
     const recentUserLogins = recentUserRows.map(row => ({
