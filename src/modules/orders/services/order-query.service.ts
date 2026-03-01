@@ -130,7 +130,7 @@ export class OrderQueryService {
     if (exchangeRate.rateType === 'BUY') {
       // BUY rate: foreign currency -> base currency (LAK)
       // To convert from base to foreign: amount / rate
-      const converted = amount / exchangeRate.rate;
+      const converted = amount * exchangeRate.rate;
       console.log(`BUY conversion: ${amount} / ${exchangeRate.rate} = ${converted}`);
       return converted.toString();
     } else {
