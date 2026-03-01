@@ -61,6 +61,15 @@ export class OrderController {
     return this.orderQueryService.getList(query);
   }
 
+  @Get('summary')
+  @ApiOperation({ summary: 'Get order summary (admin - optional merchantId)' })
+  @ApiBearerAuth('BearerAuth')
+  @ApiOkResponseBase()
+  @ApiUnauthorizedBase()
+  async adminGetSummary(@Query() query: OrderListQueryDto) {
+    return this.orderQueryService.getSummary(query);
+  }
+
   @Get('by-merchant')
   @ApiOperation({ summary: 'List orders for the authenticated merchant (auto-filter by JWT token)' })
   @ApiBearerAuth('BearerAuth')
@@ -71,6 +80,18 @@ export class OrderController {
     @CurrentUser() currentUser: CurrentUserPayload,
   ) {
     return this.orderQueryService.getListByMerchant(query, currentUser);
+  }
+
+  @Get('by-merchant/summary')
+  @ApiOperation({ summary: 'Get order summary for the authenticated merchant' })
+  @ApiBearerAuth('BearerAuth')
+  @ApiOkResponseBase()
+  @ApiUnauthorizedBase()
+  async merchantGetSummary(
+    @Query() query: OrderListQueryDto,
+    @CurrentUser() currentUser: CurrentUserPayload,
+  ) {
+    return this.orderQueryService.getSummaryByMerchant(query, currentUser);
   }
 
   @Get(':id')

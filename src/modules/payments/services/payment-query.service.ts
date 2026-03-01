@@ -91,16 +91,12 @@ export class PaymentQueryService {
   async getListByMerchant(
     query: PaymentListQueryDto,
     currentUser: CurrentUserPayload,
-  ): Promise<ResponseWithPaginationInterface<PaymentResponseDto> & { summary: any }> {
+  ): Promise<ResponseWithPaginationInterface<PaymentResponseDto>> {
     if (!currentUser.merchantId) {
       throw new ForbiddenException('Only merchants can view their payments');
     }
 
     const response = await this.paymentRepository.findByMerchant(
-      currentUser.merchantId,
-      query,
-    );
-    const summary = await this.paymentRepository.getSummaryByMerchant(
       currentUser.merchantId,
       query,
     );
@@ -111,8 +107,23 @@ export class PaymentQueryService {
       paymentProofUrl: extractPaymentProofUrl(payment.paymentProofImage),
     }));
     
-    const paginated = createPaginatedResponse(transformedResults, response.pagination, 'Payments retrieved successfully');
-    return { ...paginated, summary };
+    return createPaginatedResponse(transformedResults, response.pagination, 'Payments retrieved successfully');
+  }
+
+  async getSummaryByMerchant(
+    query: PaymentListQueryDto,
+    currentUser: CurrentUserPayload,
+  ): Promise<{
+    totalPayments: number;
+    totalAmount: string;
+    totalPending: number;
+    totalVerified: number;
+    totalRejected: number;
+  }> {
+    if (!currentUser.merchantId) {
+      throw new ForbiddenException('Only merchants can view their payment summary');
+    }
+    return this.paymentRepository.getSummaryByMerchant(currentUser.merchantId, query);
   }
 
   async getListByCustomer(

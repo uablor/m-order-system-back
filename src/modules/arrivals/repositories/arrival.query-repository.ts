@@ -75,6 +75,17 @@ export class ArrivalQueryRepository extends BaseQueryRepository<ArrivalOrmEntity
       }
     }
 
+    if (options.customerName) {
+      qb.andWhere(
+        `EXISTS (
+          SELECT 1 FROM customer_orders co
+          INNER JOIN customers c ON c.id = co.customer_id
+          WHERE co.order_id = order.id AND c.customer_name LIKE :customerName
+        )`,
+        { customerName: `%${options.customerName}%` },
+      );
+    }
+
     return fetchWithPagination({
       qb,
       page: options.page ?? 1,
@@ -83,5 +94,63 @@ export class ArrivalQueryRepository extends BaseQueryRepository<ArrivalOrmEntity
       manager: manager || repo.manager,
       sort: options.sort || SortDirection.DESC,
     });
+  }
+
+  async getSummary(
+    options: ArrivalListQueryDto,
+    manager?: import('typeorm').EntityManager,
+  ): Promise<{ totalArrivals: number }> {
+    const repo = this.getRepo(manager);
+    const qb = repo
+      .createQueryBuilder('arrival')
+      .leftJoin('arrival.order', 'order')
+      .leftJoin('arrival.merchant', 'merchant')
+      .leftJoin('arrival.recordedByUser', 'recordedByUser')
+      .select('COUNT(DISTINCT arrival.id)', 'totalArrivals');
+
+    if (options.merchantId != null) {
+      qb.andWhere('merchant.id = :merchantId', { merchantId: options.merchantId });
+    }
+    if (options.orderId != null) {
+      qb.andWhere('order.id = :orderId', { orderId: options.orderId });
+    }
+    if (options.startDate) {
+      qb.andWhere('DATE(arrival.arrivedDate) >= :startDate', { startDate: options.startDate });
+    }
+    if (options.endDate) {
+      qb.andWhere('DATE(arrival.arrivedDate) <= :endDate', { endDate: options.endDate });
+    }
+    if (options.search) {
+      qb.andWhere('order.orderCode LIKE :search', { search: `%${options.search}%` });
+    }
+    if (options.createdByUserId != null) {
+      qb.andWhere('recordedByUser.id = :createdByUserId', { createdByUserId: options.createdByUserId });
+    }
+    if (options.arrivalDate) {
+      qb.andWhere('DATE(arrival.arrivedDate) = :arrivalDate', { arrivalDate: options.arrivalDate });
+    }
+    if (options.arrivalTime) {
+      qb.andWhere('arrival.arrivedTime = :arrivalTime', { arrivalTime: options.arrivalTime });
+    }
+    if (options.arrival !== undefined) {
+      if (options.arrival) {
+        qb.andWhere('arrival.arrivedDate IS NOT NULL AND arrival.arrivedTime IS NOT NULL');
+      } else {
+        qb.andWhere('arrival.arrivedDate IS NULL OR arrival.arrivedTime IS NULL');
+      }
+    }
+    if (options.customerName) {
+      qb.andWhere(
+        `EXISTS (
+          SELECT 1 FROM customer_orders co
+          INNER JOIN customers c ON c.id = co.customer_id
+          WHERE co.order_id = order.id AND c.customer_name LIKE :customerName
+        )`,
+        { customerName: `%${options.customerName}%` },
+      );
+    }
+
+    const raw = await qb.getRawOne<Record<string, string>>();
+    return { totalArrivals: Number(raw?.totalArrivals ?? 0) };
   }
 }

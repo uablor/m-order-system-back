@@ -78,6 +78,14 @@ export class UserQueryRepository extends BaseQueryRepository<UserOrmEntity> {
     if (options.merchantId) {
       qb.andWhere('entity.merchantId = :merchantId', { merchantId: options.merchantId });
     }
+    if (options.isActive !== undefined && options.isActive !== null) {
+      qb.andWhere('entity.isActive = :isActive', { isActive: options.isActive });
+    }
+    if (options.search) {
+      qb.andWhere('(entity.fullName ILIKE :search OR entity.email ILIKE :search)', {
+        search: `%${options.search}%`,
+      });
+    }
     if (options.startDate) {
       qb.andWhere('entity.createdAt >= :startDate', { startDate: options.startDate });
     }

@@ -51,6 +51,7 @@ export class ArrivalQueryService {
       arrivalDate: query.arrivalDate,
       arrivalTime: query.arrivalTime,
       arrival: query.arrival,
+      customerName: query.customerName,
     });
     return createPaginatedResponse(
       result.results.map((e) => this.toResponse(e)),
@@ -74,11 +75,34 @@ export class ArrivalQueryService {
       arrivalDate: query.arrivalDate,
       arrivalTime: query.arrivalTime,
       arrival: query.arrival,
+      customerName: query.customerName,
     });
     return createPaginatedResponse(
       result.results.map((e) => this.toResponse(e)),
       result.pagination,
     );
+  }
+
+  async getSummary(query: ArrivalListQueryDto): Promise<{ totalArrivals: number }> {
+    return this.arrivalQueryRepository.getSummary({
+      merchantId: query.merchantId,
+      orderId: query.orderId,
+      startDate: query.startDate,
+      endDate: query.endDate,
+      search: query.search,
+      createdByUserId: query.createdByUserId,
+      arrivalDate: query.arrivalDate,
+      arrivalTime: query.arrivalTime,
+      arrival: query.arrival,
+      customerName: query.customerName,
+    });
+  }
+
+  async getSummaryByMerchant(
+    query: ArrivalListQueryDto,
+    currentUser: import('../../../common/decorators/current-user.decorator').CurrentUserPayload,
+  ): Promise<{ totalArrivals: number }> {
+    return this.getSummary({ ...query, merchantId: currentUser.merchantId! });
   }
 
   private toResponse(entity: ArrivalOrmEntity): ArrivalResponseDto {

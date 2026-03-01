@@ -38,7 +38,7 @@ export class UserQueryService {
   async getList(
     query: UserListQueryDto,
     merchantId?: number,
-  ): Promise<ResponseWithPaginationInterface<UserResponseDto> & { summary: any }> {
+  ): Promise<ResponseWithPaginationInterface<UserResponseDto>> {
     return this.transactionService.run(async (manager) => {
       const result = await this.userQueryRepository.findWithPagination(
         {
@@ -54,7 +54,19 @@ export class UserQueryService {
         },
         manager,
       );
-      const summary = await this.userQueryRepository.getSummary(
+      return createPaginatedResponse(
+        result.results.map((e) => this.toResponse(e)),
+        result.pagination,
+      );
+    });
+  }
+
+  async getSummary(
+    query: UserListQueryDto,
+    merchantId?: number,
+  ): Promise<{ totalUsers: number; totalActive: number; totalInactive: number }> {
+    return this.transactionService.run(async (manager) => {
+      return this.userQueryRepository.getSummary(
         {
           merchantId,
           isActive: query.isActive,
@@ -64,11 +76,6 @@ export class UserQueryService {
         },
         manager,
       );
-      const paginated = createPaginatedResponse(
-        result.results.map((e) => this.toResponse(e)),
-        result.pagination,
-      );
-      return { ...paginated, summary };
     });
   }
 

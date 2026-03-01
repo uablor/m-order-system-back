@@ -21,7 +21,6 @@ export interface OrderPaginatedResult {
   message: string;
   results: OrderOrmEntity[];
   pagination: PaginationResponse;
-  summary: OrderSummary;
 }
 
 @Injectable()
@@ -87,31 +86,10 @@ export class OrderQueryRepository extends BaseQueryRepository<OrderOrmEntity> {
       .leftJoinAndSelect('orderItems.exchangeRateSell', 'orderItems.exchangeRateSell');
 
     buildFilters(qb);
-    qb.orderBy('order.createdAt', 'DESC').skip(skip).take(limit);
+    const sortDir = options.sort === 'ASC' ? 'ASC' : 'DESC';
+    qb.orderBy('order.createdAt', sortDir).skip(skip).take(limit);
 
     const [data, total] = await qb.getManyAndCount();
-
-    const aggQb = repo
-      .createQueryBuilder('order')
-      .leftJoin('order.merchant', 'merchant')
-      .leftJoin('order.customerOrders', 'customerOrders')
-      .leftJoin('customerOrders.customer', 'customer')
-      .select('COUNT(DISTINCT order.id)', 'totalOrders')
-      .addSelect('COALESCE(SUM(order.totalFinalCost), 0)', 'totalFinalCostLak')
-      .addSelect('COALESCE(SUM(order.totalSellingAmount), 0)', 'totalSellingAmountLak')
-      .addSelect('COALESCE(SUM(order.totalProfit), 0)', 'totalProfitLak')
-      .addSelect('COALESCE(SUM(customerOrders.totalPaid), 0)', 'totalPaidAmount')
-      .addSelect('COALESCE(SUM(customerOrders.remainingAmount), 0)', 'totalRemainingAmount');
-
-    buildFilters(aggQb);
-    const aggRaw = await aggQb.getRawOne<Record<string, string>>();
-
-    const summary: OrderSummary = {
-      totalOrders: Number(aggRaw?.totalOrders ?? total),
-      totalFinalCost: aggRaw?.totalFinalCost ?? '0',
-      totalSellingAmount: aggRaw?.totalSellingAmount ?? '0',
-      totalProfit: aggRaw?.totalProfit ?? '0',
-    };
 
     const totalPages = Math.ceil(total / limit);
     const pagination: PaginationResponse = {
@@ -128,7 +106,65 @@ export class OrderQueryRepository extends BaseQueryRepository<OrderOrmEntity> {
       message: 'Orders fetched successfully',
       results: data,
       pagination,
-      summary,
+    };
+  }
+
+  async getSummary(
+    options: OrderListQueryDto,
+    manager?: import('typeorm').EntityManager,
+  ): Promise<OrderSummary> {
+    const repo = this.getRepo(manager);
+
+    const buildFilters = (qb: ReturnType<typeof repo.createQueryBuilder>) => {
+      if (options.merchantId != null) {
+        qb.andWhere('merchant.id = :merchantId', { merchantId: options.merchantId });
+      }
+      if (options.customerId != null) {
+        qb.andWhere('customer.id = :customerId', { customerId: options.customerId });
+      }
+      if (options.customerName) {
+        qb.andWhere('customer.customerName LIKE :customerName', {
+          customerName: `%${options.customerName}%`,
+        });
+      }
+      if (options.search) {
+        const field = options.searchField || 'orderCode';
+        qb.andWhere(`order.${field} LIKE :search`, { search: `%${options.search}%` });
+      }
+      if (options.startDate) {
+        qb.andWhere('DATE(order.orderDate) >= :startDate', { startDate: options.startDate });
+      }
+      if (options.endDate) {
+        qb.andWhere('DATE(order.orderDate) <= :endDate', { endDate: options.endDate });
+      }
+      if (options.arrivalStatus) {
+        qb.andWhere('order.arrivalStatus = :arrivalStatus', { arrivalStatus: options.arrivalStatus });
+      }
+      if (options.paymentStatus) {
+        qb.andWhere('order.paymentStatus = :paymentStatus', { paymentStatus: options.paymentStatus });
+      }
+    };
+
+    const aggQb = repo
+      .createQueryBuilder('order')
+      .leftJoin('order.merchant', 'merchant')
+      .leftJoin('order.customerOrders', 'customerOrders')
+      .leftJoin('customerOrders.customer', 'customer')
+      .select('COUNT(DISTINCT order.id)', 'totalOrders')
+      .addSelect('COALESCE(SUM(order.totalFinalCost), 0)', 'totalFinalCostLak')
+      .addSelect('COALESCE(SUM(order.totalSellingAmount), 0)', 'totalSellingAmountLak')
+      .addSelect('COALESCE(SUM(order.totalProfit), 0)', 'totalProfitLak')
+      .addSelect('COALESCE(SUM(customerOrders.totalPaid), 0)', 'totalPaidAmount')
+      .addSelect('COALESCE(SUM(customerOrders.remainingAmount), 0)', 'totalRemainingAmount');
+
+    buildFilters(aggQb);
+    const aggRaw = await aggQb.getRawOne<Record<string, string>>();
+
+    return {
+      totalOrders: Number(aggRaw?.totalOrders ?? 0),
+      totalFinalCost: aggRaw?.totalFinalCost ?? '0',
+      totalSellingAmount: aggRaw?.totalSellingAmount ?? '0',
+      totalProfit: aggRaw?.totalProfit ?? '0',
     };
   }
 }

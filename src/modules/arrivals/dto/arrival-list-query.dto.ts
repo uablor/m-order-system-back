@@ -51,5 +51,10 @@ export class ArrivalListQueryDto extends BaseQueryDto {
     return value;
   })
   arrival?: boolean;
+
+  @ApiPropertyOptional({ description: 'Filter by customer name (partial match)' })
+  @IsOptional()
+  @IsString()
+  customerName?: string;
 }
 

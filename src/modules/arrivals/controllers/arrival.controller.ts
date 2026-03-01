@@ -47,6 +47,15 @@ export class ArrivalController {
     return this.arrivalQueryService.getList(query);
   }
 
+  @Get('summary')
+  @ApiOperation({ summary: 'Get arrival summary (admin - optional merchantId)' })
+  @ApiBearerAuth('BearerAuth')
+  @ApiOkResponseBase()
+  @ApiUnauthorizedBase()
+  async adminGetSummary(@Query() query: ArrivalListQueryDto) {
+    return this.arrivalQueryService.getSummary(query);
+  }
+
   @Get('by-merchant')
   @ApiOperation({ summary: 'List arrivals for the authenticated merchant (auto-filter by JWT token)' })
   @ApiBearerAuth('BearerAuth')
@@ -57,6 +66,18 @@ export class ArrivalController {
     @CurrentUser() currentUser: CurrentUserPayload,
   ) {
     return this.arrivalQueryService.getListByMerchant(query, currentUser);
+  }
+
+  @Get('by-merchant/summary')
+  @ApiOperation({ summary: 'Get arrival summary for the authenticated merchant' })
+  @ApiBearerAuth('BearerAuth')
+  @ApiOkResponseBase()
+  @ApiUnauthorizedBase()
+  async merchantGetSummary(
+    @Query() query: ArrivalListQueryDto,
+    @CurrentUser() currentUser: CurrentUserPayload,
+  ) {
+    return this.arrivalQueryService.getSummaryByMerchant(query, currentUser);
   }
 
   @Get(':id')

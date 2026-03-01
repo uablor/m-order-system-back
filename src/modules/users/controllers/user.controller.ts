@@ -125,6 +125,15 @@ export class UserController {
     return this.queryService.getList(query);
   }
 
+  @Get('summary')
+  @ApiOperation({ summary: 'Get user summary (admin - optional merchantId in query)' })
+  @ApiBearerAuth('BearerAuth')
+  @ApiOkResponseBase()
+  @ApiUnauthorizedBase()
+  async adminGetSummary(@Query() query: UserListQueryDto) {
+    return this.queryService.getSummary(query);
+  }
+
   @Get('by-merchant')
   @ApiOperation({
     summary: 'List users by merchant with pagination (page, limit, search)',
@@ -140,6 +149,18 @@ export class UserController {
     @CurrentUser() currentUser: CurrentUserPayload,
   ) {
     return this.queryService.getList(query, currentUser.merchantId!);
+  }
+
+  @Get('by-merchant/summary')
+  @ApiOperation({ summary: 'Get user/team member summary for the authenticated merchant' })
+  @ApiBearerAuth('BearerAuth')
+  @ApiOkResponseBase()
+  @ApiUnauthorizedBase()
+  async merchantGetSummary(
+    @Query() query: UserListQueryDto,
+    @CurrentUser() currentUser: CurrentUserPayload,
+  ) {
+    return this.queryService.getSummary(query, currentUser.merchantId!);
   }
 
   @Patch('profile')

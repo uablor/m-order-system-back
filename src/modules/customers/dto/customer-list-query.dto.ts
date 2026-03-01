@@ -1,5 +1,5 @@
-import { IsOptional, IsInt, IsString, MaxLength, Min, Max } from 'class-validator';
-import { Type } from 'class-transformer';
+import { IsOptional, IsInt, IsString, MaxLength, Min, Max, IsIn } from 'class-validator';
+import { Type, Transform } from 'class-transformer';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 
 export class CustomerListQueryDto {
@@ -29,4 +29,19 @@ export class CustomerListQueryDto {
   @IsString()
   @MaxLength(255)
   search?: string;
+
+  @ApiPropertyOptional({ description: 'Filter by customer type', enum: ['CUSTOMER', 'AGENT'] })
+  @IsOptional()
+  @IsString()
+  @IsIn(['CUSTOMER', 'AGENT'])
+  customerType?: 'CUSTOMER' | 'AGENT';
+
+  @ApiPropertyOptional({ description: 'Filter by active status (true/false)' })
+  @IsOptional()
+  @Transform(({ value }) => {
+    if (value === 'true' || value === true) return true;
+    if (value === 'false' || value === false) return false;
+    return undefined;
+  })
+  isActive?: boolean;
 }

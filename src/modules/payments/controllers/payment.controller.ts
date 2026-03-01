@@ -99,6 +99,18 @@ export class PaymentController {
     return this.queryService.getListByMerchant(query, currentUser);
   }
 
+  @Get('merchant/summary')
+  @ApiOperation({ summary: 'Get payment summary for the authenticated merchant' })
+  @ApiBearerAuth('BearerAuth')
+  @ApiOkResponseBase()
+  @ApiUnauthorizedBase()
+  async getMerchantPaymentSummary(
+    @Query() query: PaymentListQueryDto,
+    @CurrentUser() currentUser: CurrentUserPayload,
+  ) {
+    return this.queryService.getSummaryByMerchant(query, currentUser);
+  }
+
   // ─── Admin: full payment list ───────────────────────────────────────────
 
   @Get()

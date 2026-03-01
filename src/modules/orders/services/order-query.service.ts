@@ -65,12 +65,13 @@ export class OrderQueryService {
     return this.toResponse(entity);
   }
 
-  async getList(query: OrderListQueryDto): Promise<ResponseWithPaginationInterface<OrderResponseDto> & { summary: any }> {
+  async getList(query: OrderListQueryDto): Promise<ResponseWithPaginationInterface<OrderResponseDto>> {
     const result = await this.orderQueryRepository.findWithPagination({
       page: query.page,
       limit: query.limit,
       search: query.search,
       searchField: query.searchField,
+      sort: query.sort,
       merchantId: query.merchantId,
       customerId: query.customerId,
       customerName: query.customerName,
@@ -85,19 +86,19 @@ export class OrderQueryService {
       message: DEFAULT_SUCCESS_MESSAGE,
       results: result.results.map((e) => this.toResponse(e)),
       pagination: result.pagination,
-      summary: result.summary,
     };
   }
 
   async getListByMerchant(
     query: OrderListQueryDto,
     currentUser: import('../../../common/decorators/current-user.decorator').CurrentUserPayload,
-  ): Promise<ResponseWithPaginationInterface<OrderResponseDto> & { summary: any }> {
+  ): Promise<ResponseWithPaginationInterface<OrderResponseDto>> {
     const result = await this.orderQueryRepository.findWithPagination({
       page: query.page,
       limit: query.limit,
       search: query.search,
       searchField: query.searchField,
+      sort: query.sort,
       merchantId: currentUser.merchantId!,
       customerId: query.customerId,
       customerName: query.customerName,
@@ -112,8 +113,37 @@ export class OrderQueryService {
       message: DEFAULT_SUCCESS_MESSAGE,
       results: result.results.map((e) => this.toResponse(e)),
       pagination: result.pagination,
-      summary: result.summary,
     };
+  }
+
+  async getSummary(query: OrderListQueryDto): Promise<{ totalOrders: number; totalFinalCostLak: string; totalSellingAmountLak: string; totalProfitLak: string }> {
+    const summary = await this.orderQueryRepository.getSummary({
+      merchantId: query.merchantId,
+      customerId: query.customerId,
+      customerName: query.customerName,
+      search: query.search,
+      searchField: query.searchField,
+      startDate: query.startDate,
+      endDate: query.endDate,
+      arrivalStatus: query.arrivalStatus,
+      paymentStatus: query.paymentStatus,
+    });
+    return {
+      totalOrders: summary.totalOrders,
+      totalFinalCostLak: summary.totalFinalCost,
+      totalSellingAmountLak: summary.totalSellingAmount,
+      totalProfitLak: summary.totalProfit,
+    };
+  }
+
+  async getSummaryByMerchant(
+    query: OrderListQueryDto,
+    currentUser: import('../../../common/decorators/current-user.decorator').CurrentUserPayload,
+  ): Promise<{ totalOrders: number; totalFinalCostLak: string; totalSellingAmountLak: string; totalProfitLak: string }> {
+    return this.getSummary({
+      ...query,
+      merchantId: currentUser.merchantId!,
+    });
   }
 
   private convertToTargetCurrency(amount: number, exchangeRate: ExchangeRateOrmEntity | null): string {

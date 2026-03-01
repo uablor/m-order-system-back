@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { FindOptionsWhere, Repository } from 'typeorm';
+import { Repository } from 'typeorm';
 import { BaseQueryRepository } from '../../../common/base/repositories/base.query-repository';
 import { CustomerOrmEntity } from '../entities/customer.orm-entity';
 import { PaginatedResult, PaginationResponse } from '../../../common/base/interfaces/paginted.interface';
@@ -22,7 +22,14 @@ export class CustomerQueryRepository extends BaseQueryRepository<CustomerOrmEnti
   }
 
   async findWithPagination(
-    options: { page?: number; limit?: number; merchantId?: number; search?: string },
+    options: {
+      page?: number;
+      limit?: number;
+      merchantId?: number;
+      search?: string;
+      customerType?: 'CUSTOMER' | 'AGENT';
+      isActive?: boolean;
+    },
     manager?: import('typeorm').EntityManager,
   ): Promise<PaginatedResult<CustomerOrmEntity>> {
     const repo = this.getRepo(manager);
@@ -31,45 +38,29 @@ export class CustomerQueryRepository extends BaseQueryRepository<CustomerOrmEnti
     const skip = (page - 1) * limit;
     const search = options.search?.trim();
 
-    // ถ้ามี search -> ใช้ query builder เพื่อรองรับ OR (name/phone/token)
+    const qb = repo.createQueryBuilder('customer')
+      .leftJoinAndSelect('customer.merchant', 'merchant')
+      .orderBy('customer.createdAt', 'DESC')
+      .skip(skip)
+      .take(limit);
+
+    if (options.merchantId != null) {
+      qb.andWhere('merchant.id = :merchantId', { merchantId: options.merchantId });
+    }
     if (search) {
-      const qb = repo.createQueryBuilder('customer')
-        .leftJoinAndSelect('customer.merchant', 'merchant')
-        .orderBy('customer.createdAt', 'DESC')
-        .skip(skip)
-        .take(limit);
-
-      if (options.merchantId != null) {
-        qb.andWhere('merchant.id = :merchantId', { merchantId: options.merchantId });
-      }
-
       qb.andWhere(
         '(customer.customerName LIKE :s OR customer.contactPhone LIKE :s OR customer.uniqueToken LIKE :s)',
         { s: `%${search}%` },
       );
-
-      const [data, total] = await qb.getManyAndCount();
-      const totalPages = Math.ceil(total / limit);
-      const pagination: PaginationResponse = {
-        total,
-        page,
-        limit,
-        totalPages,
-        hasNextPage: page < totalPages,
-        hasPreviousPage: page > 1,
-      };
-      return { success: true, Code: 200, message: 'Customers fetched successfully', results: data, pagination };
+    }
+    if (options.customerType != null) {
+      qb.andWhere('customer.customerType = :customerType', { customerType: options.customerType });
+    }
+    if (options.isActive != null) {
+      qb.andWhere('customer.isActive = :isActive', { isActive: options.isActive });
     }
 
-    const where: FindOptionsWhere<CustomerOrmEntity> = {};
-    if (options.merchantId != null) where.merchant = { id: options.merchantId };
-    const [data, total] = await repo.findAndCount({
-      where: Object.keys(where).length ? where : undefined,
-      relations: ['merchant'],
-      order: { createdAt: 'DESC' as const },
-      skip,
-      take: limit,
-    });
+    const [data, total] = await qb.getManyAndCount();
     const totalPages = Math.ceil(total / limit);
     const pagination: PaginationResponse = {
       total,

@@ -43,6 +43,8 @@ export class CustomerQueryService {
       limit: query.limit,
       merchantId,
       search: query.search,
+      customerType: query.customerType,
+      isActive: query.isActive,
     });
     const summary = await this.customerQueryRepository.getSummary({
       merchantId,
