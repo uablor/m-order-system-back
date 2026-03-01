@@ -1,7 +1,6 @@
-import { Controller, Get, Query } from '@nestjs/common';
+import { Body, Controller, Get, Post } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { DashboardQueryService } from '../services/dashboard-query.service';
-import { AnnualReportQueryDto } from '../dto/annual-report-query.dto';
 import { CurrentUser } from '../../../common/decorators/current-user.decorator';
 import type { CurrentUserPayload } from '../../../common/decorators/current-user.decorator';
 import {
@@ -12,9 +11,8 @@ import { AdminDashboardDetailsResponseDto } from '../dto/admin-dashboard-details
 import { AdminDashboardSummaryResponseDto } from '../dto/admin-dashboard-summary.dto';
 import { createSingleResponse } from '../../../common/base/helpers/response.helper';
 import { MerchantSummaryResponseDto } from '../dto/merchant-summary.dto';
-import { MerchantPriceSummaryResponseDto } from '../dto/merchant-price-summary.dto';
-import { MerchantPriceCurrencySummaryDto } from '../dto/merchant-price-currency-summary.dto';
-import { AnnualReportResponseDto } from '../dto/annual-report-response.dto';
+import { MerchantGetPriceCurrencySummaryDto, MerchantPriceCurrencySummaryDto } from '../dto/merchant-price-currency-summary.dto';
+import { TopCustomersResponseDto } from '../dto/top-customers.dto';
 
 @ApiTags('Dashboard')
 @Controller('dashboard')
@@ -51,17 +49,7 @@ export class DashboardController {
     return createSingleResponse(data);
   }
 
-  @Get('merchant/price-summary')
-  @ApiOperation({ summary: 'Merchant price summary - current merchant price stats' })
-  @ApiBearerAuth('BearerAuth')
-  @ApiOkResponseBase(MerchantPriceSummaryResponseDto)
-  @ApiUnauthorizedBase()
-  async merchantGetPriceSummary(@CurrentUser() currentUser: CurrentUserPayload) {
-    const data = await this.dashboardQueryService.getMerchantPriceSummary(currentUser.merchantId!);
-    return createSingleResponse(data);
-  }
-
-  @Get('merchant/price-currency-summary')
+  @Post('merchant/price-currency-summary')
   @ApiOperation({ summary: 'Merchant price currency summary - grouped by target currency' })
   @ApiBearerAuth('BearerAuth')
   @ApiOkResponseBase(MerchantPriceCurrencySummaryDto)
@@ -70,4 +58,29 @@ export class DashboardController {
     const data = await this.dashboardQueryService.getMerchantPriceCurrencySummary(currentUser.merchantId!);
     return createSingleResponse(data);
   }
+  @Post('merchant/price-currency-summary-by-date')
+  @ApiOperation({ summary: 'Merchant price currency summary - grouped by target currency' })
+  @ApiBearerAuth('BearerAuth')
+  @ApiOkResponseBase(MerchantPriceCurrencySummaryDto)
+  @ApiUnauthorizedBase()
+  async getMerchantPriceCurrencySummaryByDate(@CurrentUser() currentUser: CurrentUserPayload
+, @Body() body: MerchantGetPriceCurrencySummaryDto) {
+    const data = await this.dashboardQueryService.getMerchantPriceCurrencySummaryByDate(currentUser.merchantId!, body.startDate, body.endDate);
+    return createSingleResponse(data);
+  }
+
+  @Get('merchant/top-customers')
+  @ApiOperation({ summary: 'Top 5 customers by buy order amount' })
+  @ApiBearerAuth('BearerAuth')
+  @ApiOkResponseBase(TopCustomersResponseDto)
+  @ApiUnauthorizedBase()
+  async getTopCustomersByBuyOrder(@CurrentUser() currentUser: CurrentUserPayload) {
+    const data = await this.dashboardQueryService.getTopCustomersByBuyOrder(currentUser.merchantId!);
+    return createSingleResponse(data);
+  }
+
+
+  
+
+
 }

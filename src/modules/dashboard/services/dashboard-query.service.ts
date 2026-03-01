@@ -1,12 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { DataSource } from 'typeorm';
-import { OrderOrmEntity } from '../../orders/entities/order.orm-entity';
 import { AdminDashboardDetailsResponseDto } from '../dto/admin-dashboard-details.dto';
 import { AdminDashboardSummaryResponseDto } from '../dto/admin-dashboard-summary.dto';
 import { MerchantSummaryResponseDto } from '../dto/merchant-summary.dto';
-import { MerchantPriceSummaryResponseDto } from '../dto/merchant-price-summary.dto';
-import { MerchantPriceCurrencySummaryDto } from '../dto/merchant-price-currency-summary.dto';
 import { AnnualReportResponseDto, MonthlyReportDto } from '../dto/annual-report-response.dto';
+import { TopCustomersResponseDto, TopCustomerDto } from '../dto/top-customers.dto';
 
 const MONTH_NAMES = [
   'January', 'February', 'March', 'April', 'May', 'June',
@@ -15,7 +13,7 @@ const MONTH_NAMES = [
 
 @Injectable()
 export class DashboardQueryService {
-  constructor(private readonly dataSource: DataSource) {}
+  constructor(private readonly dataSource: DataSource) { }
 
   async getAdminDashboardSummary(): Promise<AdminDashboardSummaryResponseDto> {
     const [
@@ -168,238 +166,292 @@ export class DashboardQueryService {
     };
   }
 
-  async getMerchantPriceSummary(merchantId: number): Promise<MerchantPriceSummaryResponseDto> {
-    const [
-      orderItemsAll,
-      orderItemsUnpaid,
-      orderItemsPaid,
-      orderItemsFinalCostPaid,
-      paymentsAll,
-      paymentsRejected,
-      paymentsPendingVerified,
-      paymentsPendingRejected,
-      totalFinalCost,
-      totalShippingPrice,
-      finalCostPaid,
-      shippingPricePaid,
-      exchangeRate,
-    ] = await Promise.all([
-      // Order items price calculations
-      this.dataSource.query<{ total: string }[]>(
-        `SELECT COALESCE(SUM(oi.selling_price * oi.quantity), 0) AS total
-         FROM order_items oi
-         INNER JOIN orders o ON o.id = oi.order_id
-         WHERE o.merchant_id = ?`,
-        [merchantId],
-      ),
-      this.dataSource.query<{ total: string }[]>(
-        `SELECT COALESCE(SUM(oi.selling_price * oi.quantity), 0) AS total
-         FROM order_items oi
-         INNER JOIN orders o ON o.id = oi.order_id
-         WHERE o.merchant_id = ? AND o.payment_status = 'UNPAID'`,
-        [merchantId],
-      ),
-      this.dataSource.query<{ total: string }[]>(
-        `SELECT COALESCE(SUM(oi.selling_price * oi.quantity), 0) AS total
-         FROM order_items oi
-         INNER JOIN orders o ON o.id = oi.order_id
-         WHERE o.merchant_id = ? AND o.payment_status = 'PAID'`,
-        [merchantId],
-      ),
-      this.dataSource.query<{ total: string }[]>(
-        `SELECT COALESCE(SUM(oi.total_cost_before_discount), 0) AS total
-         FROM order_items oi
-         INNER JOIN orders o ON o.id = oi.order_id
-         WHERE o.merchant_id = ? AND o.payment_status = 'PAID'`,
-        [merchantId],
-      ),
-      // Payments price calculations
-      this.dataSource.query<{ total: string }[]>(
-        `SELECT COALESCE(SUM(amount), 0) AS total
-         FROM payments p
-         INNER JOIN orders o ON o.id = p.order_id
-         WHERE o.merchant_id = ?`,
-        [merchantId],
-      ),
-      this.dataSource.query<{ total: string }[]>(
-        `SELECT COALESCE(SUM(amount), 0) AS total
-         FROM payments p
-         INNER JOIN orders o ON o.id = p.order_id
-         WHERE o.merchant_id = ? AND p.status = 'REJECTED'`,
-        [merchantId],
-      ),
-      this.dataSource.query<{ total: string }[]>(
-        `SELECT COALESCE(SUM(amount), 0) AS total
-         FROM payments p
-         INNER JOIN orders o ON o.id = p.order_id
-         WHERE o.merchant_id = ? AND p.status = 'PENDING VERIFIED'`,
-        [merchantId],
-      ),
-      this.dataSource.query<{ total: string }[]>(
-        `SELECT COALESCE(SUM(amount), 0) AS total
-         FROM payments p
-         INNER JOIN orders o ON o.id = p.order_id
-         WHERE o.merchant_id = ? AND p.status = 'PENDING REJECTED'`,
-        [merchantId],
-      ),
-      // Final cost and shipping price calculations
-      this.dataSource.query<{ total: string }[]>(
-        `SELECT COALESCE(SUM(oi.total_cost_before_discount), 0) AS total
-         FROM order_items oi
-         INNER JOIN orders o ON o.id = oi.order_id
-         WHERE o.merchant_id = ?`,
-        [merchantId],
-      ),
-      this.dataSource.query<{ total: string }[]>(
-        `SELECT COALESCE(SUM(oi.shipping_price * oi.quantity), 0) AS total
-         FROM order_items oi
-         INNER JOIN orders o ON o.id = oi.order_id
-         WHERE o.merchant_id = ?`,
-        [merchantId],
-      ),
-      this.dataSource.query<{ total: string }[]>(
-        `SELECT COALESCE(SUM(oi.total_cost_before_discount), 0) AS total
-         FROM order_items oi
-         INNER JOIN orders o ON o.id = oi.order_id
-         WHERE o.merchant_id = ? AND o.payment_status = 'PAID'`,
-        [merchantId],
-      ),
-      this.dataSource.query<{ total: string }[]>(
-        `SELECT COALESCE(SUM(oi.shipping_price * oi.quantity), 0) AS total
-         FROM order_items oi
-         INNER JOIN orders o ON o.id = oi.order_id
-         WHERE o.merchant_id = ? AND o.payment_status = 'PAID'`,
-        [merchantId],
-      ),
-      // Get exchange rate for LAK
-      this.dataSource.query<{ rate: string }[]>(
-        `SELECT rate FROM exchange_rates WHERE target_currency = 'LAK' ORDER BY created_at DESC LIMIT 1`,
-      ),
-    ]);
 
-    const lakRate = Number(exchangeRate[0]?.rate ?? 1);
+async getMerchantPriceCurrencySummary(
+  merchantId: number
+): Promise<any[]> {
+
+  const query = `
+SELECT 
+  erb.base_currency as baseCurrency,
+  SUM(o.total_final_cost) as totalAll,
+  SUM(CASE WHEN o.payment_status = ? THEN o.total_final_cost ELSE 0 END) as totalUnpaid,
+  SUM(CASE WHEN o.payment_status = ? THEN o.total_final_cost ELSE 0 END) as totalPaid,
+  erb.rate as rate
+FROM orders o
+LEFT JOIN exchange_rates erb ON erb.id = o.exchange_rate_buy_id
+WHERE o.merchant_id = ?
+GROUP BY erb.base_currency, erb.rate
+
+UNION ALL
+
+SELECT 
+  ers.base_currency as baseCurrency,
+  SUM(o.total_selling_amount) as totalAll,
+  SUM(CASE WHEN o.payment_status = ? THEN o.total_selling_amount ELSE 0 END) as totalUnpaid,
+  SUM(CASE WHEN o.payment_status = ? THEN o.total_selling_amount ELSE 0 END) as totalPaid,
+  ers.rate as rate
+FROM orders o
+LEFT JOIN exchange_rates ers ON ers.id = o.exchange_rate_sell_id
+WHERE o.merchant_id = ?
+GROUP BY ers.base_currency, ers.rate
+`;
+
+  const rows = await this.dataSource.query(query, [
+    'UNPAID','PAID',merchantId,
+    'UNPAID','PAID',merchantId
+  ]);
+
+  let lakTotalAll = 0;
+  let lakTotalUnpaid = 0;
+  let lakTotalPaid = 0;
+
+  const result = rows.map(r => {
+
+    const totalAll = Number(r.totalAll ?? 0);
+    const totalUnpaid = Number(r.totalUnpaid ?? 0);
+    const totalPaid = Number(r.totalPaid ?? 0);
+    const rate = Number(r.rate ?? 1);
+
+    lakTotalAll += totalAll * rate;
+    lakTotalUnpaid += totalUnpaid * rate;
+    lakTotalPaid += totalPaid * rate;
 
     return {
-      totalOrderItemsPrice: Number(orderItemsAll[0]?.total ?? 0) * lakRate,
-      totalOrderItemsPriceUnpaid: Number(orderItemsUnpaid[0]?.total ?? 0) * lakRate,
-      totalOrderItemsPricePaid: Number(orderItemsPaid[0]?.total ?? 0) * lakRate,
-      totalOrderItemsFinalCostPaid: Number(orderItemsFinalCostPaid[0]?.total ?? 0) * lakRate,
-      totalPaymentsPrice: Number(paymentsAll[0]?.total ?? 0) * lakRate,
-      totalPaymentsPriceRejected: Number(paymentsRejected[0]?.total ?? 0) * lakRate,
-      totalPaymentsPricePendingVerified: Number(paymentsPendingVerified[0]?.total ?? 0) * lakRate,
-      totalPaymentsPricePendingRejected: Number(paymentsPendingRejected[0]?.total ?? 0) * lakRate,
-      totalFinalCost: Number(totalFinalCost[0]?.total ?? 0) * lakRate,
-      totalShippingPrice: Number(totalShippingPrice[0]?.total ?? 0) * lakRate,
-      totalFinalCostPaid: Number(finalCostPaid[0]?.total ?? 0) * lakRate,
-      totalShippingPricePaid: Number(shippingPricePaid[0]?.total ?? 0) * lakRate,
+      baseCurrency: r.baseCurrency,
+      totalAll,
+      totalUnpaid,
+      totalPaid
     };
+  });
+
+  result.push({
+    targetCurrency: "LAK",
+    totalAll: lakTotalAll,
+    totalUnpaid: lakTotalUnpaid,
+    totalPaid: lakTotalPaid
+  });
+
+  return result;
+}
+
+async getMerchantPriceCurrencySummaryByDate(
+  merchantId: number,
+  startDate?: Date,
+  endDate?: Date
+): Promise<any> {
+
+  if (!startDate) {
+    startDate = new Date(new Date().getFullYear(), 0, 1);
+  }
+  
+  if (!endDate) {
+    endDate = new Date(new Date().getFullYear(), 11, 31);
   }
 
-  async getMerchantPriceCurrencySummary(merchantId: number): Promise<MerchantPriceCurrencySummaryDto[]> {
-    // Use raw SQL query to avoid TypeORM alias conflicts
-    const query = `
-      SELECT 
-        COALESCE(erb.target_currency, ers.target_currency) as targetCurrency,
-        SUM(CASE WHEN o.payment_status IS NOT NULL THEN o.total_selling_amount ELSE 0 END) as totalAll,
-        SUM(CASE WHEN o.payment_status = ? THEN o.total_selling_amount ELSE 0 END) as totalUnpaid,
-        SUM(CASE WHEN o.payment_status = ? THEN o.total_selling_amount ELSE 0 END) as totalPaid
-      FROM orders o
-      LEFT JOIN exchange_rates erb ON erb.id = o.exchange_rate_buy_id
-      LEFT JOIN exchange_rates ers ON ers.id = o.exchange_rate_sell_id
-      WHERE o.merchant_id = ?
-        AND (erb.is_active = 1 OR ers.is_active = 1)
-        AND (erb.target_currency IS NOT NULL OR ers.target_currency IS NOT NULL)
-      GROUP BY COALESCE(erb.target_currency, ers.target_currency)
-      ORDER BY COALESCE(erb.target_currency, ers.target_currency) ASC
-    `;
+  // Query 1: Buy rate (final cost)
+  const buyQuery = `
+    SELECT 
+      YEAR(o.created_at) as year,
+      MONTH(o.created_at) as month,
+      erb.base_currency as baseCurrency,
+      SUM(o.total_final_cost) as totalAll,
+      SUM(CASE WHEN o.payment_status = 'UNPAID' THEN o.total_final_cost ELSE 0 END) as totalUnpaid,
+      SUM(CASE WHEN o.payment_status = 'PAID' THEN o.total_final_cost ELSE 0 END) as totalPaid,
+      erb.rate as rate
+    FROM orders o
+    LEFT JOIN exchange_rates erb ON erb.id = o.exchange_rate_buy_id
+    WHERE o.merchant_id = ?
+      AND o.created_at >= ?
+      AND o.created_at <= ?
+    GROUP BY YEAR(o.created_at), MONTH(o.created_at), erb.base_currency, erb.rate
+  `;
 
-    const results = await this.dataSource.query<{
-      targetCurrency: string;
-      totalAll: string;
-      totalUnpaid: string;
-      totalPaid: string;
-    }[]>(query, ['UNPAID', 'PAID', merchantId]);
+  // Query 2: Sell rate (selling amount)
+  const sellQuery = `
+    SELECT 
+      YEAR(o.created_at) as year,
+      MONTH(o.created_at) as month,
+      ers.base_currency as baseCurrency,
+      SUM(o.total_selling_amount) as totalAll,
+      SUM(CASE WHEN o.payment_status = 'UNPAID' THEN o.total_selling_amount ELSE 0 END) as totalUnpaid,
+      SUM(CASE WHEN o.payment_status = 'PAID' THEN o.total_selling_amount ELSE 0 END) as totalPaid,
+      ers.rate as rate
+    FROM orders o
+    LEFT JOIN exchange_rates ers ON ers.id = o.exchange_rate_sell_id
+    WHERE o.merchant_id = ?
+      AND o.created_at >= ?
+      AND o.created_at <= ?
+    GROUP BY YEAR(o.created_at), MONTH(o.created_at), ers.base_currency, ers.rate
+  `;
 
-    // Get LAK exchange rate for conversion
-    const lakRateQuery = await this.dataSource.query<{ rate: string }[]>(
-      `SELECT rate FROM exchange_rates WHERE target_currency = 'LAK' AND is_active = 1 ORDER BY created_at DESC LIMIT 1`
-    );
-    const lakRate = Number(lakRateQuery[0]?.rate ?? 1);
+  const [buyRows, sellRows] = await Promise.all([
+    this.dataSource.query(buyQuery, [merchantId, startDate, endDate]),
+    this.dataSource.query(sellQuery, [merchantId, startDate, endDate]),
+  ]);
 
-    return results.map(result => ({
-      targetCurrency: result.targetCurrency,
-      totalAll: Number(result.totalAll ?? 0),
-      totalUnpaid: Number(result.totalUnpaid ?? 0),
-      totalPaid: Number(result.totalPaid ?? 0),
-      // Add converted values only if not LAK
-      ...(result.targetCurrency !== 'LAK' ? {
-        totalAllConverted: Number(result.totalAll ?? 0) * lakRate,
-        totalUnpaidConverted: Number(result.totalUnpaid ?? 0) * lakRate,
-        totalPaidConverted: Number(result.totalPaid ?? 0) * lakRate,
-      } : {}),
-    }));
+  // Generate all year-month keys between startDate and endDate
+  const monthMap: Record<string, {
+    year: number,
+    month: number,
+    buyRows: any[],
+    sellRows: any[],
+  }> = {};
+
+  const cursor = new Date(startDate);
+  cursor.setDate(1);
+
+  while (
+    cursor.getFullYear() < endDate.getFullYear() ||
+    (cursor.getFullYear() === endDate.getFullYear() && cursor.getMonth() <= endDate.getMonth())
+  ) {
+    const key = `${cursor.getFullYear()}-${cursor.getMonth() + 1}`;
+    monthMap[key] = {
+      year: cursor.getFullYear(),
+      month: cursor.getMonth() + 1,
+      buyRows: [],
+      sellRows: [],
+    };
+    cursor.setMonth(cursor.getMonth() + 1);
   }
 
-  async getAdminAnnualReport(year: number): Promise<AnnualReportResponseDto> {
-    const rows = await this.dataSource.query<{
-      month: string;
-      orderCount: string;
-      finalCost: string;
-      revenue: string;
-      profit: string;
-    }[]>(
-      `SELECT
-        MONTH(order_date) AS month,
-        COUNT(*) AS orderCount,
-        COALESCE(SUM(total_final_cost), 0) AS finalCost,
-        COALESCE(SUM(total_selling_amount), 0) AS revenue,
-        COALESCE(SUM(total_profit), 0) AS profit
-      FROM orders
-      WHERE YEAR(order_date) = ?
-      GROUP BY MONTH(order_date)
-      ORDER BY MONTH(order_date)`,
-      [year],
-    );
-
-    return { year, months: this.buildMonthlyReport(rows) };
+  // Fill rows into map
+  for (const r of buyRows) {
+    const key = `${Number(r.year)}-${Number(r.month)}`;
+    if (monthMap[key]) monthMap[key].buyRows.push(r);
+  }
+  for (const r of sellRows) {
+    const key = `${Number(r.year)}-${Number(r.month)}`;
+    if (monthMap[key]) monthMap[key].sellRows.push(r);
   }
 
-  private toStatusMap(
-    rows: { [key: string]: string }[],
-    statusKey: string,
-  ): Record<string, string> {
-    const map: Record<string, string> = {};
-    for (const row of rows) {
-      map[row[statusKey]] = row['cnt'];
+  // Yearly accumulator (LAK)
+  let totalLakAll = 0;
+  let totalLakUnpaid = 0;
+  let totalLakPaid = 0;
+
+  const months = Object.values(monthMap).map(({ year, month, buyRows, sellRows }) => {
+    let lakTotalAll = 0;
+    let lakTotalUnpaid = 0;
+    let lakTotalPaid = 0;
+
+    const currencies: any[] = [];
+
+    // Buy side
+    for (const r of buyRows) {
+      const totalAll = Number(r.totalAll ?? 0);
+      const totalUnpaid = Number(r.totalUnpaid ?? 0);
+      const totalPaid = Number(r.totalPaid ?? 0);
+      const rate = Number(r.rate ?? 1);
+
+      lakTotalAll += totalAll * rate;
+      lakTotalUnpaid += totalUnpaid * rate;
+      lakTotalPaid += totalPaid * rate;
+
+      currencies.push({
+        type: 'BUY',
+        baseCurrency: r.baseCurrency,
+        totalAll,
+        totalUnpaid,
+        totalPaid,
+      });
     }
-    return map;
-  }
 
-  private buildMonthlyReport(
-    rows: {
-      month: string;
-      orderCount: string;
-      finalCost: string;
-      revenue: string;
-      profit: string;
-    }[],
-  ): MonthlyReportDto[] {
-    const rowMap: Record<number, (typeof rows)[0]> = {};
-    for (const row of rows) {
-      rowMap[Number(row.month)] = row;
+    // Sell side
+    for (const r of sellRows) {
+      const totalAll = Number(r.totalAll ?? 0);
+      const totalUnpaid = Number(r.totalUnpaid ?? 0);
+      const totalPaid = Number(r.totalPaid ?? 0);
+      const rate = Number(r.rate ?? 1);
+
+      lakTotalAll += totalAll * rate;
+      lakTotalUnpaid += totalUnpaid * rate;
+      lakTotalPaid += totalPaid * rate;
+
+      currencies.push({
+        type: 'SELL',
+        baseCurrency: r.baseCurrency,
+        totalAll,
+        totalUnpaid,
+        totalPaid,
+      });
     }
 
-    return Array.from({ length: 12 }, (_, i) => {
-      const monthNum = i + 1;
-      const row = rowMap[monthNum];
-      return {
-        month: monthNum,
-        monthName: MONTH_NAMES[i],
-        orderCount: Number(row?.orderCount ?? 0),
-        finalCost: String(row?.finalCost ?? '0'),
-        revenue: String(row?.revenue ?? '0'),
-        profit: String(row?.profit ?? '0'),
-      };
-    });
-  }
+    totalLakAll += lakTotalAll;
+    totalLakUnpaid += lakTotalUnpaid;
+    totalLakPaid += lakTotalPaid;
+
+    return {
+      year,
+      month,
+      currencies,
+      summary: {
+        targetCurrency: 'LAK',
+        totalAll: lakTotalAll,
+        totalUnpaid: lakTotalUnpaid,
+        totalPaid: lakTotalPaid,
+      },
+    };
+  });
+
+  return {
+    startDate,
+    endDate,
+    months,
+    totalSummary: {
+      targetCurrency: 'LAK',
+      totalAll: totalLakAll,
+      totalUnpaid: totalLakUnpaid,
+      totalPaid: totalLakPaid,
+    },
+  };
+}
+
+async getTopCustomersByBuyOrder(merchantId: number): Promise<TopCustomersResponseDto> {
+  const query = `
+    SELECT 
+      u.id as customerId,
+      u.full_name as customerName,
+      u.email as customerEmail,
+      COALESCE(SUM(o.total_final_cost), 0) as totalBuyAmount,
+      COUNT(o.id) as orderCount,
+      COALESCE(AVG(o.total_final_cost), 0) as averageOrderAmount
+    FROM users u
+    INNER JOIN customer_orders co ON co.customer_id = u.id
+    INNER JOIN orders o ON o.id = co.order_id
+    WHERE o.merchant_id = ?
+      AND o.payment_status = 'PAID'
+    GROUP BY u.id, u.full_name, u.email
+    HAVING totalBuyAmount > 0
+    ORDER BY totalBuyAmount DESC
+    LIMIT 5
+  `;
+
+  const results = await this.dataSource.query<{
+    customerId: number;
+    customerName: string;
+    customerEmail: string;
+    totalBuyAmount: string;
+    orderCount: string;
+    averageOrderAmount: string;
+  }[]>(query, [merchantId]);
+
+  // Get LAK exchange rate for conversion
+  const lakRateQuery = await this.dataSource.query<{ rate: string }[]>(
+    `SELECT rate FROM exchange_rates WHERE target_currency = 'LAK' AND is_active = 1 ORDER BY created_at DESC LIMIT 1`
+  );
+  const lakRate = Number(lakRateQuery[0]?.rate ?? 1);
+
+  const customers: TopCustomerDto[] = results.map(result => ({
+    customerId: result.customerId,
+    customerName: result.customerName,
+    customerEmail: result.customerEmail,
+    totalBuyAmount: Number(result.totalBuyAmount) * lakRate,
+    orderCount: Number(result.orderCount),
+    averageOrderAmount: Number(result.averageOrderAmount) * lakRate,
+  }));
+
+  return { customers };
+}
+
 }
