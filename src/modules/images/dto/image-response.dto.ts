@@ -4,8 +4,11 @@ export class ImageResponseDto {
   @ApiProperty()
   id: number;
 
-  @ApiProperty()
-  merchantId: number;
+  @ApiPropertyOptional({ nullable: true })
+  merchantId: {
+    id: number;
+    shopName: string;
+  } | null;
 
   @ApiPropertyOptional({ nullable: true })
   uploadedByUser: {
@@ -32,16 +35,16 @@ export class ImageResponseDto {
   @ApiProperty({ description: 'MIME type of the file' })
   mimeType: string;
 
-  @ApiPropertyOptional({ description: 'Public URL if available' })
+  @ApiPropertyOptional({ description: 'Public URL if available', nullable: true })
   publicUrl: string | null;
 
   @ApiProperty({ description: 'Whether the image is active' })
   isActive: boolean;
 
-  @ApiPropertyOptional({ description: 'Image tags' })
+  @ApiPropertyOptional({ description: 'Image tags', nullable: true })
   tags: string[] | null;
 
-  @ApiPropertyOptional({ description: 'Image description' })
+  @ApiPropertyOptional({ description: 'Image description', nullable: true })
   description: string | null;
 
   @ApiProperty({ description: 'Creation timestamp' })

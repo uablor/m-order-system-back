@@ -125,7 +125,12 @@ export class ImageCommandService {
   private toResponse(entity: ImageOrmEntity): ImageResponseDto {
     return {
       id: entity.id,
-      merchantId: entity.merchant?.id ?? 0,
+      merchantId: entity.merchant
+        ? {
+            id: entity.merchant.id,
+            shopName: entity.merchant.shopName,
+          }
+        : null,
       uploadedByUser: entity.uploadedByUser
         ? {
             id: entity.uploadedByUser.id,
