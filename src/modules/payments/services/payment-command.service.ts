@@ -7,12 +7,14 @@ import { CustomerOrderOrmEntity } from '../../orders/entities/customer-order.orm
 import { TransactionService } from '../../../common/transaction/transaction.service';
 import { CurrentUserPayload } from '../../../common/decorators/current-user.decorator';
 import { createSingleResponse } from '../../../common/base/helpers/response.helper';
+import { ImageQueryRepository } from 'src/modules/images/repositories/image.query-repository';
 
 @Injectable()
 export class PaymentCommandService {
   constructor(
     private readonly paymentRepository: PaymentRepository,
     private readonly transactionService: TransactionService,
+    private readonly imageQueryRepository: ImageQueryRepository,
   ) { }
 
   async create(
@@ -25,6 +27,9 @@ export class PaymentCommandService {
       const customerOrder = await customerOrderRepo.findOne({
         where: { id: dto.customerOrderId },
       });
+
+    
+      const image = await this.imageQueryRepository.findByIdWithRelations(dto.paymentProofImageId, manager);
 
       if (!customerOrder) {
         throw new NotFoundException('Customer order not found');
@@ -47,7 +52,8 @@ export class PaymentCommandService {
         {
           customerOrderId: dto.customerOrderId,
           paymentAmount: dto.paymentAmount,
-          paymentProofUrl: dto.paymentProofUrl,
+          paymentProofImageId: image?.id ?? undefined,
+          paymentProofImage: image ?? undefined,
           customerMessage: dto.customerMessage,
           status: 'PENDING' as PaymentStatus,
           paymentDate: new Date(),

@@ -5,6 +5,7 @@ import {
   IsIn,
   MaxLength,
   MinLength,
+  IsNumber,
 } from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 
@@ -20,8 +21,8 @@ export class MerchantUpdateDto {
 
   @ApiPropertyOptional()
   @IsOptional()
-  @IsString()
-  shopLogoUrl?: string;
+  @IsNumber()
+  shopLogoUrl: number;
 
   @ApiPropertyOptional()
   @IsOptional()

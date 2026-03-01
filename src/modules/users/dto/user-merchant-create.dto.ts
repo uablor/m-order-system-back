@@ -30,8 +30,8 @@ export class UserMerchantCreateDto {
 
   @ApiPropertyOptional()
   @IsOptional()
-  @IsString()
-  shopLogoUrl?: string;
+  @IsNumber()
+  shopLogoUrl?: number;
 
   @ApiPropertyOptional()
   @IsOptional()

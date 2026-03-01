@@ -12,10 +12,9 @@ export class PaymentCreateDto {
   @IsNumber()
   paymentAmount: number;
 
-  @ApiProperty({ description: 'Payment proof URL (slip image)', required: false })
-  @IsOptional()
-  @IsString()
-  paymentProofUrl?: string;
+  @ApiProperty({ description: 'Payment proof image ID', required: false })
+  @IsNumber()
+  paymentProofImageId: number;
 
   @ApiProperty({ description: 'Message from customer', required: false })
   @IsOptional()

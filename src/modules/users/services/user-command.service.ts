@@ -27,6 +27,8 @@ import {
 import { CurrentUserPayload } from 'src/common/decorators/current-user.decorator';
 import { ChangePasswordDto } from '../dto/change-password.dto';
 import { AcitveDto } from 'src/common/base/dtos/active.dto';
+import { ImageOrmEntity } from 'src/modules/images/entities/image.orm-entity';
+import { ImageQueryRepository } from 'src/modules/images/repositories/image.query-repository';
 
 @Injectable()
 export class UserCommandService {
@@ -35,6 +37,7 @@ export class UserCommandService {
     private readonly roleRepository: RoleRepository,
     private readonly merchantRepository: MerchantRepository,
     private readonly transactionService: TransactionService,
+    private readonly imageQueryRepository: ImageQueryRepository,
   ) { }
 
   async create(
@@ -91,6 +94,18 @@ export class UserCommandService {
         throw new ConflictException('User with this email already exists');
       }
 
+      let shopLogoUrl: ImageOrmEntity | null = null;
+
+      if (dto.shopLogoUrl) {
+        shopLogoUrl = await this.imageQueryRepository.findByIdWithRelations(
+          Number(dto.shopLogoUrl),
+          manager,
+        );
+        if (!shopLogoUrl) {
+          throw new NotFoundException('Image not found');
+        }
+      }
+
       const passwordHash = await hashPassword(dto.password);
 
       const role = await this.roleRepository.findOneBy(
@@ -116,7 +131,8 @@ export class UserCommandService {
         {
           ownerUserId: userEntity.id,
           shopName: dto.shopName ?? userEntity.fullName ?? '',
-          shopLogoUrl: dto.shopLogoUrl ?? null,
+          shopLogoUrlId: dto.shopLogoUrl ? Number(dto.shopLogoUrl) : null,
+          shopLogoUrl: shopLogoUrl ? shopLogoUrl : null,
           shopAddress: dto.shopAddress ?? null,
           contactPhone: dto.contactPhone ?? null,
           contactEmail: dto.contactEmail ?? null,

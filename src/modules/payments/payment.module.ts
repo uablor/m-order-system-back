@@ -8,10 +8,12 @@ import { PaymentController } from './controllers/payment.controller';
 import { TransactionService } from '../../common/transaction/transaction.service';
 import { PermissionsGuard } from '../../common/policies/permissions.guard';
 import { RolesGuard } from '../../common/policies/roles.guard';
+import { ImageModule } from '../images/image.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([PaymentOrmEntity]),
+    ImageModule,
   ],
   controllers: [PaymentController],
   providers: [

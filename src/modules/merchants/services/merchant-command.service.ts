@@ -4,24 +4,36 @@ import { MerchantRepository } from '../repositories/merchant.repository';
 import { MerchantCreateDto } from '../dto/merchant-create.dto';
 import { MerchantUpdateDto } from '../dto/merchant-update.dto';
 import { MerchantOrmEntity } from '../entities/merchant.orm-entity';
+import { ImageQueryRepository } from 'src/modules/images/repositories/image.query-repository';
+import { ImageOrmEntity } from 'src/modules/images/entities/image.orm-entity';
 
 @Injectable()
 export class MerchantCommandService {
   constructor(
     private readonly merchantRepository: MerchantRepository,
     private readonly transactionService: TransactionService,
-  ) {}
+    private readonly imageQueryRepository: ImageQueryRepository,
+  ) { }
 
   async create(
     ownerUserId: number,
     dto: MerchantCreateDto,
   ): Promise<{ id: number }> {
     return this.transactionService.run(async (manager) => {
+
+      let image: ImageOrmEntity | null = null;
+      if (dto.shopLogoUrl) {
+        image = await this.imageQueryRepository.findByIdWithRelations(Number(dto.shopLogoUrl));
+        if (!image) {
+          throw new NotFoundException('Image not found');
+        }
+      }
       const entity = await this.merchantRepository.create(
         {
           ownerUserId,
           shopName: dto.shopName,
-          shopLogoUrl: dto.shopLogoUrl ?? null,
+          shopLogoUrlId: dto.shopLogoUrl ? Number(dto.shopLogoUrl) : null,
+          shopLogoUrl: image ? image : null,
           shopAddress: dto.shopAddress ?? null,
           contactPhone: dto.contactPhone ?? null,
           contactEmail: dto.contactEmail ?? null,
@@ -37,15 +49,25 @@ export class MerchantCommandService {
     });
   }
 
-  async update(id: number, dto: MerchantUpdateDto ): Promise<void> {
+  async update(id: number, dto: MerchantUpdateDto): Promise<void> {
     await this.transactionService.run(async (manager) => {
       const existing = await this.merchantRepository.findOneById(id, manager);
       if (!existing) {
         throw new NotFoundException('Merchant not found');
       }
+      
+      let image: ImageOrmEntity | null = null;
+      if (dto.shopLogoUrl) {
+        image = await this.imageQueryRepository.findByIdWithRelations(Number(dto.shopLogoUrl));
+        if (!image) {
+          throw new NotFoundException('Image not found');
+        }
+      }
+      
       const updateData: Partial<MerchantOrmEntity> = {
         ...(dto.shopName !== undefined && { shopName: dto.shopName }),
-        ...(dto.shopLogoUrl !== undefined && { shopLogoUrl: dto.shopLogoUrl }),
+        ...(dto.shopLogoUrl !== undefined && { shopLogoUrlId: dto.shopLogoUrl ? Number(dto.shopLogoUrl) : null }),
+
         ...(dto.shopAddress !== undefined && { shopAddress: dto.shopAddress }),
         ...(dto.contactPhone !== undefined && { contactPhone: dto.contactPhone }),
         ...(dto.contactEmail !== undefined && { contactEmail: dto.contactEmail }),

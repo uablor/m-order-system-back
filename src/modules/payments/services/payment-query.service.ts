@@ -7,6 +7,16 @@ import { createSingleResponse, createPaginatedResponse } from '../../../common/b
 import { ResponseInterface, ResponseWithPaginationInterface } from 'src/common/base/interfaces/response.interface';
 import { PaymentResponseDto } from '../dto/payment-response.dto';
 
+// Helper function to extract URL from image object
+function extractPaymentProofUrl(paymentProofImage: any): string {
+  if (!paymentProofImage) {
+    return '';
+  }
+  
+  return paymentProofImage.publicUrl || 
+    `${process.env.R2_PUBLIC_URL}/${paymentProofImage.fileKey}`;
+}
+
 @Injectable()
 export class PaymentQueryService {
   constructor(private readonly paymentRepository: PaymentRepository) { }
@@ -24,7 +34,10 @@ export class PaymentQueryService {
       throw new NotFoundException('Payment not found');
     }
 
-    return createSingleResponse(payment, 'Payment retrieved successfully');
+    return createSingleResponse({
+      ...payment,
+      paymentProofUrl: extractPaymentProofUrl(payment.paymentProofImage),
+    }, 'Payment retrieved successfully');
   }
 
   async getByIdWithOwnership(
@@ -43,7 +56,7 @@ export class PaymentQueryService {
       throw new NotFoundException('Payment not found');
     }
 
-    // ตรวจสอบสิทธิ์การเข้าถึง
+    // ตรวจสอบว่าสถานะยังสามารถชำระได้
     if (currentUser.roleName === 'CUSTOMER') {
       // Customer สามารถดูได้เฉพาะของตัวเอง
       if (payment.customerOrder.customer.id !== currentUser.userId) {
@@ -57,12 +70,22 @@ export class PaymentQueryService {
     }
     // Staff และ Admin สามารถดูได้ทั้งหมด
 
-    return createSingleResponse(payment, 'Payment retrieved successfully');
+    return createSingleResponse({
+      ...payment,
+      paymentProofUrl: extractPaymentProofUrl(payment.paymentProofImage),
+    }, 'Payment retrieved successfully');
   }
 
   async getList(query: PaymentListQueryDto): Promise<ResponseWithPaginationInterface<PaymentResponseDto>> {
     const response = await this.paymentRepository.findByMerchant(0, query); // สำหรับ admin (merchantId = 0 หมายถึงทั้งหมด)
-    return createPaginatedResponse(response.results, response.pagination, 'Payments retrieved successfully');
+    
+    // Transform results to include paymentProofUrl
+    const transformedResults = response.results.map(payment => ({
+      ...payment,
+      paymentProofUrl: extractPaymentProofUrl(payment.paymentProofImage),
+    }));
+    
+    return createPaginatedResponse(transformedResults, response.pagination, 'Payments retrieved successfully');
   }
 
   async getListByMerchant(
@@ -81,7 +104,14 @@ export class PaymentQueryService {
       currentUser.merchantId,
       query,
     );
-    const paginated = createPaginatedResponse(response.results, response.pagination, 'Payments retrieved successfully');
+    
+    // Transform results to include paymentProofUrl
+    const transformedResults = response.results.map(payment => ({
+      ...payment,
+      paymentProofUrl: extractPaymentProofUrl(payment.paymentProofImage),
+    }));
+    
+    const paginated = createPaginatedResponse(transformedResults, response.pagination, 'Payments retrieved successfully');
     return { ...paginated, summary };
   }
 
@@ -93,6 +123,13 @@ export class PaymentQueryService {
       currentUser.userId,
       query,
     );
-    return createPaginatedResponse(response.results, response.pagination, 'Payments retrieved successfully');
+    
+    // Transform results to include paymentProofUrl
+    const transformedResults = response.results.map(payment => ({
+      ...payment,
+      paymentProofUrl: extractPaymentProofUrl(payment.paymentProofImage),
+    }));
+    
+    return createPaginatedResponse(transformedResults, response.pagination, 'Payments retrieved successfully');
   }
 }

@@ -2,6 +2,7 @@ import { Column, Entity, JoinColumn, ManyToOne } from 'typeorm';
 import { BaseOrmEntity } from '../../../common/base/enities/base.orm-entities';
 import { CustomerOrderOrmEntity } from '../../orders/entities/customer-order.orm-entity';
 import { UserOrmEntity } from '../../users/entities/user.orm-entity';
+import { ImageOrmEntity } from 'src/modules/images/entities/image.orm-entity';
 
 export type PaymentStatus = 'PENDING' | 'VERIFIED' | 'REJECTED';
 
@@ -20,8 +21,12 @@ export class PaymentOrmEntity extends BaseOrmEntity {
   @Column({ name: 'payment_date', type: 'timestamp', nullable: true })
   paymentDate: Date;
 
-  @Column({ name: 'payment_proof_url', type: 'text', nullable: true })
-  paymentProofUrl: string;
+  @ManyToOne(() => ImageOrmEntity, { onDelete: 'SET NULL', nullable: true })
+  @JoinColumn({ name: 'payment_proof_image_id' })
+  paymentProofImage: ImageOrmEntity;
+
+  @Column({ name: 'payment_proof_image_id', nullable: true })
+  paymentProofImageId: number | null;
 
   @Column({ name: 'customer_message', type: 'text', nullable: true })
   customerMessage: string;
