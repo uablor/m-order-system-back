@@ -3,6 +3,7 @@ import { ApiTags, ApiOperation, ApiParam, ApiBearerAuth } from '@nestjs/swagger'
 import { ArrivalCommandService } from '../services/arrival-command.service';
 import { ArrivalQueryService } from '../services/arrival-query.service';
 import { CreateArrivalDto } from '../dto/create-arrival.dto';
+import { CreateMultipleArrivalsDto } from '../dto/create-multiple-arrivals.dto';
 import { ArrivalUpdateDto } from '../dto/arrival-update.dto';
 import { ArrivalListQueryDto } from '../dto/arrival-list-query.dto';
 import { ArrivalResponseDto } from '../dto/arrival-response.dto';
@@ -36,6 +37,20 @@ export class ArrivalController {
     @CurrentUser() currentUser: CurrentUserPayload,
   ) {
     return this.arrivalCommandService.create(dto, currentUser);
+  }
+
+  @Post('create-multiple')
+  @ApiOperation({ summary: 'Record multiple arrivals for different orders in a single transaction' })
+  @ApiBearerAuth('BearerAuth')
+  @ApiCreatedResponseBase()
+  @ApiBadRequestBase()
+  @ApiUnauthorizedBase()
+  @ApiNotFoundBase()
+  async merchantCreateMultiple(
+    @Body() dto: CreateMultipleArrivalsDto,
+    @CurrentUser() currentUser: CurrentUserPayload,
+  ) {
+    return this.arrivalCommandService.createMultiple(dto, currentUser);
   }
 
   @Get()

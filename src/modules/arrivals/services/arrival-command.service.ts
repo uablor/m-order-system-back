@@ -12,6 +12,7 @@ import { MerchantRepository } from '../../merchants/repositories/merchant.reposi
 import { NotificationSendService } from '../../notifications/services/notification-send.service';
 import { CreateArrivalDto } from '../dto/create-arrival.dto';
 import { ArrivalUpdateDto } from '../dto/arrival-update.dto';
+import { CreateMultipleArrivalsDto } from '../dto/create-multiple-arrivals.dto';
 import { ArrivalOrmEntity } from '../entities/arrival.orm-entity';
 import { ArrivalItemOrmEntity } from '../entities/arrival-item.orm-entity';
 import { OrderItemOrmEntity } from '../../orders/entities/order-item.orm-entity';
@@ -25,10 +26,8 @@ export class ArrivalCommandService {
     private readonly arrivalRepository: ArrivalRepository,
     private readonly arrivalItemRepository: ArrivalItemRepository,
     private readonly orderRepository: OrderRepository,
-    private readonly orderItemRepository: OrderItemRepository,
     private readonly merchantRepository: MerchantRepository,
-    private readonly notificationSendService: NotificationSendService,
-  ) {}
+ ) {}
 
   async create(
     dto: CreateArrivalDto,
@@ -36,7 +35,7 @@ export class ArrivalCommandService {
   ): Promise<{
     success: true;
     arrival: object;
-    notifications: object[];
+    // notifications: object[];
     message: string;
   }> {
     return this.transactionService.run(async (manager) => {
@@ -157,14 +156,14 @@ export class ArrivalCommandService {
       }
 
       // 4) Create and send notifications via notification module
-      const notifications =
-        await this.notificationSendService.sendArrivalNotifications(manager, {
-          merchant,
-          orderId: order.id,
-          customers,
-          messageContent,
-          notificationLinkPath,
-        });
+      // const notifications =
+      //   await this.notificationSendService.sendArrivalNotifications(manager, {
+      //     merchant,
+      //     orderId: order.id,
+      //     customers,
+      //     messageContent,
+      //     notificationLinkPath,
+      //   });
 
       // 5) Update order arrival_status and arrived_at, notified_at
       await this.orderRepository.update(
@@ -172,9 +171,9 @@ export class ArrivalCommandService {
         {
           arrivalStatus: 'ARRIVED',
           arrivedAt: arrivedDate,
-          notifiedAt: notifications.some((n) => n.status === 'SENT')
-            ? new Date()
-            : null,
+          // notifiedAt: notifications.some((n) => n.status === 'SENT')
+          //   ? new Date()
+          //   : null,
         } as Partial<
           import('../../orders/entities/order.orm-entity').OrderOrmEntity
         >,
@@ -196,15 +195,173 @@ export class ArrivalCommandService {
       return {
         success: true,
         arrival: arrivalReloaded ?? { ...arrival, arrivalItems },
-        notifications: notifications.map((n) => ({
-          id: n.id,
-          customerId: n.customer?.id,
-          channel: n.channel,
-          status: n.status,
-          sentAt: n.sentAt,
-          errorMessage: n.errorMessage,
-        })),
+        // notifications: notifications.map((n) => ({
+        //   id: n.id,
+        //   customerId: n.customer?.id,
+        //   channel: n.channel,
+        //   status: n.status,
+        //   sentAt: n.sentAt,
+        //   errorMessage: n.errorMessage,
+        // })),
         message: 'Arrival recorded and notifications sent successfully',
+      };
+    });
+  }
+
+  async createMultiple(
+    dto: CreateMultipleArrivalsDto,
+    currentUser: CurrentUserPayload,
+  ): Promise<{
+    success: true;
+    arrivals: object[];
+    message: string;
+    processedOrders: number;
+    failedOrders: Array<{ orderId: number; error: string }>;
+  }> {
+    return this.transactionService.run(async (manager) => {
+      const merchant = await this.merchantRepository.findOneById(
+        currentUser.merchantId!,
+        manager,
+      );
+      if (!merchant) throw new NotFoundException('Merchant not found');
+
+      const arrivedDate = new Date();
+      const arrivedTime = formatTime(arrivedDate);
+      const recordedBy = currentUser.userId;
+      
+      const arrivals: object[] = [];
+      const failedOrders: Array<{ orderId: number; error: string }> = [];
+      let processedOrders = 0;
+
+      // Process each order
+      for (const orderDto of dto.orders) {
+        try {
+          // 1) Validate and fetch order
+          const order = await this.orderRepository.getRepo(manager).findOne({
+            where: { id: orderDto.orderId },
+            relations: [
+              'merchant',
+              'customerOrders',
+              'customerOrders.customer',
+              'orderItems',
+            ],
+          });
+          
+          if (!order) {
+            failedOrders.push({ orderId: orderDto.orderId, error: 'Order not found' });
+            continue;
+          }
+
+          if (order.merchant?.id !== merchant.id) {
+            failedOrders.push({ orderId: orderDto.orderId, error: 'Order does not belong to this merchant' });
+            continue;
+          }
+
+          if (order.arrivalStatus === 'ARRIVED') {
+            failedOrders.push({ orderId: orderDto.orderId, error: 'Order already arrived' });
+            continue;
+          }
+
+          // 2) Validate arrived quantities
+          const orderItemMap = new Map<number, OrderItemOrmEntity>();
+          for (const oi of order.orderItems ?? []) {
+            orderItemMap.set(oi.id, oi);
+          }
+
+          for (const item of orderDto.arrivalItems) {
+            const orderItem = orderItemMap.get(item.orderItemId);
+            if (!orderItem) {
+              throw new BadRequestException(
+                `Order item ${item.orderItemId} not found in order ${orderDto.orderId}`,
+              );
+            }
+            if (item.arrivedQuantity > orderItem.quantity) {
+              throw new BadRequestException(
+                `Arrived quantity (${item.arrivedQuantity}) exceeds order item quantity (${orderItem.quantity}) for product "${orderItem.productName}" in order ${orderDto.orderId}`,
+              );
+            }
+          }
+
+          // 3) Create arrival
+          const arrival = await this.arrivalRepository.create(
+            {
+              order,
+              merchant,
+              arrivedDate,
+              arrivedTime: arrivedTime,
+              recordedByUser: recordedBy != null ? ({ id: recordedBy } as any) : null,
+              notes: orderDto.notes ?? dto.notes ?? null,
+            } as Partial<ArrivalOrmEntity>,
+            manager,
+          );
+
+          // 4) Create arrival items
+          const arrivalItems: ArrivalItemOrmEntity[] = [];
+          const damagedOrLost: string[] = [];
+
+          for (const itemDto of orderDto.arrivalItems) {
+            const orderItem = orderItemMap.get(itemDto.orderItemId)!;
+            const condition = itemDto.condition ?? 'OK';
+            if (condition === 'DAMAGED')
+              damagedOrLost.push(`${orderItem.productName}: DAMAGED`);
+            if (condition === 'LOST')
+              damagedOrLost.push(`${orderItem.productName}: LOST`);
+
+            const arrivalItem = await this.arrivalItemRepository.create(
+              {
+                arrival,
+                orderItem,
+                arrivedQuantity: itemDto.arrivedQuantity,
+                condition: condition as 'OK' | 'DAMAGED' | 'LOST',
+                notes: itemDto.notes ?? null,
+              } as Partial<ArrivalItemOrmEntity>,
+              manager,
+            );
+            arrivalItems.push(arrivalItem);
+          }
+
+          // 5) Update order status
+          await this.orderRepository.update(
+            order.id,
+            {
+              arrivalStatus: 'ARRIVED',
+              arrivedAt: arrivedDate,
+            } as Partial<
+              import('../../orders/entities/order.orm-entity').OrderOrmEntity
+            >,
+            manager,
+          );
+
+          // 6) Reload arrival with relations
+          const arrivalReloaded = await this.arrivalRepository
+            .getRepo(manager)
+            .findOne({
+              where: { id: arrival.id },
+              relations: [
+                'arrivalItems',
+                'arrivalItems.orderItem',
+                'order',
+                'merchant',
+              ],
+            });
+
+          arrivals.push(arrivalReloaded ?? { ...arrival, arrivalItems });
+          processedOrders++;
+
+        } catch (error) {
+          failedOrders.push({
+            orderId: orderDto.orderId,
+            error: error instanceof Error ? error.message : 'Unknown error',
+          });
+        }
+      }
+
+      return {
+        success: true,
+        arrivals,
+        message: `Processed ${processedOrders} orders successfully${failedOrders.length > 0 ? ` with ${failedOrders.length} failures` : ''}`,
+        processedOrders,
+        failedOrders,
       };
     });
   }
