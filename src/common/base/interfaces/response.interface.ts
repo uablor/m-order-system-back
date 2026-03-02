@@ -5,7 +5,7 @@ export interface ResponseInterface<T> {
   success: boolean;
   Code: number;
   message: string;
-  results?: T[];
+  results?: T;
 }
 
 /** Paginated list response: results + pagination. */

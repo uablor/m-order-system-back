@@ -58,6 +58,7 @@ export class DashboardController {
     const data = await this.dashboardQueryService.getMerchantPriceCurrencySummary(currentUser.merchantId!);
     return createSingleResponse(data);
   }
+  
   @Post('merchant/price-currency-summary-by-date')
   @ApiOperation({ summary: 'Merchant price currency summary - grouped by target currency' })
   @ApiBearerAuth('BearerAuth')

@@ -45,7 +45,7 @@ describe('Response Helper', () => {
       const item = { id: 1, name: 'Test' };
       const result = createSingleResponse(item);
 
-      expect(result.results).toEqual([item]);
+      expect(result.results).toEqual(item);
       expect(result.success).toBe(true);
       expect(result.Code).toBe(DEFAULT_SUCCESS_CODE);
       expect(result.message).toBe(DEFAULT_SUCCESS_MESSAGE);

@@ -8,7 +8,7 @@ import { createResponse } from '../../../common/base/helpers/response.helper';
 export class RolePermissionQueryService {
   constructor(private readonly rolePermissionQueryRepository: RolePermissionQueryRepository) {}
 
-  async getPermissionsByRoleId(roleId: number): Promise<ResponseInterface<PermissionResponseDto>> {
+  async getPermissionsByRoleId(roleId: number): Promise<ResponseInterface<PermissionResponseDto[]>> {
     const permissions = await this.rolePermissionQueryRepository.findPermissionsByRoleId(roleId);
     const results = permissions.map((p) => ({
       id: p.id,

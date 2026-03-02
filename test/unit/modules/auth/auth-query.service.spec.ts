@@ -61,8 +61,7 @@ describe('AuthQueryService', () => {
       const result = await service.getProfile(1);
 
       expect(result.success).toBe(true);
-      expect(result.results).toHaveLength(1);
-      const profile = result.results![0];
+      const profile = result.results!;
       expect(profile.userId).toBe(1);
       expect(profile.email).toBe('user@test.com');
       expect(profile.fullName).toBe('Test User');
@@ -90,7 +89,7 @@ describe('AuthQueryService', () => {
       });
 
       const result = await service.getProfile(1);
-      const profile = result.results![0];
+      const profile = result.results!;
       expect(profile.permissions).toEqual([]);
     });
 
@@ -105,7 +104,7 @@ describe('AuthQueryService', () => {
       });
 
       const result = await service.getProfile(1);
-      const profile = result.results![0];
+      const profile = result.results!;
       expect(profile.merchantId).toBe(7);
     });
   });
