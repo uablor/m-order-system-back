@@ -51,6 +51,8 @@ export class MerchantQueryService {
           page: query.page,
           limit: query.limit,
           search: query.search,
+          searchField: query.searchField,
+          sort: query.sort,
         },
         manager,
       );
