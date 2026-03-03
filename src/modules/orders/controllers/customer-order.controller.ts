@@ -1,7 +1,7 @@
 import { Controller, Get, Param, ParseIntPipe, Query } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiParam, ApiBearerAuth } from '@nestjs/swagger';
 import { CustomerOrderQueryService } from '../services/customer-order-query.service';
-import { CustomerOrderListQueryDto } from '../dto/customer-order-list-query.dto';
+import { CustomerOrderListQueryDto, TokenQueryDto } from '../dto/customer-order-list-query.dto';
 import { CustomerOrderResponseDto } from '../dto/customer-order-response.dto';
 import { ApiOkResponseBase, ApiNotFoundBase, ApiUnauthorizedBase } from '../../../common/swagger/swagger.decorators';
 import { Public } from '../../../common/decorators/public.decorator';
@@ -19,17 +19,26 @@ export class CustomerOrderController {
     return this.customerOrderQueryService.getList(query);
   }
 
-  @Get('by-token/:token')
+  @Get('by-token')
   @Public()
   @ApiOperation({ summary: 'Get customer orders by customer token (public — no JWT needed)' })
   @ApiParam({ name: 'token', description: 'Customer unique token from URL' })
   @ApiOkResponseBase()
   async getByToken(
-    @Param('token') token: string,
     @Query() query: CustomerOrderListQueryDto,
   ) {
-    const queryWithToken = { ...query, customerToken: token };
-    return this.customerOrderQueryService.getList(queryWithToken);
+    return this.customerOrderQueryService.getList(query);
+  }
+
+  @Get('summary-by-token')
+  @Public()
+  @ApiOperation({ summary: 'Get customer orders by customer token (public — no JWT needed)' })
+  @ApiParam({ name: 'token', description: 'Customer unique token from URL' })
+  @ApiOkResponseBase()
+  async getSummaryByToken(
+    @Query() query: TokenQueryDto,
+  ) {
+    return this.customerOrderQueryService.getSummary(query);
   }
 
   @Get(':id')

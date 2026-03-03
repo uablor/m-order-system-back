@@ -1,26 +1,75 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { PaymentStatusEnum } from '../enum/enum.entities';
 
 class CustomerOrderItemResponseDto {
   @ApiProperty()
   id: number;
 
   @ApiProperty()
-  orderId: number;
+  orderItemId: number;
 
   @ApiProperty()
   productName: string;
 
   @ApiProperty()
+  variant: string | null;
+
+  @ApiProperty()
   quantity: number;
 
   @ApiProperty()
-  sellingPriceForeign: string;
+  exchangeRateBuy: {
+    id: number;
+    baseCurrency: string;
+    targetCurrency: string;
+    rate: number;
+    rateType: string;
+    rateDate: Date;
+    isActive: boolean;
+  } | null;
+  
+  @ApiProperty()
+  exchangeRateSell: {
+    id: number;
+    baseCurrency: string;
+    targetCurrency: string;
+    rate: number;
+    rateType: string;
+    rateDate: Date;
+    isActive: boolean;
+  } | null;
+  
+  @ApiProperty()
+  exchangeRateBuyValue: number | null;
+  
+  @ApiProperty()
+  exchangeRateSellValue: number | null;
+  
+  @ApiProperty()
+  image: {
+    originalName: string;
+    fileName: string;
+    filePath: string;
+    fileKey: string;
+    fileSize: number;
+    mimeType: string;
+    publicUrl: string | null;
+    isActive: boolean;
+    tags: string[] | null;
+    description: string | null;
+  } | null;
 
   @ApiProperty()
-  sellingTotal: string;
+  sellingPriceForeign: number;
 
   @ApiProperty()
-  profit: string;
+  sellingTotal: number;
+
+  @ApiProperty()
+  targetCurrencySellingPriceForeign: number;
+
+  @ApiProperty()
+  targetCurrencySellingTotal: number;
 }
 
 export class CustomerOrderResponseDto {
@@ -40,16 +89,25 @@ export class CustomerOrderResponseDto {
   customerToken: string;
 
   @ApiProperty()
-  totalSellingAmount: string;
+  totalSellingAmount: number;
 
   @ApiProperty()
-  totalPaid: string;
+  totalPaid: number;
 
   @ApiProperty()
-  remainingAmount: string;
+  remainingAmount: number;
+
+    @ApiProperty()
+  targetCurrencyTotalSellingAmount: number;
 
   @ApiProperty()
-  paymentStatus: string;
+  targetCurrencyTotalPaid: number;
+
+  @ApiProperty()
+  targetCurrencyRemainingAmount: number;
+
+  @ApiProperty()
+  paymentStatus: PaymentStatusEnum;
 
   @ApiProperty({ type: [CustomerOrderItemResponseDto] })
   customerOrderItems: CustomerOrderItemResponseDto[];

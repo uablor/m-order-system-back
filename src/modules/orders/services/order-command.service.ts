@@ -16,17 +16,9 @@ import { CustomerOrderOrmEntity } from '../entities/customer-order.orm-entity';
 import { CustomerOrderItemOrmEntity } from '../entities/customer-order-item.orm-entity';
 import { CurrentUserPayload } from 'src/common/decorators/current-user.decorator';
 import { ArrivalStatusEnum, PaymentStatusEnum } from '../enum/enum.entities';
-import { convertToBaseCurrency, convertToTargetCurrency } from 'src/common/utils/convert-to-target-currency';
+import { convertToBaseCurrency, convertToTargetCurrency } from 'src/common/utils/convert-to-target-currency.utils';
 
 const ZERO = 0;
-
-function toDecimal(v: number): string {
-  return String(Number(v.toFixed(4)));
-}
-
-function toDecimal2(v: number): string {
-  return String(Number(v.toFixed(2)));
-}
 
 function calcPaymentStatus(total: number, paid: number): 'UNPAID' | 'PARTIAL' | 'PAID' {
   if (paid <= 0) return 'UNPAID';

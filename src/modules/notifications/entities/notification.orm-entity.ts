@@ -1,12 +1,9 @@
-import { Column, Entity, JoinColumn, ManyToOne } from 'typeorm';
+import { Column, Entity, JoinColumn, ManyToOne, OneToMany } from 'typeorm';
 import { BaseOrmEntity } from '../../../common/base/enities/base.orm-entities';
 import { MerchantOrmEntity } from '../../merchants/entities/merchant.orm-entity';
 import { CustomerOrmEntity } from '../../customers/entities/customer.orm-entity';
-import { StatusSend } from '../enum/status-send.enum';
-
-export type NotificationType = 'ARRIVAL' | 'PAYMENT' | 'REMINDER';
-export type NotificationChannel = 'FB' | 'LINE' | 'WHATSAPP';
-export type NotificationStatus = 'SENT' | 'FAILED';
+import { CustomerOrderOrmEntity } from 'src/modules/orders/entities/customer-order.orm-entity';
+import { NotificationChannel, NotificationStatus, NotificationType } from '../enum/notification.enum';
 
 
 @Entity('notifications')
@@ -15,14 +12,20 @@ export class NotificationOrmEntity extends BaseOrmEntity {
   @JoinColumn({ name: 'merchant_id' })
   merchant: MerchantOrmEntity;
 
+  @Column({ name: 'unique_token', type: 'varchar', length: 255 })
+  uniqueToken: string;
+
   @ManyToOne(() => CustomerOrmEntity, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'customer_id' })
   customer: CustomerOrmEntity;
 
-  @Column({ name: 'notification_type', type: 'varchar', length: 20 })
+  @OneToMany(() => CustomerOrderOrmEntity, (customerOrder) => customerOrder.notification)
+  customerOrder: CustomerOrderOrmEntity[];
+
+  @Column({ name: 'notification_type', type: 'enum', enum: NotificationType, default: NotificationType.ARRIVAL })
   notificationType: NotificationType;
 
-  @Column({ type: 'varchar', length: 20 })
+  @Column({ type: 'enum', enum: NotificationChannel, default: NotificationChannel.FB })
   channel: NotificationChannel;
 
   @Column({ name: 'recipient_contact', type: 'varchar', length: 255 })
@@ -40,11 +43,8 @@ export class NotificationOrmEntity extends BaseOrmEntity {
   @Column({ name: 'last_retry_at', type: 'datetime', nullable: true })
   lastRetryAt: Date | null;
 
-  @Column({ type: 'varchar', length: 20 })
+  @Column({ type: 'enum', enum: NotificationStatus , default: NotificationStatus.SENT })
   status: NotificationStatus;
-
-  @Column({ name: 'status_sent', type: 'enum', enum: StatusSend, default: StatusSend.PENDING })
-  statusSent: StatusSend;
 
   @Column({ name: 'sent_at', type: 'datetime', nullable: true })
   sentAt: Date | null;

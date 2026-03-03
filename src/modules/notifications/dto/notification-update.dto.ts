@@ -1,20 +1,12 @@
 import { IsOptional, IsIn, IsInt, Min, IsDateString, MaxLength } from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { StatusSend } from '../enum/status-send.enum';
-
-const STATUSES = ['SENT', 'FAILED'] as const;
-const STATUS_SEND_VALUES = Object.values(StatusSend);
+import { NotificationStatus } from '../enum/notification.enum';
 
 export class NotificationUpdateDto {
-  @ApiPropertyOptional({ enum: STATUSES })
+  @ApiPropertyOptional({ enum: NotificationStatus })
   @IsOptional()
-  @IsIn(STATUSES)
-  status?: (typeof STATUSES)[number];
-
-  @ApiPropertyOptional({ enum: STATUS_SEND_VALUES })
-  @IsOptional()
-  @IsIn(STATUS_SEND_VALUES)
-  statusSent?: StatusSend;
+  @IsIn(Object.values(NotificationStatus))
+  status?: NotificationStatus;
 
   @ApiPropertyOptional({ minimum: 0 })
   @IsOptional()

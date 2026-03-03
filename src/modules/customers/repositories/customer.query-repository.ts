@@ -4,6 +4,7 @@ import { FindOptionsWhere, Repository } from 'typeorm';
 import { BaseQueryRepository } from '../../../common/base/repositories/base.query-repository';
 import { CustomerOrmEntity } from '../entities/customer.orm-entity';
 import { PaginatedResult, PaginationResponse } from '../../../common/base/interfaces/paginted.interface';
+import { CurrentUserPayload } from 'src/common/decorators/current-user.decorator';
 
 @Injectable()
 export class CustomerQueryRepository extends BaseQueryRepository<CustomerOrmEntity> {
@@ -14,11 +15,20 @@ export class CustomerQueryRepository extends BaseQueryRepository<CustomerOrmEnti
     super(repository);
   }
 
-  async findOneByIdWithMerchant(id: number): Promise<CustomerOrmEntity | null> {
-    return this.repository.findOne({
-      where: { id },
-      relations: ['merchant'],
-    });
+  async findOneByIdWithMerchant(
+    id: number,
+    currentUser: CurrentUserPayload,
+    manager?: import('typeorm').EntityManager,
+  ): Promise<CustomerOrmEntity | null> {
+    const repo = this.getRepo(manager);
+    const qb = repo.createQueryBuilder('customer')
+      .leftJoinAndSelect('customer.merchant', 'merchant');
+
+    if (currentUser.merchantId) {
+      qb.andWhere('merchant.id = :merchantId', { merchantId: currentUser.merchantId });
+    }
+
+    return qb.andWhere('customer.id = :id', { id }).getOne();
   }
 
   async findWithPagination(

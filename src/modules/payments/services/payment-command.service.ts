@@ -147,7 +147,7 @@ export class PaymentCommandService {
         await customerOrderRepo.update(payment.customerOrderId, {
           totalPaid: newPaid,
           remainingAmount: remainingAmount,
-          paymentStatus: remainingAmount <= 0 ? 'PAID' : 'PARTIAL',
+          paymentStatus: remainingAmount <= 0 ? PaymentStatusEnum.PAID : PaymentStatusEnum.PARTIAL
         });
       }
       const order = manager.getRepository(OrderOrmEntity);

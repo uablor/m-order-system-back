@@ -1,9 +1,25 @@
 import { IsOptional, IsInt, Min, Max, IsString, IsBoolean } from 'class-validator';
 import { Type } from 'class-transformer';
-import { ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiPropertyOptional, IntersectionType } from '@nestjs/swagger';
 import { BaseQueryDto } from 'src/common/base/dtos/base.query.dto';
 
-export class CustomerOrderListQueryDto extends BaseQueryDto {
+
+export class TokenQueryDto {
+  @ApiPropertyOptional({ description: 'Filter by customer unique token' })
+  @IsOptional()
+  @IsString()
+  customerToken?: string;
+
+  @ApiPropertyOptional({ description: 'Filter by notification token' })
+  @IsOptional()
+  @IsString()
+  notificationToken?: string;
+}
+
+export class CustomerOrderListQueryDto extends IntersectionType(
+  BaseQueryDto,
+  TokenQueryDto,
+) {
   @ApiPropertyOptional({ description: 'Filter by order ID' })
   @IsOptional()
   @Type(() => Number)
@@ -21,11 +37,6 @@ export class CustomerOrderListQueryDto extends BaseQueryDto {
   @IsString()
   customerName?: string;
 
-  @ApiPropertyOptional({ description: 'Filter by customer unique token' })
-  @IsOptional()
-  @IsString()
-  customerToken?: string;
-
   @ApiPropertyOptional({ description: 'Filter by arrival status (true = arrived, false = not arrived)' })
   @IsOptional()
   @IsBoolean()
@@ -40,4 +51,10 @@ export class CustomerOrderListQueryDto extends BaseQueryDto {
   @IsOptional()
   @IsString()
   endDate?: string;
+
+  @ApiPropertyOptional({ description: 'Filter by payment status' })
+  @IsOptional()
+  @IsString()
+  paymentStatus?: string;
+
 }

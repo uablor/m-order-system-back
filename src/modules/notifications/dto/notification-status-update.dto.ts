@@ -1,13 +1,13 @@
 import { IsOptional, IsEnum } from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { StatusSend } from '../enum/status-send.enum';
+import { NotificationStatus } from '../enum/notification.enum';
 
 export class NotificationStatusUpdateDto {
   @ApiPropertyOptional({ 
-    enum: StatusSend,
+    enum: NotificationStatus,
     description: 'Update the send status of the notification'
   })
   @IsOptional()
-  @IsEnum(StatusSend)
-  statusSent?: StatusSend;
+  @IsEnum(NotificationStatus)
+  status?: NotificationStatus;
 }
