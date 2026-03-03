@@ -6,6 +6,7 @@ import { OrderItemResponseDto } from '../dto/order-item-response.dto';
 import type { ResponseInterface, ResponseWithPaginationInterface } from '../../../common/base/interfaces/response.interface';
 import { createPaginatedResponse, createSingleResponse } from '../../../common/base/helpers/response.helper';
 import { ExchangeRateOrmEntity } from 'src/modules/exchange-rates/entities/exchange-rate.orm-entity';
+import type { CurrentUserPayload } from '../../../common/decorators/current-user.decorator';
 
 @Injectable()
 export class OrderItemQueryService {
@@ -34,6 +35,33 @@ export class OrderItemQueryService {
       page: query.page,
       limit: query.limit,
       orderId: query.orderId,
+    });
+    return createPaginatedResponse(
+      result.results.map((e) => this.toResponse(e)),
+      result.pagination,
+    );
+  }
+
+  async getListByMerchant(
+    query: OrderItemListQueryDto,
+    currentUser: CurrentUserPayload,
+  ): Promise<ResponseWithPaginationInterface<OrderItemResponseDto>> {
+    const merchantId = currentUser?.merchantId;
+    if (!merchantId) {
+      return createPaginatedResponse([], {
+        total: 0,
+        page: query.page ?? 1,
+        limit: query.limit ?? 10,
+        totalPages: 0,
+        hasNextPage: false,
+        hasPreviousPage: false,
+      });
+    }
+    const result = await this.orderItemQueryRepository.findWithPagination({
+      page: query.page,
+      limit: query.limit,
+      orderId: query.orderId,
+      merchantId,
     });
     return createPaginatedResponse(
       result.results.map((e) => this.toResponse(e)),

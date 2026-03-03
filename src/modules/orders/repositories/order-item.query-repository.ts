@@ -15,7 +15,7 @@ export class OrderItemQueryRepository extends BaseQueryRepository<OrderItemOrmEn
   }
 
   async findWithPagination(
-    options: { page?: number; limit?: number; orderId?: number },
+    options: { page?: number; limit?: number; orderId?: number; merchantId?: number },
     manager?: import('typeorm').EntityManager,
   ): Promise<PaginatedResult<OrderItemOrmEntity>> {
     const repo = this.getRepo(manager);
@@ -24,10 +24,11 @@ export class OrderItemQueryRepository extends BaseQueryRepository<OrderItemOrmEn
     const skip = (page - 1) * limit;
     const where: FindOptionsWhere<OrderItemOrmEntity> = {};
     if (options.orderId != null) where.order = { id: options.orderId };
+    else if (options.merchantId != null) where.order = { merchant: { id: options.merchantId } };
     const [data, total] = await repo.findAndCount({
       where: Object.keys(where).length ? where : undefined,
       relations: ['order'],
-      order: { id: 'ASC' as const },
+      order: { id: 'DESC' as const },
       skip,
       take: limit,
     });

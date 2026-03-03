@@ -4,6 +4,8 @@ import { OrderItemQueryService } from '../services/order-item-query.service';
 import { OrderItemListQueryDto } from '../dto/order-item-list-query.dto';
 import { OrderItemResponseDto } from '../dto/order-item-response.dto';
 import { ApiOkResponseBase, ApiNotFoundBase, ApiUnauthorizedBase } from '../../../common/swagger/swagger.decorators';
+import { CurrentUser } from '../../../common/decorators/current-user.decorator';
+import type { CurrentUserPayload } from '../../../common/decorators/current-user.decorator';
 
 @ApiTags('Order Items')
 @Controller('order-items')
@@ -17,6 +19,18 @@ export class OrderItemController {
   @ApiUnauthorizedBase()
   async getList(@Query() query: OrderItemListQueryDto) {
     return this.orderItemQueryService.getList(query);
+  }
+
+  @Get('by-merchant')
+  @ApiOperation({ summary: 'List order items for the authenticated merchant (latest first)' })
+  @ApiBearerAuth('BearerAuth')
+  @ApiOkResponseBase()
+  @ApiUnauthorizedBase()
+  async getListByMerchant(
+    @Query() query: OrderItemListQueryDto,
+    @CurrentUser() currentUser: CurrentUserPayload,
+  ) {
+    return this.orderItemQueryService.getListByMerchant(query, currentUser);
   }
 
   @Get(':id')
