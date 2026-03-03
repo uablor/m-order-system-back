@@ -16,6 +16,17 @@ export class ArrivalItemResponseDto {
     productName: string;
     variant: string | null;
     quantity: number;
+    purchasePrice: number;
+    purchaseTotal: number;
+    shippingPrice: number;
+    totalCostBeforeDiscount: number;
+    discountType: string | null;
+    discountValue: number | null;
+    discountAmount: number | null;
+    finalCost: number;
+    sellingPriceForeign: number | null;
+    sellingTotal: number | null;
+    profit: number | null;
   } | null;
 
   @ApiProperty()
@@ -46,6 +57,16 @@ export class ArrivalResponseDto {
     id: number;
     orderCode: string;
     orderDate: string;
+    totalAmount: number;
+    currency: string;
+    status: string;
+    paymentStatus: string;
+    customer: {
+      id: number;
+      fullName: string;
+      email: string;
+      
+    } | null;
   } | null;
 
   @ApiProperty()

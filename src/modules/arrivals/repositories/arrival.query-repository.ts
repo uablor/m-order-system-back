@@ -27,7 +27,8 @@ export class ArrivalQueryRepository extends BaseQueryRepository<ArrivalOrmEntity
       .leftJoinAndSelect('arrival.merchant', 'merchant')
       .leftJoinAndSelect('arrival.recordedByUser', 'recordedByUser')
       .leftJoinAndSelect('arrival.arrivalItems', 'arrivalItems')
-      .leftJoinAndSelect('arrivalItems.orderItem', 'orderItem');
+      .leftJoinAndSelect('order.customerOrders', 'customerOrders')
+      .leftJoinAndSelect('customerOrders.customer', 'customer');
 
     if (options.merchantId != null) {
       qb.andWhere('merchant.id = :merchantId', { merchantId: options.merchantId });
@@ -73,6 +74,10 @@ export class ArrivalQueryRepository extends BaseQueryRepository<ArrivalOrmEntity
         // Filter for records that don't have arrival data
         qb.andWhere('arrival.arrivedDate IS NULL OR arrival.arrivedTime IS NULL');
       }
+    }
+
+    if (options.customerId != null) {
+      qb.andWhere('customer.id = :customerId', { customerId: options.customerId });
     }
 
     return fetchWithPagination({
