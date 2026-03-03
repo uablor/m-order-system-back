@@ -5,6 +5,7 @@ import { AdminDashboardSummaryResponseDto } from '../dto/admin-dashboard-summary
 import { MerchantSummaryResponseDto } from '../dto/merchant-summary.dto';
 import { AnnualReportResponseDto, MonthlyReportDto } from '../dto/annual-report-response.dto';
 import { TopCustomersResponseDto, TopCustomerDto } from '../dto/top-customers.dto';
+import { CurrencySummary } from '../interfaces/currency-summary';
 
 const MONTH_NAMES = [
   'January', 'February', 'March', 'April', 'May', 'June',
@@ -206,8 +207,10 @@ GROUP BY ers.base_currency, ers.rate
     let lakTotalUnpaid = 0;
     let lakTotalPaid = 0;
 
-    const result = rows.map(r => {
+    const grouped = new Map<string, CurrencySummary>();
 
+    for (const r of rows) {
+      const baseCurrency = r.baseCurrency;
       const totalAll = Number(r.totalAll ?? 0);
       const totalUnpaid = Number(r.totalUnpaid ?? 0);
       const totalPaid = Number(r.totalPaid ?? 0);
@@ -217,13 +220,17 @@ GROUP BY ers.base_currency, ers.rate
       lakTotalUnpaid += totalUnpaid * rate;
       lakTotalPaid += totalPaid * rate;
 
-      return {
-        baseCurrency: r.baseCurrency,
-        totalAll,
-        totalUnpaid,
-        totalPaid
-      };
-    });
+      if (grouped.has(baseCurrency)) {
+        const existing = grouped.get(baseCurrency)!;
+        existing.totalAll += totalAll;
+        existing.totalUnpaid += totalUnpaid;
+        existing.totalPaid += totalPaid;
+      } else {
+        grouped.set(baseCurrency, { baseCurrency, totalAll, totalUnpaid, totalPaid });
+      }
+    }
+
+    const result = Array.from(grouped.values());
 
     result.push({
       targetCurrency: "LAK",

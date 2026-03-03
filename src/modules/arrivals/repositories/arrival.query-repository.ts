@@ -27,7 +27,8 @@ export class ArrivalQueryRepository extends BaseQueryRepository<ArrivalOrmEntity
       .leftJoinAndSelect('arrival.merchant', 'merchant')
       .leftJoinAndSelect('arrival.recordedByUser', 'recordedByUser')
       .leftJoinAndSelect('arrival.arrivalItems', 'arrivalItems')
-      .leftJoinAndSelect('arrivalItems.orderItem', 'orderItem');
+      .leftJoinAndSelect('order.customerOrders', 'customerOrders')
+      .leftJoinAndSelect('customerOrders.customer', 'customer');
 
     if (options.merchantId != null) {
       qb.andWhere('merchant.id = :merchantId', { merchantId: options.merchantId });
@@ -87,19 +88,10 @@ export class ArrivalQueryRepository extends BaseQueryRepository<ArrivalOrmEntity
       }
     }
 
-    if (options.customerName) {
-      qb.andWhere(
-        `EXISTS (
-          SELECT 1 FROM customer_orders co
-          INNER JOIN customers c ON c.id = co.customer_id
-          WHERE co.order_id = order.id AND c.customer_name LIKE :customerName
-        )`,
-        { customerName: `%${options.customerName}%` },
-      );
+    if (options.customerId != null) {
+      qb.andWhere('customer.id = :customerId', { customerId: options.customerId });
     }
 
-    // ไม่ส่ง search ไป fetchWithPagination เพราะ search ใช้ relation (order.orderCode)
-    // และ pagination util จะ prefix ด้วย alias ทำให้ผิดพลาด — เรา handle search เองด้านบนแล้ว
     return fetchWithPagination({
       qb,
       page: options.page ?? 1,
@@ -164,14 +156,14 @@ export class ArrivalQueryRepository extends BaseQueryRepository<ArrivalOrmEntity
         qb.andWhere('arrival.arrivedDate IS NULL OR arrival.arrivedTime IS NULL');
       }
     }
-    if (options.customerName) {
+    if (options.customerId) {
       qb.andWhere(
         `EXISTS (
           SELECT 1 FROM customer_orders co
           INNER JOIN customers c ON c.id = co.customer_id
           WHERE co.order_id = order.id AND c.customer_name LIKE :customerName
         )`,
-        { customerName: `%${options.customerName}%` },
+        { customerId: `%${options.customerId}%` },
       );
     }
 

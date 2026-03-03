@@ -2,6 +2,7 @@ import { IsOptional, IsInt, IsDateString, IsString, IsEnum, IsBoolean } from 'cl
 import { Type, Transform } from 'class-transformer';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { BaseQueryDto } from 'src/common/base/dtos/base.query.dto';
+import { ArrivalStatusEnum } from 'src/modules/orders/enum/enum.entities';
 
 export class ArrivalListQueryDto extends BaseQueryDto {
   @ApiPropertyOptional({ description: 'Filter by merchant ID' })
@@ -58,9 +59,10 @@ export class ArrivalListQueryDto extends BaseQueryDto {
   })
   arrival?: boolean;
 
-  @ApiPropertyOptional({ description: 'Filter by customer name (partial match)' })
+  @ApiPropertyOptional({ description: 'Filter by customer ID' })
   @IsOptional()
-  @IsString()
-  customerName?: string;
+  @Type(() => Number)
+  @IsInt()
+  customerId?: number;
 }
 

@@ -38,7 +38,7 @@ export class ArrivalQueryService {
     return this.toResponse(entity);
   }
 
-  async getList(query: ArrivalListQueryDto): Promise<ResponseWithPaginationInterface<ArrivalResponseDto>> {
+  async getList(query: ArrivalListQueryDto): Promise<ResponseWithPaginationInterface<ArrivalOrmEntity>> {
     const result = await this.arrivalQueryRepository.findWithPagination({
       page: query.page,
       limit: query.limit,
@@ -54,10 +54,10 @@ export class ArrivalQueryService {
       arrivalDate: query.arrivalDate,
       arrivalTime: query.arrivalTime,
       arrival: query.arrival,
-      customerName: query.customerName,
+      customerId: query.customerId,
     });
     return createPaginatedResponse(
-      result.results.map((e) => this.toResponse(e)),
+      result.results,
       result.pagination,
     );
   }
@@ -81,7 +81,7 @@ export class ArrivalQueryService {
       arrivalDate: query.arrivalDate,
       arrivalTime: query.arrivalTime,
       arrival: query.arrival,
-      customerName: query.customerName,
+      customerId: query.customerId,
     });
     return createPaginatedResponse(
       result.results.map((e) => this.toResponse(e)),
@@ -101,7 +101,7 @@ export class ArrivalQueryService {
       arrivalDate: query.arrivalDate,
       arrivalTime: query.arrivalTime,
       arrival: query.arrival,
-      customerName: query.customerName,
+      customerId: query.customerId,
     });
   }
 
@@ -128,6 +128,11 @@ export class ArrivalQueryService {
               entity.order.orderDate instanceof Date
                 ? entity.order.orderDate.toISOString().slice(0, 10)
                 : String(entity.order.orderDate),
+            totalAmount: 0, // TODO: Calculate from order items
+            currency: 'LAK', // TODO: Get from order
+            status: entity.order.arrivalStatus ?? 'PENDING',
+            paymentStatus: 'PENDING', // TODO: Get from customer orders
+            customer: null, // TODO: Get from customer orders
           }
         : null,
       merchantId: entity.merchant?.id ?? 0,
@@ -152,6 +157,17 @@ export class ArrivalQueryService {
               productName: item.orderItem.productName,
               variant: item.orderItem.variant ?? null,
               quantity: item.orderItem.quantity,
+              purchasePrice: item.orderItem.purchasePrice,
+              purchaseTotal: item.orderItem.purchaseTotal,
+              shippingPrice: item.orderItem.shippingPrice ?? 0,
+              totalCostBeforeDiscount: item.orderItem.totalCostBeforeDiscount,
+              discountType: item.orderItem.discountType,
+              discountValue: item.orderItem.discountValue,
+              discountAmount: item.orderItem.discountAmount,
+              finalCost: item.orderItem.finalCost,
+              sellingPriceForeign: item.orderItem.sellingPriceForeign,
+              sellingTotal: item.orderItem.sellingTotal,
+              profit: item.orderItem.profit,
             }
           : null,
         arrivedQuantity: item.arrivedQuantity,
