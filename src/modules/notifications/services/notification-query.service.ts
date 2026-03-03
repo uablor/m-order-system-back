@@ -100,7 +100,6 @@ export class NotificationQueryService {
       retryCount: entity.retryCount,
       lastRetryAt: entity.lastRetryAt ?? null,
       status: entity.status,
-      statusSent: entity.statusSent,
       sentAt: entity.sentAt ?? null,
       errorMessage: entity.errorMessage ?? null,
       relatedOrders: entity.relatedOrders ?? null,

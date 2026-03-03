@@ -4,6 +4,10 @@ import { FindOptionsWhere, Repository, Not, IsNull } from 'typeorm';
 import { BaseQueryRepository } from '../../../common/base/repositories/base.query-repository';
 import { CustomerOrderOrmEntity } from '../entities/customer-order.orm-entity';
 import { PaginatedResult, PaginationResponse } from '../../../common/base/interfaces/paginted.interface';
+import { CustomerOrderListQueryDto } from '../dto/customer-order-list-query.dto';
+import { fetchWithPagination } from '../../../common/utils/pagination.util';
+import { ResponseWithPaginationInterface } from '../../../common/base/interfaces/response.interface';
+import { SortDirection } from '../../../common/base/enums/base.query.enum';
 
 @Injectable()
 export class CustomerOrderQueryRepository extends BaseQueryRepository<CustomerOrderOrmEntity> {
@@ -15,65 +19,61 @@ export class CustomerOrderQueryRepository extends BaseQueryRepository<CustomerOr
   }
 
   async findWithPagination(
-    options: { page?: number; limit?: number; orderId?: number; customerId?: number; customerToken?: string; customerName?: string; isArrived?: boolean; startDate?: string; endDate?: string },
+    options: CustomerOrderListQueryDto,
     manager?: import('typeorm').EntityManager,
-  ): Promise<PaginatedResult<CustomerOrderOrmEntity>> {
+  ): Promise<ResponseWithPaginationInterface<CustomerOrderOrmEntity>> {
     const repo = this.getRepo(manager);
-    const page = Math.max(1, options.page ?? 1);
-    const limit = Math.min(100, Math.max(1, options.limit ?? 10));
-    const skip = (page - 1) * limit;
-    const where: FindOptionsWhere<CustomerOrderOrmEntity> = {};
-    
-    if (options.orderId != null) where.order = { id: options.orderId };
-    if (options.customerId != null) where.customer = { id: options.customerId };
-    if (options.customerToken) {
-      where.customer = {
-        ...(where.customer as any || {}),
-        uniqueToken: options.customerToken
-      };
-    }
-    if (options.customerName) {
-      where.customer = {
-        ...(where.customer as any || {}),
-        contactName: options.customerName
-      };
-    }
-    
-    // Apply isArrived filter
-    if (options.isArrived !== undefined) {
-      where.order = {
-        ...(where.order as any || {}),
-        arrivedAt: options.isArrived ? Not(IsNull()) : IsNull()
-      };
-    }
-    
-    const [data, total] = await repo.findAndCount({
-      where: Object.keys(where).length ? where : undefined,
-      relations: ['order', 'order.exchangeRateSell', 'customer', 'customerOrderItems', 'customerOrderItems.orderItem', 'payments'],
-      order: { id: 'ASC' as const },
-      skip,
-      take: limit,
-    });
+  const qb = repo.createQueryBuilder('customerOrder')
+    .leftJoinAndSelect('customerOrder.order', 'order')
+    .leftJoinAndSelect('customerOrder.notification', 'notification')
+    .leftJoinAndSelect('customerOrder.customer', 'customer')
+    .leftJoinAndSelect('customerOrder.customerOrderItems', 'customerOrderItems')
+    .leftJoinAndSelect('customerOrderItems.orderItem', 'orderItem');
 
-    // Apply date filters if provided
-    if (options.startDate || options.endDate) {
-      const dateConditions: any = {};
-      if (options.startDate) dateConditions.$gte = new Date(options.startDate);
-      if (options.endDate) dateConditions.$lte = new Date(options.endDate);
-      if (Object.keys(dateConditions).length) {
-        where.createdAt = dateConditions;
-      }
+  // Apply filters
+  if (options.orderId != null) {
+    qb.andWhere('order.id = :orderId', { orderId: options.orderId });
+  }
+  
+  if (options.customerId != null) {
+    qb.andWhere('customer.id = :customerId', { customerId: options.customerId });
+  }
+  
+  if (options.customerToken) {
+    qb.andWhere('customer.uniqueToken = :customerToken', { customerToken: options.customerToken });
+  }
+  
+  if (options.notificationToken) {
+    qb.andWhere('notification.notificationToken = :notificationToken', { notificationToken: options.notificationToken });
+  }
+  
+  if (options.customerName) {
+    qb.andWhere('customer.contactName LIKE :customerName', { customerName: `%${options.customerName}%` });
+  }
+  
+  if (options.isArrived !== undefined) {
+    if (options.isArrived) {
+      qb.andWhere('order.arrivedAt IS NOT NULL');
+    } else {
+      qb.andWhere('order.arrivedAt IS NULL');
     }
+  }
+  
+  // Apply date filters
+  if (options.startDate) {
+    qb.andWhere('customerOrder.createdAt >= :startDate', { startDate: new Date(options.startDate) });
+  }
+  
+  if (options.endDate) {
+    qb.andWhere('customerOrder.createdAt <= :endDate', { endDate: new Date(options.endDate) });
+  }
 
-    const totalPages = Math.ceil(total / limit);
-    const pagination: PaginationResponse = {
-      total,
-      page,
-      limit,
-      totalPages,
-      hasNextPage: page < totalPages,
-      hasPreviousPage: page > 1,
-    };
-    return { success: true, Code: 200, message: 'Customer orders fetched successfully', results: data, pagination };
+  return fetchWithPagination({
+    qb,
+    page: options.page ?? 1,
+    limit: options.limit ?? 10,
+    sort: SortDirection.ASC, // Default sort direction
+    manager: manager!,
+  });
   }
 }

@@ -1,32 +1,75 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiProperty } from '@nestjs/swagger';
+import { PaymentStatusEnum } from '../enum/enum.entities';
 
 class CustomerOrderItemResponseDto {
   @ApiProperty()
   id: number;
 
   @ApiProperty()
-  orderId: number;
+  orderItemId: number;
 
   @ApiProperty()
   productName: string;
 
-  @ApiPropertyOptional({ nullable: true })
+  @ApiProperty()
   variant: string | null;
 
   @ApiProperty()
   quantity: number;
 
   @ApiProperty()
-  sellingPriceForeign: string;
+  exchangeRateBuy: {
+    id: number;
+    baseCurrency: string;
+    targetCurrency: string;
+    rate: number;
+    rateType: string;
+    rateDate: Date;
+    isActive: boolean;
+  } | null;
+  
+  @ApiProperty()
+  exchangeRateSell: {
+    id: number;
+    baseCurrency: string;
+    targetCurrency: string;
+    rate: number;
+    rateType: string;
+    rateDate: Date;
+    isActive: boolean;
+  } | null;
+  
+  @ApiProperty()
+  exchangeRateBuyValue: number | null;
+  
+  @ApiProperty()
+  exchangeRateSellValue: number | null;
+  
+  @ApiProperty()
+  image: {
+    originalName: string;
+    fileName: string;
+    filePath: string;
+    fileKey: string;
+    fileSize: number;
+    mimeType: string;
+    publicUrl: string | null;
+    isActive: boolean;
+    tags: string[] | null;
+    description: string | null;
+  } | null;
 
   @ApiProperty()
-  sellingTotal: string;
-
-  @ApiPropertyOptional({ nullable: true })
-  targetCurrencySellingTotal: string | null;
+  sellingPriceForeign: number;
 
   @ApiProperty()
-  profit: string;
+  sellingTotal: number;
+
+  @ApiProperty()
+  targetCurrencySellingPriceForeign: number;
+
+  @ApiProperty()
+  targetCurrencySellingTotal: number;
 }
 
 export class CustomerOrderResponseDto {
@@ -46,31 +89,25 @@ export class CustomerOrderResponseDto {
   customerToken: string;
 
   @ApiProperty()
-  totalSellingAmount: string;
+  totalSellingAmount: number;
 
   @ApiProperty()
-  totalPaid: string;
+  totalPaid: number;
 
   @ApiProperty()
-  remainingAmount: string;
+  remainingAmount: number;
+
+    @ApiProperty()
+  targetCurrencyTotalSellingAmount: number;
 
   @ApiProperty()
-  paymentStatus: string;
+  targetCurrencyTotalPaid: number;
 
-  @ApiPropertyOptional({ description: 'Target currency from order exchange rate (e.g. THB, LAK)' })
-  targetCurrency: string | null;
+  @ApiProperty()
+  targetCurrencyRemainingAmount: number;
 
-  @ApiPropertyOptional({ description: 'Total selling amount in target currency' })
-  targetCurrencyTotalSellingAmount: string | null;
-
-  @ApiPropertyOptional({ description: 'Total paid in target currency' })
-  targetCurrencyTotalPaid: string | null;
-
-  @ApiPropertyOptional({ description: 'Remaining amount in target currency' })
-  targetCurrencyRemainingAmount: string | null;
-
-  @ApiProperty({ description: 'Whether there is a payment with status PENDING awaiting verification' })
-  hasPendingPayment: boolean;
+  @ApiProperty()
+  paymentStatus: PaymentStatusEnum;
 
   @ApiProperty({ type: [CustomerOrderItemResponseDto] })
   customerOrderItems: CustomerOrderItemResponseDto[];

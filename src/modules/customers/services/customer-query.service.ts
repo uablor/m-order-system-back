@@ -16,19 +16,21 @@ import { CurrentUserPayload } from 'src/common/decorators/current-user.decorator
 export class CustomerQueryService {
   constructor(
     private readonly customerQueryRepository: CustomerQueryRepository,
-  ) {}
+  ) { }
 
-  async getById(id: number): Promise<CustomerResponseDto | null> {
+  async getById(id: number, auth: CurrentUserPayload, manager?: import('typeorm').EntityManager,): Promise<CustomerResponseDto | null> {
     const entity =
-      await this.customerQueryRepository.findOneByIdWithMerchant(id);
+      await this.customerQueryRepository.findOneByIdWithMerchant(id, auth, manager);
     if (!entity) return null;
     return this.toResponse(entity);
   }
 
   async getByIdOrFail(
     id: number,
+    auth: CurrentUserPayload,
+    manager?: import('typeorm').EntityManager,
   ): Promise<ResponseInterface<CustomerResponseDto>> {
-    const dto = await this.getById(id);
+    const dto = await this.getById(id, auth, manager);
     if (!dto) throw new NotFoundException('Customer not found');
     return createSingleResponse(dto);
   }

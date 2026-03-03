@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Query } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, Query } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiParam, ApiBearerAuth } from '@nestjs/swagger';
 import { NotificationCommandService } from '../services/notification-command.service';
 import { NotificationQueryService } from '../services/notification-query.service';
@@ -6,6 +6,7 @@ import { NotificationUpdateDto } from '../dto/notification-update.dto';
 import { NotificationStatusUpdateDto } from '../dto/notification-status-update.dto';
 import { NotificationListQueryDto } from '../dto/notification-list-query.dto';
 import { NotificationResponseDto } from '../dto/notification-response.dto';
+import { CreateNotificationDto } from '../dto/create-notification.dto';
 import { CurrentUser } from 'src/common/decorators/current-user.decorator';
 import type { CurrentUserPayload } from 'src/common/decorators/current-user.decorator';
 import {
@@ -23,13 +24,20 @@ export class NotificationController {
     private readonly notificationQueryService: NotificationQueryService,
   ) {}
 
-  @Get()
-  @ApiOperation({ summary: 'List notifications with pagination' })
+  @Post('create')
+  @ApiOperation({ summary: 'Create notifications for customer orders' })
   @ApiBearerAuth('BearerAuth')
   @ApiOkResponseBase()
+  @ApiBadRequestBase()
   @ApiUnauthorizedBase()
-  async merchantGetList(@Query() query: NotificationListQueryDto, @CurrentUser() user: CurrentUserPayload) {
-    return this.notificationQueryService.getList(query, user);
+  async createNotifications(
+    @Body() dto: CreateNotificationDto,
+    @CurrentUser() user: CurrentUserPayload,
+  ) {
+    return this.notificationCommandService.create(
+      dto,
+      user,
+    );
   }
 
   @Get(':id')
@@ -82,4 +90,6 @@ export class NotificationController {
   async adminDelete(@Param('id', ParseIntPipe) id: number) {
     return this.notificationCommandService.delete(id);
   }
+
+
 }

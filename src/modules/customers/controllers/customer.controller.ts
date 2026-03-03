@@ -79,8 +79,8 @@ export class CustomerController {
   @ApiNotFoundBase()
   @ApiUnauthorizedBase()
   @NoCache()
-  async getById(@Param('id', ParseIntPipe) id: number) {
-    return this.queryService.getByIdOrFail(id);
+  async getById(@Param('id', ParseIntPipe) id: number, @CurrentUser() currentUser: CurrentUserPayload) {
+    return this.queryService.getByIdOrFail(id, currentUser);
   }
 
   @Patch(':id')
