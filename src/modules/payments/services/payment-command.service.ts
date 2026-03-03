@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
 import { PaymentRepository } from '../repositories/payment.repository';
 import { PaymentOrmEntity, PaymentStatus } from '../entities/payment.orm-entity';
 import { PaymentCreateDto } from '../dto/payment-create.dto';
@@ -81,6 +81,7 @@ export class PaymentCommandService {
     const payment = await this.paymentRepository.findById(id, [
       'customerOrder',
       'customerOrder.order',
+      'customerOrder.order.merchant',
     ]);
 
     if (!payment) {
@@ -89,6 +90,14 @@ export class PaymentCommandService {
 
     if (payment.status !== 'PENDING') {
       throw new BadRequestException('Only pending payments can be rejected');
+    }
+
+    // Merchant สามารถ reject ได้เฉพาะ payment ของร้านตัวเอง (ตรวจสอบเมื่อมี merchantId ทั้งสองฝ่าย)
+    const paymentMerchantId = payment.customerOrder?.order?.merchant?.id;
+    if (typeof currentUser.merchantId === 'number' && typeof paymentMerchantId === 'number') {
+      if (paymentMerchantId !== currentUser.merchantId) {
+        throw new ForbiddenException('You can only reject payments for your own store');
+      }
     }
 
     return this.transactionService.run(async (manager) => {
@@ -112,6 +121,7 @@ export class PaymentCommandService {
     const payment = await this.paymentRepository.findById(id, [
       'customerOrder',
       'customerOrder.order',
+      'customerOrder.order.merchant',
     ]);
 
     if (!payment) {
@@ -120,6 +130,14 @@ export class PaymentCommandService {
 
     if (payment.status !== 'PENDING') {
       throw new BadRequestException('Only pending payments can be verified');
+    }
+
+    // Merchant สามารถ verify ได้เฉพาะ payment ของร้านตัวเอง (ตรวจสอบเมื่อมี merchantId ทั้งสองฝ่าย)
+    const paymentMerchantId = payment.customerOrder?.order?.merchant?.id;
+    if (typeof currentUser.merchantId === 'number' && typeof paymentMerchantId === 'number') {
+      if (paymentMerchantId !== currentUser.merchantId) {
+        throw new ForbiddenException('You can only verify payments for your own store');
+      }
     }
 
     return this.transactionService.run(async (manager) => {
@@ -142,11 +160,14 @@ export class PaymentCommandService {
         relations: ['order'],
       });
 
+      let remainingAmount: number | undefined;
       if (customerOrder) {
-        const currentPaid = customerOrder.totalPaid;
-        const paymentAmount = payment.paymentAmount;
+        // แปลงเป็น number ก่อนคำนวณ (MySQL decimal คืนค่าเป็น string)
+        const currentPaid = Number(customerOrder.totalPaid) || 0;
+        const paymentAmount = Number(payment.paymentAmount) || 0;
+        const currentRemaining = Number(customerOrder.remainingAmount) || 0;
         const newPaid = currentPaid + paymentAmount;
-        const remainingAmount = customerOrder.remainingAmount - paymentAmount;
+        remainingAmount = currentRemaining - paymentAmount;
 
         await customerOrderRepo.update(payment.customerOrderId, {
           totalPaid: newPaid,
@@ -159,9 +180,10 @@ export class PaymentCommandService {
         where: { id: customerOrder?.order.id },
       });
 
-      if (orderEntity) {
+      if (orderEntity && remainingAmount !== undefined) {
+        const orderPaymentStatus = remainingAmount <= 0 ? PaymentStatusEnum.PAID : PaymentStatusEnum.PARTIAL;
         await order.update(orderEntity.id, {
-          paymentStatus: PaymentStatusEnum.PAID,
+          paymentStatus: orderPaymentStatus,
         });
       }
       return payment;

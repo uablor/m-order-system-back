@@ -23,7 +23,7 @@ export class UserQueryService {
   async getById(id: number): Promise<UserResponseDto | null> {
     const entity = await this.userQueryRepository.repository.findOne({
       where: { id },
-      relations: ['role'],
+      relations: ['role', 'merchant'],
     });
     if (!entity) return null;
     return this.toResponse(entity);
@@ -80,12 +80,14 @@ export class UserQueryService {
   }
 
   private toResponse(entity: UserOrmEntity): UserResponseDto {
+    const merchantId = entity.merchantId ?? entity.merchant?.id ?? null;
     return {
       id: entity.id,
       email: entity.email,
       fullName: entity.fullName,
       roleId: entity.roleId,
       roleName: entity.role?.roleName,
+      merchantId,
       isActive: entity.isActive,
       createdAt: entity.createdAt,
       updatedAt: entity.updatedAt,

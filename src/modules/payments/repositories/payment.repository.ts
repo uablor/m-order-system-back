@@ -118,7 +118,10 @@ export class PaymentRepository {
   ): Promise<PaymentOrmEntity> {
     const repo = manager ? manager.getRepository(PaymentOrmEntity) : this.repository;
     await repo.update(id, data);
-    const updated = await this.findById(id);
+    // ใช้ repo เดียวกันเมื่ออยู่ใน transaction เพื่อให้เห็นข้อมูลที่อัปเดตแล้ว
+    const updated = manager
+      ? await repo.findOne({ where: { id } })
+      : await this.repository.findOne({ where: { id } });
     if (!updated) {
       throw new Error(`Payment with id ${id} not found`);
     }

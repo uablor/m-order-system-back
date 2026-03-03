@@ -138,6 +138,33 @@ export class PaymentController {
   }
 
   // ─── Verify / Reject (merchant & admin) ────────────────────────────────
+  // หมายเหตุ: ต้องประกาศ bulk routes ก่อน :id routes เพื่อให้ NestJS match ถูกต้อง
+
+  @Patch('bulk-verify')
+  @ApiOperation({ summary: 'Verify multiple payments (admin / merchant)' })
+  @ApiBearerAuth('BearerAuth')
+  @ApiOkResponseBase()
+  @ApiBadRequestBase()
+  @ApiUnauthorizedBase()
+  async bulkVerify(
+    @Body() dto: PaymentBulkActionDto,
+    @CurrentUser() currentUser: CurrentUserPayload,
+  ) {
+    return this.commandService.bulkVerify(dto.paymentIds, currentUser);
+  }
+
+  @Patch('bulk-reject')
+  @ApiOperation({ summary: 'Reject multiple payments (admin / merchant)' })
+  @ApiBearerAuth('BearerAuth')
+  @ApiOkResponseBase()
+  @ApiBadRequestBase()
+  @ApiUnauthorizedBase()
+  async bulkReject(
+    @Body() dto: PaymentBulkRejectDto,
+    @CurrentUser() currentUser: CurrentUserPayload,
+  ) {
+    return this.commandService.bulkReject(dto, currentUser);
+  }
 
   @Patch(':id/verify')
   @ApiOperation({ summary: 'Verify payment (admin / merchant)' })
@@ -154,19 +181,6 @@ export class PaymentController {
     return this.commandService.verify(id, currentUser);
   }
 
-  @Patch('bulk-verify')
-  @ApiOperation({ summary: 'Verify multiple payments (admin / merchant)' })
-  @ApiBearerAuth('BearerAuth')
-  @ApiOkResponseBase()
-  @ApiBadRequestBase()
-  @ApiUnauthorizedBase()
-  async bulkVerify(
-    @Body() dto: PaymentBulkActionDto,
-    @CurrentUser() currentUser: CurrentUserPayload,
-  ) {
-    return this.commandService.bulkVerify(dto.paymentIds, currentUser);
-  }
-
   @Patch(':id/reject')
   @ApiOperation({ summary: 'Reject payment (admin / merchant)' })
   @ApiBearerAuth('BearerAuth')
@@ -181,19 +195,6 @@ export class PaymentController {
     @CurrentUser() currentUser: CurrentUserPayload,
   ) {
     return this.commandService.reject(id, dto, currentUser);
-  }
-
-  @Patch('bulk-reject')
-  @ApiOperation({ summary: 'Reject multiple payments (admin / merchant)' })
-  @ApiBearerAuth('BearerAuth')
-  @ApiOkResponseBase()
-  @ApiBadRequestBase()
-  @ApiUnauthorizedBase()
-  async bulkReject(
-    @Body() dto: PaymentBulkRejectDto,
-    @CurrentUser() currentUser: CurrentUserPayload,
-  ) {
-    return this.commandService.bulkReject(dto, currentUser);
   }
 
   // ─── Delete ─────────────────────────────────────────────────────────────

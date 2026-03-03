@@ -34,12 +34,14 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
     if (!user || !user.isActive) {
       throw new UnauthorizedException('User not found or inactive');
     }
+    // ใช้ merchantId จาก user (DB) ก่อน ถ้าไม่มีค่อยใช้จาก payload
+    const merchantId = user.merchantId ?? payload.merchantId ?? undefined;
     return {
       userId: payload.userId,
       email: payload.email,
       roleId: payload.roleId,
       roleName: user.roleName ?? payload.roleName,
-      merchantId: payload.merchantId,
+      merchantId,
       permissions: payload.permissions,
     };
   }

@@ -16,6 +16,9 @@ export class UserResponseDto {
   @ApiPropertyOptional()
   roleName?: string;
 
+  @ApiPropertyOptional({ description: 'Merchant ID for merchant users' })
+  merchantId?: number | null;
+
   @ApiProperty()
   isActive: boolean;
 
