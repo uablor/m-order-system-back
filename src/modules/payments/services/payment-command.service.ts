@@ -24,20 +24,22 @@ export class PaymentCommandService {
     currentUser: CurrentUserPayload,
   ) {
     const payment = await this.transactionService.run(async (manager) => {
-      // ค้นหา customer order โดยตรงจาก id
       const customerOrderRepo = manager.getRepository(CustomerOrderOrmEntity);
       const customerOrder = await customerOrderRepo.findOne({
         where: { id: dto.customerOrderId },
+        relations: ['order'],
       });
-
-    
-      const image = dto.paymentProofImageId != null
-        ? await this.imageQueryRepository.findByIdWithRelations(dto.paymentProofImageId, manager)
-        : null;
 
       if (!customerOrder) {
         throw new NotFoundException('Customer order not found');
       }
+      if (!customerOrder.order.arrivedAt) {
+        throw new BadRequestException('Order must be arrived before making a payment');
+      }
+
+      const image = dto.paymentProofImageId != null
+        ? await this.imageQueryRepository.findByIdWithRelations(dto.paymentProofImageId, manager)
+        : null;
 
       // ตรวจสอบว่า payment amount ไม่เกิน remaining amount
       if (dto.paymentAmount > customerOrder.remainingAmount) {
@@ -47,7 +49,7 @@ export class PaymentCommandService {
       }
 
       // ตรวจสอบว่าสถานะยังสามารถชำระได้
-      if (customerOrder.paymentStatus === 'PAID') {
+      if (customerOrder.paymentStatus === PaymentStatusEnum.PAID) {
         throw new BadRequestException('This order has already been fully paid');
       }
 

@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { FindOptionsWhere, Repository } from 'typeorm';
+import { FindOptionsWhere, Repository, Not, IsNull } from 'typeorm';
 import { BaseQueryRepository } from '../../../common/base/repositories/base.query-repository';
 import { CustomerOrderOrmEntity } from '../entities/customer-order.orm-entity';
 import { PaginatedResult, PaginationResponse } from '../../../common/base/interfaces/paginted.interface';
@@ -15,7 +15,7 @@ export class CustomerOrderQueryRepository extends BaseQueryRepository<CustomerOr
   }
 
   async findWithPagination(
-    options: { page?: number; limit?: number; orderId?: number; customerId?: number; customerToken?: string; customerName?: string; startDate?: string; endDate?: string },
+    options: { page?: number; limit?: number; orderId?: number; customerId?: number; customerToken?: string; customerName?: string; isArrived?: boolean; startDate?: string; endDate?: string },
     manager?: import('typeorm').EntityManager,
   ): Promise<PaginatedResult<CustomerOrderOrmEntity>> {
     const repo = this.getRepo(manager);
@@ -36,6 +36,14 @@ export class CustomerOrderQueryRepository extends BaseQueryRepository<CustomerOr
       where.customer = {
         ...(where.customer as any || {}),
         contactName: options.customerName
+      };
+    }
+    
+    // Apply isArrived filter
+    if (options.isArrived !== undefined) {
+      where.order = {
+        ...(where.order as any || {}),
+        arrivedAt: options.isArrived ? Not(IsNull()) : IsNull()
       };
     }
     

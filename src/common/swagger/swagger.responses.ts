@@ -14,7 +14,7 @@ export class ApiResponseDto<T = unknown> {
   message: string;
 
   @ApiPropertyOptional({ description: 'Response payload (list or single item)' })
-  results?: T[];
+  results?: T;
 }
 
 /**

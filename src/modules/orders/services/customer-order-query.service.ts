@@ -37,6 +37,7 @@ export class CustomerOrderQueryService {
       customerId: query.customerId,
       customerToken: query.customerToken,
       customerName: query.customerName,
+      isArrived: query.isArrived,
       startDate: query.startDate,
       endDate: query.endDate,
     });

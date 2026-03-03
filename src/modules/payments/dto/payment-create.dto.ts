@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsString, IsOptional, IsNumber, IsUUID } from 'class-validator';
 
-export class PaymentCreateDto {
+export class  PaymentCreateDto {
   @ApiProperty({ description: 'Customer Order ID' })
   @IsNotEmpty()
   @IsNumber()

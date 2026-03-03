@@ -1,4 +1,4 @@
-import { IsOptional, IsInt, Min, Max, IsString } from 'class-validator';
+import { IsOptional, IsInt, Min, Max, IsString, IsBoolean } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { BaseQueryDto } from 'src/common/base/dtos/base.query.dto';
@@ -25,6 +25,11 @@ export class CustomerOrderListQueryDto extends BaseQueryDto {
   @IsOptional()
   @IsString()
   customerToken?: string;
+
+  @ApiPropertyOptional({ description: 'Filter by arrival status (true = arrived, false = not arrived)' })
+  @IsOptional()
+  @IsBoolean()
+  isArrived?: boolean;
 
   @ApiPropertyOptional({ description: 'Start date filter (YYYY-MM-DD)', example: '2025-01-01' })
   @IsOptional()

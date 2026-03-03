@@ -8,7 +8,7 @@ export function createResponse<T>(
   results: T[],
   message = DEFAULT_SUCCESS_MESSAGE,
   Code = DEFAULT_SUCCESS_CODE,
-): ResponseInterface<T> {
+): ResponseInterface<T[]> {
   return { success: true, Code, message, results };
 }
 
@@ -17,7 +17,7 @@ export function createSingleResponse<T>(
   message = DEFAULT_SUCCESS_MESSAGE,
   Code = DEFAULT_SUCCESS_CODE,
 ): ResponseInterface<T> {
-  return { success: true, Code, message, results: [data] };
+  return { success: true, Code, message, results: data };
 }
 
 export function createPaginatedResponse<T>(

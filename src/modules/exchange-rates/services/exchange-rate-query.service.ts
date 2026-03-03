@@ -73,7 +73,7 @@ export class ExchangeRateQueryService {
    */
   async getTodayRates(
     currentUser: CurrentUserPayload,
-  ): Promise<ResponseInterface<ExchangeRateResponseDto>> {
+  ): Promise<ResponseInterface<ExchangeRateResponseDto[]>> {
     if (!currentUser?.merchantId) {
       throw new ForbiddenException('Merchant context required');
     }
