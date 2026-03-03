@@ -16,6 +16,12 @@ export class ArrivalListQueryDto extends BaseQueryDto {
   @IsInt()
   orderId?: number;
 
+  @ApiPropertyOptional({ description: 'Filter by order item ID (arrivals that contain this order item)' })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  orderItemId?: number;
+
   @ApiPropertyOptional({ description: 'Start date filter (YYYY-MM-DD)', example: '2025-01-01' })
   @IsOptional()
   @IsDateString()

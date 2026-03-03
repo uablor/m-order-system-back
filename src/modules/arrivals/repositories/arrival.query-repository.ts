@@ -37,6 +37,13 @@ export class ArrivalQueryRepository extends BaseQueryRepository<ArrivalOrmEntity
       qb.andWhere('order.id = :orderId', { orderId: options.orderId });
     }
 
+    if (options.orderItemId != null) {
+      qb.andWhere(
+        'EXISTS (SELECT 1 FROM arrival_items ai WHERE ai.arrival_id = arrival.id AND ai.order_item_id = :orderItemId)',
+        { orderItemId: options.orderItemId },
+      );
+    }
+
     if (options.startDate) {
       qb.andWhere('DATE(arrival.arrivedDate) >= :startDate', { startDate: options.startDate });
     }
@@ -46,7 +53,12 @@ export class ArrivalQueryRepository extends BaseQueryRepository<ArrivalOrmEntity
     }
 
     if (options.search) {
-      qb.andWhere('order.orderCode LIKE :search', { search: `%${options.search}%` });
+      const searchVal = `%${options.search}%`;
+      if (options.searchField === 'notes') {
+        qb.andWhere('arrival.notes LIKE :search', { search: searchVal });
+      } else {
+        qb.andWhere('order.orderCode LIKE :search', { search: searchVal });
+      }
     }
 
     // Enable createdByUserId filter since recordedByUser relation exists
@@ -86,10 +98,12 @@ export class ArrivalQueryRepository extends BaseQueryRepository<ArrivalOrmEntity
       );
     }
 
+    // ไม่ส่ง search ไป fetchWithPagination เพราะ search ใช้ relation (order.orderCode)
+    // และ pagination util จะ prefix ด้วย alias ทำให้ผิดพลาด — เรา handle search เองด้านบนแล้ว
     return fetchWithPagination({
       qb,
       page: options.page ?? 1,
-      search: options.search ? { kw: options.search, field: options.searchField || 'order.orderCode' } : undefined,
+      search: undefined,
       limit: options.limit ?? 10,
       manager: manager || repo.manager,
       sort: options.sort || SortDirection.DESC,
@@ -114,6 +128,12 @@ export class ArrivalQueryRepository extends BaseQueryRepository<ArrivalOrmEntity
     if (options.orderId != null) {
       qb.andWhere('order.id = :orderId', { orderId: options.orderId });
     }
+    if (options.orderItemId != null) {
+      qb.andWhere(
+        'EXISTS (SELECT 1 FROM arrival_items ai WHERE ai.arrival_id = arrival.id AND ai.order_item_id = :orderItemId)',
+        { orderItemId: options.orderItemId },
+      );
+    }
     if (options.startDate) {
       qb.andWhere('DATE(arrival.arrivedDate) >= :startDate', { startDate: options.startDate });
     }
@@ -121,7 +141,12 @@ export class ArrivalQueryRepository extends BaseQueryRepository<ArrivalOrmEntity
       qb.andWhere('DATE(arrival.arrivedDate) <= :endDate', { endDate: options.endDate });
     }
     if (options.search) {
-      qb.andWhere('order.orderCode LIKE :search', { search: `%${options.search}%` });
+      const searchVal = `%${options.search}%`;
+      if (options.searchField === 'notes') {
+        qb.andWhere('arrival.notes LIKE :search', { search: searchVal });
+      } else {
+        qb.andWhere('order.orderCode LIKE :search', { search: searchVal });
+      }
     }
     if (options.createdByUserId != null) {
       qb.andWhere('recordedByUser.id = :createdByUserId', { createdByUserId: options.createdByUserId });
