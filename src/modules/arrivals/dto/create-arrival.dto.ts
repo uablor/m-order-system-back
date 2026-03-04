@@ -51,8 +51,5 @@ export class CreateArrivalDto {
   @Type(() => CreateArrivalItemDto)
   arrivalItems: CreateArrivalItemDto[];
 
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsBoolean()
-  notification?: boolean;
+
 }

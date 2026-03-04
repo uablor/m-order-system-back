@@ -96,7 +96,7 @@ export class MerchantController {
   async getDetailById(@Param('id', ParseIntPipe) id: number) {
     return this.queryService.getDetailById(id);
   }
-  @Post('merchant/price-currency-summary')
+  @Post('price-currency-summary')
   @ApiOperation({ summary: 'Merchant price currency summary - grouped by target currency' })
   @ApiBearerAuth('BearerAuth')
   @ApiOkResponseBase(MerchantPriceCurrencySummaryDto)
@@ -106,7 +106,7 @@ export class MerchantController {
     return createSingleResponse(data);
   }
 
-  @Post('merchant/price-currency-summary-by-date')
+  @Post('price-currency-summary-by-date')
   @ApiOperation({ summary: 'Merchant price currency summary - grouped by target currency' })
   @ApiBearerAuth('BearerAuth')
   @ApiOkResponseBase(MerchantPriceCurrencySummaryDto)

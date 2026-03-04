@@ -3,7 +3,7 @@ import { ApiPropertyOptional } from '@nestjs/swagger';
 import { NotificationStatus } from '../enum/notification.enum';
 
 export class NotificationStatusUpdateDto {
-  @ApiPropertyOptional({ 
+  @ApiPropertyOptional({
     enum: NotificationStatus,
     description: 'Update the send status of the notification'
   })

@@ -6,10 +6,9 @@ import { MerchantRepository } from '../../merchants/repositories/merchant.reposi
 import { CustomerCreateDto } from '../dto/customer-create.dto';
 import { CustomerUpdateDto } from '../dto/customer-update.dto';
 import { CustomerOrmEntity } from '../entities/customer.orm-entity';
+import { generateUniqueToken } from 'src/common/utils/generate-unique-token.utils';
 
-function generateUniqueToken(): string {
-  return randomBytes(24).toString('base64url');
-}
+
 
 @Injectable()
 export class CustomerCommandService {
