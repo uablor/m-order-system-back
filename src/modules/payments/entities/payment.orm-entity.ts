@@ -3,8 +3,7 @@ import { BaseOrmEntity } from '../../../common/base/enities/base.orm-entities';
 import { CustomerOrderOrmEntity } from '../../orders/entities/customer-order.orm-entity';
 import { UserOrmEntity } from '../../users/entities/user.orm-entity';
 import { ImageOrmEntity } from 'src/modules/images/entities/image.orm-entity';
-
-export type PaymentStatus = 'PENDING' | 'VERIFIED' | 'REJECTED';
+import { PaymentStatusEnum, PaymentVerificationStatusEnum } from '../enum/payment.enum';
 
 @Entity('payments')
 export class PaymentOrmEntity extends BaseOrmEntity {
@@ -31,8 +30,8 @@ export class PaymentOrmEntity extends BaseOrmEntity {
   @Column({ name: 'customer_message', type: 'text', nullable: true })
   customerMessage: string;
 
-  @Column({ name: 'status', type: 'varchar', length: 20, default: 'PENDING' })
-  status: PaymentStatus;
+  @Column({ name: 'status', type: 'enum', enum: PaymentVerificationStatusEnum, default: PaymentVerificationStatusEnum.PENDING })
+  status: PaymentVerificationStatusEnum;
 
   @ManyToOne(() => UserOrmEntity, { nullable: true })
   @JoinColumn({ name: 'verified_by' })

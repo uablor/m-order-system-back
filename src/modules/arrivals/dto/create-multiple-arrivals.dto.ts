@@ -7,9 +7,11 @@ import {
   IsIn,
   Min,
   MaxLength,
+  IsBoolean,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { CreateNotificationDto, CreateNotificationMultipleDto } from 'src/modules/notifications/dto/create-notification.dto';
 
 const CONDITIONS = ['OK', 'DAMAGED', 'LOST'] as const;
 
@@ -57,7 +59,7 @@ export class CreateMultipleArrivalsDto {
   @IsString()
   notes?: string;
 
-  @ApiProperty({ 
+  @ApiProperty({
     description: 'Array of orders to process',
     type: [CreateArrivalDto]
   })
@@ -65,4 +67,24 @@ export class CreateMultipleArrivalsDto {
   @ValidateNested({ each: true })
   @Type(() => CreateArrivalDto)
   orders: CreateArrivalDto[];
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsBoolean()
+  notification?: boolean;
+
+  @ApiProperty({
+    description: 'Array of notification data',
+    example: [
+      {
+        customerOrderIds: [123, 124, 125],
+        message: 'Your orders have arrived!',
+        customerId: 1,
+      },
+    ],
+  })
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => CreateNotificationDto)
+  notis?: CreateNotificationDto[];
 }

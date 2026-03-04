@@ -4,7 +4,7 @@ import { OrderOrmEntity } from './order.orm-entity';
 import { CustomerOrmEntity } from '../../customers/entities/customer.orm-entity';
 import { CustomerOrderItemOrmEntity } from './customer-order-item.orm-entity';
 import { NotificationOrmEntity } from 'src/modules/notifications/entities/notification.orm-entity';
-import { PaymentStatusEnum } from '../enum/enum.entities';
+import { PaymentStatusEnum } from 'src/modules/payments/enum/payment.enum';
 
 @Entity('customer_orders')
 export class CustomerOrderOrmEntity extends BaseOrmEntity {
@@ -25,7 +25,7 @@ export class CustomerOrderOrmEntity extends BaseOrmEntity {
   @Column({ name: 'remaining_amount', type: 'decimal', precision: 18, scale: 2, default: 0 })
   remainingAmount: number;
 
-  @Column({ name: 'payment_status', type: 'enum', enum: PaymentStatusEnum, default: PaymentStatusEnum.UNPAID })
+  @Column({ name: 'payment_status', type: 'enum', enum: PaymentStatusEnum, default: PaymentStatusEnum.NOT_CREATED })
   paymentStatus: PaymentStatusEnum;
 
   @OneToMany(() => CustomerOrderItemOrmEntity, (coi) => coi.customerOrder)

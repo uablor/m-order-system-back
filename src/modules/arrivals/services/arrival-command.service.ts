@@ -18,6 +18,7 @@ import { ArrivalItemOrmEntity } from '../entities/arrival-item.orm-entity';
 import { OrderItemOrmEntity } from '../../orders/entities/order-item.orm-entity';
 import { CurrentUserPayload } from 'src/common/decorators/current-user.decorator';
 import { formatTime } from 'src/common/utils/dayjs.util';
+import { NotificationCommandService } from 'src/modules/notifications/services/notification-command.service';
 
 @Injectable()
 export class ArrivalCommandService {
@@ -27,6 +28,7 @@ export class ArrivalCommandService {
     private readonly arrivalItemRepository: ArrivalItemRepository,
     private readonly orderRepository: OrderRepository,
     private readonly merchantRepository: MerchantRepository,
+    private readonly notificationCommandService: NotificationCommandService,
  ) {}
 
   async create(
@@ -356,12 +358,20 @@ export class ArrivalCommandService {
         }
       }
 
+      if (dto.notification && dto.notis && dto.notis.length > 0) {
+        await this.notificationCommandService.createMultiple(
+          { notifications: dto.notis },
+          currentUser,
+        );
+      }
+
       return {
         success: true,
         arrivals,
         message: `Processed ${processedOrders} orders successfully${failedOrders.length > 0 ? ` with ${failedOrders.length} failures` : ''}`,
         processedOrders,
         failedOrders,
+        notifications: dto.notification ? 'Notifications created' : 'No notifications',
       };
     });
   }

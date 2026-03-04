@@ -4,8 +4,9 @@ import { MerchantOrmEntity } from '../../merchants/entities/merchant.orm-entity'
 import { UserOrmEntity } from '../../users/entities/user.orm-entity';
 import { OrderItemOrmEntity } from './order-item.orm-entity';
 import { CustomerOrderOrmEntity } from './customer-order.orm-entity';
-import { ArrivalStatusEnum, PaymentStatusEnum } from '../enum/enum.entities';
+import { ArrivalStatusEnum } from '../enum/enum.entities';
 import { ExchangeRateOrmEntity } from 'src/modules/exchange-rates/entities/exchange-rate.orm-entity';
+import { PaymentStatusEnum } from 'src/modules/payments/enum/payment.enum';
 
 @Entity('orders')
 export class OrderOrmEntity extends BaseOrmEntity {
@@ -28,7 +29,7 @@ export class OrderOrmEntity extends BaseOrmEntity {
   orderDate: Date;
 
   // สถานะการมาถึงของสินค้า (เช่น ยังไม่ถึง, ถึงแล้ว)
-  @Column({ name: 'arrival_status', type: 'varchar', length: 20, default: ArrivalStatusEnum.NOT_ARRIVED })
+  @Column({ type: 'enum', enum: ArrivalStatusEnum, default: ArrivalStatusEnum.NOT_ARRIVED })
   arrivalStatus: ArrivalStatusEnum;
 
   // วันเวลาที่สินค้ามาถึงจริง
@@ -86,7 +87,7 @@ export class OrderOrmEntity extends BaseOrmEntity {
   totalProfit: number;
 
   // สถานะการชำระเงิน (เช่น ยังไม่จ่าย, จ่ายบางส่วน, จ่ายครบแล้ว)
-  @Column({ name: 'payment_status', type: 'varchar', length: 20, default: 'UNPAID' })
+  @Column({ type: 'enum', enum: PaymentStatusEnum, default: PaymentStatusEnum.NOT_CREATED })
   paymentStatus: PaymentStatusEnum;
 
   // รายการสินค้าในออเดอร์นี้ (1 ออเดอร์ มีหลายสินค้า)

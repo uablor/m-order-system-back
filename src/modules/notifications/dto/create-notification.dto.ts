@@ -39,6 +39,7 @@ export class CreateNotificationMultipleDto {
     ],
   })
   @IsArray()
+  @IsOptional()
   notifications: CreateNotificationDto[];
   
 }

@@ -7,6 +7,7 @@ import {
   IsIn,
   Min,
   MaxLength,
+  IsBoolean,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
@@ -49,4 +50,9 @@ export class CreateArrivalDto {
   @ValidateNested({ each: true })
   @Type(() => CreateArrivalItemDto)
   arrivalItems: CreateArrivalItemDto[];
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsBoolean()
+  notification?: boolean;
 }

@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
 import { PaymentRepository } from '../repositories/payment.repository';
-import { PaymentOrmEntity, PaymentStatus } from '../entities/payment.orm-entity';
+import { PaymentOrmEntity } from '../entities/payment.orm-entity';
 import { PaymentCreateDto } from '../dto/payment-create.dto';
 import { PaymentRejectDto, PaymentBulkRejectDto } from '../dto/payment-reject.dto';
 import { CustomerOrderOrmEntity } from '../../orders/entities/customer-order.orm-entity';
@@ -9,7 +9,8 @@ import { CurrentUserPayload } from '../../../common/decorators/current-user.deco
 import { createSingleResponse } from '../../../common/base/helpers/response.helper';
 import { ImageQueryRepository } from 'src/modules/images/repositories/image.query-repository';
 import { OrderOrmEntity } from 'src/modules/orders/entities/order.orm-entity';
-import { PaymentStatusEnum } from 'src/modules/orders/enum/enum.entities';
+import { PaymentStatusEnum, PaymentVerificationStatusEnum } from '../enum/payment.enum';
+import { EntityManager } from 'typeorm';
 
 @Injectable()
 export class PaymentCommandService {
@@ -27,7 +28,7 @@ export class PaymentCommandService {
       const customerOrderRepo = manager.getRepository(CustomerOrderOrmEntity);
       const customerOrder = await customerOrderRepo.findOne({
         where: { id: dto.customerOrderId },
-        relations: ['order'],
+        relations: ['order', 'order.merchant'],
       });
 
       if (!customerOrder) {
@@ -35,6 +36,10 @@ export class PaymentCommandService {
       }
       if (!customerOrder.order.arrivedAt) {
         throw new BadRequestException('Order must be arrived before making a payment');
+      }
+
+      if (currentUser.merchantId && currentUser.merchantId !== customerOrder.order.merchant.id) {
+        throw new ForbiddenException('You are not authorized to make a payment for this order');
       }
 
       const image = dto.paymentProofImageId != null
@@ -49,10 +54,9 @@ export class PaymentCommandService {
       }
 
       // ตรวจสอบว่าสถานะยังสามารถชำระได้
-      if (customerOrder.paymentStatus === PaymentStatusEnum.PAID) {
-        throw new BadRequestException('This order has already been fully paid');
+      if (customerOrder.paymentStatus != PaymentStatusEnum.NOT_CREATED) {
+        throw new BadRequestException('This order already has a payment created');
       }
-
       // สร้าง payment
       const newPayment = await this.paymentRepository.create(
         {
@@ -61,7 +65,7 @@ export class PaymentCommandService {
           paymentProofImageId: image?.id ?? undefined,
           paymentProofImage: image ?? undefined,
           customerMessage: dto.customerMessage,
-          status: 'PENDING' as PaymentStatus,
+          status: PaymentVerificationStatusEnum.PENDING,
           paymentDate: new Date(),
         },
         manager,
@@ -71,123 +75,6 @@ export class PaymentCommandService {
     });
 
     return createSingleResponse(payment, 'Payment created successfully');
-  }
-
-  async reject(
-    id: number,
-    dto: PaymentRejectDto,
-    currentUser: CurrentUserPayload,
-  ): Promise<PaymentOrmEntity> {
-    const payment = await this.paymentRepository.findById(id, [
-      'customerOrder',
-      'customerOrder.order',
-      'customerOrder.order.merchant',
-    ]);
-
-    if (!payment) {
-      throw new NotFoundException('Payment not found');
-    }
-
-    if (payment.status !== 'PENDING') {
-      throw new BadRequestException('Only pending payments can be rejected');
-    }
-
-    // Merchant สามารถ reject ได้เฉพาะ payment ของร้านตัวเอง (ตรวจสอบเมื่อมี merchantId ทั้งสองฝ่าย)
-    const paymentMerchantId = payment.customerOrder?.order?.merchant?.id;
-    if (typeof currentUser.merchantId === 'number' && typeof paymentMerchantId === 'number') {
-      if (paymentMerchantId !== currentUser.merchantId) {
-        throw new ForbiddenException('You can only reject payments for your own store');
-      }
-    }
-
-    return this.transactionService.run(async (manager) => {
-      return this.paymentRepository.update(
-        id,
-        {
-          status: 'REJECTED' as PaymentStatus,
-          rejectedById: currentUser.userId,
-          rejectedAt: new Date(),
-          rejectReason: dto.rejectReason,
-        },
-        manager,
-      );
-    });
-  }
-
-  async verify(
-    id: number,
-    currentUser: CurrentUserPayload,
-  ): Promise<PaymentOrmEntity> {
-    const payment = await this.paymentRepository.findById(id, [
-      'customerOrder',
-      'customerOrder.order',
-      'customerOrder.order.merchant',
-    ]);
-
-    if (!payment) {
-      throw new NotFoundException('Payment not found');
-    }
-
-    if (payment.status !== 'PENDING') {
-      throw new BadRequestException('Only pending payments can be verified');
-    }
-
-    // Merchant สามารถ verify ได้เฉพาะ payment ของร้านตัวเอง (ตรวจสอบเมื่อมี merchantId ทั้งสองฝ่าย)
-    const paymentMerchantId = payment.customerOrder?.order?.merchant?.id;
-    if (typeof currentUser.merchantId === 'number' && typeof paymentMerchantId === 'number') {
-      if (paymentMerchantId !== currentUser.merchantId) {
-        throw new ForbiddenException('You can only verify payments for your own store');
-      }
-    }
-
-    return this.transactionService.run(async (manager) => {
-      // อัปเดต payment
-      const paymentRepo = manager.getRepository(PaymentOrmEntity);
-      const payment = await this.paymentRepository.update(
-        id,
-        {
-          status: 'VERIFIED' as PaymentStatus,
-          verifiedById: currentUser.userId,
-          verifiedAt: new Date(),
-        },
-        manager,
-      );
-
-      // อัปเดต customer order
-      const customerOrderRepo = manager.getRepository(CustomerOrderOrmEntity);
-      const customerOrder = await customerOrderRepo.findOne({
-        where: { id: payment.customerOrderId },
-        relations: ['order'],
-      });
-
-      let remainingAmount: number | undefined;
-      if (customerOrder) {
-        // แปลงเป็น number ก่อนคำนวณ (MySQL decimal คืนค่าเป็น string)
-        const currentPaid = Number(customerOrder.totalPaid) || 0;
-        const paymentAmount = Number(payment.paymentAmount) || 0;
-        const currentRemaining = Number(customerOrder.remainingAmount) || 0;
-        const newPaid = currentPaid + paymentAmount;
-        remainingAmount = currentRemaining - paymentAmount;
-
-        await customerOrderRepo.update(payment.customerOrderId, {
-          totalPaid: newPaid,
-          remainingAmount: remainingAmount,
-          paymentStatus: remainingAmount <= 0 ? PaymentStatusEnum.PAID : PaymentStatusEnum.PARTIAL
-        });
-      }
-      const order = manager.getRepository(OrderOrmEntity);
-      const orderEntity = await order.findOne({
-        where: { id: customerOrder?.order.id },
-      });
-
-      if (orderEntity && remainingAmount !== undefined) {
-        const orderPaymentStatus = remainingAmount <= 0 ? PaymentStatusEnum.PAID : PaymentStatusEnum.PARTIAL;
-        await order.update(orderEntity.id, {
-          paymentStatus: orderPaymentStatus,
-        });
-      }
-      return payment;
-    });
   }
 
   async delete(id: number): Promise<void> {
@@ -209,41 +96,172 @@ export class PaymentCommandService {
     });
   }
 
-  async bulkVerify(
-    paymentIds: number[],
+  private async rejectInternal(
+    id: number,
+    dto: PaymentRejectDto,
     currentUser: CurrentUserPayload,
-  ): Promise<PaymentOrmEntity[]> {
-    const results: PaymentOrmEntity[] = [];
+    manager: EntityManager,
+  ): Promise<PaymentOrmEntity> {
+    const payment = await this.paymentRepository.findById(id, [
+      'customerOrder',
+      'customerOrder.order',
+      'customerOrder.order.merchant',
+    ]);
 
-    for (const id of paymentIds) {
-      try {
-        const result = await this.verify(id, currentUser);
-        results.push(result);
-      } catch (error) {
-        // สามารถ log error หรือเก็บไว้เพื่อรายงานผลลัพธ์
-        console.error(`Failed to verify payment ${id}:`, error.message);
+    if (!payment) {
+      throw new NotFoundException('Payment not found');
+    }
+
+    if (payment.status !== PaymentVerificationStatusEnum.PENDING) {
+      throw new BadRequestException('Only pending payments can be rejected');
+    }
+
+    const paymentMerchantId = payment.customerOrder?.order?.merchant?.id;
+    if (typeof currentUser.merchantId === 'number' && typeof paymentMerchantId === 'number') {
+      if (paymentMerchantId !== currentUser.merchantId) {
+        throw new ForbiddenException('You can only reject payments for your own store');
       }
     }
 
-    return results;
+    return this.paymentRepository.update(
+      id,
+      {
+        status: PaymentVerificationStatusEnum.REJECTED,
+        rejectedById: currentUser.userId,
+        rejectedAt: new Date(),
+        rejectReason: dto.rejectReason,
+      },
+      manager,
+    );
+  }
+
+  async reject(
+    id: number,
+    dto: PaymentRejectDto,
+    currentUser: CurrentUserPayload,
+  ): Promise<PaymentOrmEntity> {
+    return this.transactionService.run(async (manager) => {
+      return this.rejectInternal(id, dto, currentUser, manager);
+    });
   }
 
   async bulkReject(
     dto: PaymentBulkRejectDto,
     currentUser: CurrentUserPayload,
   ): Promise<PaymentOrmEntity[]> {
-    const results: PaymentOrmEntity[] = [];
+    return this.transactionService.run(async (manager) => {
+      const results: PaymentOrmEntity[] = [];
 
-    for (const id of dto.paymentIds) {
-      try {
-        const result = await this.reject(id, { rejectReason: dto.rejectReason }, currentUser);
+      for (const id of dto.paymentIds) {
+        const result = await this.rejectInternal(
+          id,
+          { rejectReason: dto.rejectReason },
+          currentUser,
+          manager,
+        );
         results.push(result);
-      } catch (error) {
-        // สามารถ log error หรือเก็บไว้เพื่อรายงานผลลัพธ์
-        console.error(`Failed to reject payment ${id}:`, error.message);
+      }
+
+      return results;
+    });
+  }
+
+  private async verifyInternal(
+    id: number,
+    currentUser: CurrentUserPayload,
+    manager: EntityManager,
+  ): Promise<PaymentOrmEntity> {
+    const payment = await this.paymentRepository.findById(id, [
+      'customerOrder',
+      'customerOrder.order',
+      'customerOrder.order.merchant',
+    ]);
+
+    if (!payment) {
+      throw new NotFoundException('Payment not found');
+    }
+
+    if (payment.status !== PaymentVerificationStatusEnum.PENDING) {
+      throw new BadRequestException('Only pending payments can be verified');
+    }
+
+    const paymentMerchantId = payment.customerOrder?.order?.merchant?.id;
+    if (typeof currentUser.merchantId === 'number' && typeof paymentMerchantId === 'number') {
+      if (paymentMerchantId !== currentUser.merchantId) {
+        throw new ForbiddenException('You can only verify payments for your own store');
       }
     }
 
-    return results;
+    const updatedPayment = await this.paymentRepository.update(
+      id,
+      {
+        status: PaymentVerificationStatusEnum.VERIFIED,
+        verifiedById: currentUser.userId,
+        verifiedAt: new Date(),
+      },
+      manager,
+    );
+
+    const customerOrderRepo = manager.getRepository(CustomerOrderOrmEntity);
+    const customerOrder = await customerOrderRepo.findOne({
+      where: { id: updatedPayment.customerOrderId },
+      relations: ['order'],
+    });
+
+    let remainingAmount: number | undefined;
+    if (customerOrder) {
+      const currentPaid = Number(customerOrder.totalPaid) || 0;
+      const paymentAmount = Number(updatedPayment.paymentAmount) || 0;
+      const currentRemaining = Number(customerOrder.remainingAmount) || 0;
+      const newPaid = currentPaid + paymentAmount;
+      remainingAmount = currentRemaining - paymentAmount;
+
+      await customerOrderRepo.update(updatedPayment.customerOrderId, {
+        totalPaid: newPaid,
+        remainingAmount: remainingAmount,
+        paymentStatus: remainingAmount <= 0 ? PaymentStatusEnum.PAID : PaymentStatusEnum.UNPAID,
+      });
+    }
+
+    const orderRepo = manager.getRepository(OrderOrmEntity);
+    const orderEntity = await orderRepo.findOne({
+      where: { id: customerOrder?.order.id },
+    });
+
+    if (orderEntity && remainingAmount !== undefined) {
+      await orderRepo.update(orderEntity.id, {
+        paymentStatus: remainingAmount <= 0 ? PaymentStatusEnum.PAID : PaymentStatusEnum.UNPAID,
+      });
+    }
+
+    return updatedPayment;
   }
+
+
+
+  async verify(
+    id: number,
+    currentUser: CurrentUserPayload,
+  ): Promise<PaymentOrmEntity> {
+    return this.transactionService.run(async (manager) => {
+      return this.verifyInternal(id, currentUser, manager);
+    });
+  }
+
+  async bulkVerify(
+    paymentIds: number[],
+    currentUser: CurrentUserPayload,
+  ): Promise<PaymentOrmEntity[]> {
+    return this.transactionService.run(async (manager) => {
+      const results: PaymentOrmEntity[] = [];
+
+      for (const id of paymentIds) {
+        const result = await this.verifyInternal(id, currentUser, manager);
+        results.push(result);
+      }
+
+      return results;
+    });
+  }
+
 }

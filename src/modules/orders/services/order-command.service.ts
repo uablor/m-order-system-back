@@ -15,8 +15,9 @@ import { OrderItemOrmEntity } from '../entities/order-item.orm-entity';
 import { CustomerOrderOrmEntity } from '../entities/customer-order.orm-entity';
 import { CustomerOrderItemOrmEntity } from '../entities/customer-order-item.orm-entity';
 import { CurrentUserPayload } from 'src/common/decorators/current-user.decorator';
-import { ArrivalStatusEnum, PaymentStatusEnum } from '../enum/enum.entities';
+import { ArrivalStatusEnum } from '../enum/enum.entities';
 import { convertToBaseCurrency, convertToTargetCurrency } from 'src/common/utils/convert-to-target-currency.utils';
+import { PaymentStatusEnum } from 'src/modules/payments/enum/payment.enum';
 
 const ZERO = 0;
 
@@ -130,7 +131,7 @@ export class OrderCommandService {
           totalFinalCost: ZERO,
           totalSellingAmount: ZERO,
           totalProfit: ZERO,
-          paymentStatus: PaymentStatusEnum.UNPAID,
+          paymentStatus: PaymentStatusEnum.NOT_CREATED,
         } as Partial<OrderOrmEntity>,
         manager,
       );
