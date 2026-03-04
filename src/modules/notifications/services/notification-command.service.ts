@@ -90,19 +90,21 @@ export class NotificationCommandService {
           },
         },
       },
+      relations: ['order'],
       select: {
         id: true,
         order: {
           id: true,
         },
-      }
+      },
     });
 
     if (customerOrders.length !== dto.customerOrderIds.length) {
       throw new NotFoundException('Some orders not found');
     }
 
-    const notificationLink = `${this.configService.get<string>('FRONTEND_URL')}?customerToken=${customer.uniqueToken}&notificationToken=${notificationsToken}`;
+    const baseUrl = (this.configService.get<string>('FRONTEND_URL') || '').replace(/\/$/, '');
+    const notificationLink = `${baseUrl}/customer/item-arrived?customerToken=${customer.uniqueToken}&notificationToken=${notificationsToken}`;
 
     const notification = await this.notificationRepository.create({
       customer: { id: customer.id } as any,
@@ -126,9 +128,16 @@ export class NotificationCommandService {
 
       retryCount: 0,
 
-      relatedOrders: customerOrders.map(customerOrder => customerOrder.order.id),
+      relatedOrders: customerOrders.map((co) => co.id),
 
     }, manager);
+
+    // ตั้ง notification_id ใน customer_orders เพื่อให้ by-token query ทำงานได้
+    const coRepo = manager.getRepository(CustomerOrderOrmEntity);
+    await coRepo.update(
+      { id: In(customerOrders.map((c) => c.id)) },
+      { notification: notification },
+    );
 
     return notification;
   });

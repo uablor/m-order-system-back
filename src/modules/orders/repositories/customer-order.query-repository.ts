@@ -44,11 +44,11 @@ export class CustomerOrderQueryRepository extends BaseQueryRepository<CustomerOr
   }
   
   if (options.notificationToken) {
-    qb.andWhere('notification.notificationToken = :notificationToken', { notificationToken: options.notificationToken });
+    qb.andWhere('notification.uniqueToken = :notificationToken', { notificationToken: options.notificationToken });
   }
   
   if (options.customerName) {
-    qb.andWhere('customer.contactName LIKE :customerName', { customerName: `%${options.customerName}%` });
+    qb.andWhere('customer.customerName LIKE :customerName', { customerName: `%${options.customerName}%` });
   }
   
   if (options.isArrived !== undefined) {

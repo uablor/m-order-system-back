@@ -31,6 +31,7 @@ export class CustomerOrderOrmEntity extends BaseOrmEntity {
   @OneToMany(() => CustomerOrderItemOrmEntity, (coi) => coi.customerOrder)
   customerOrderItems: CustomerOrderItemOrmEntity[];
 
-  @ManyToOne(() => NotificationOrmEntity, (notification) => notification.customerOrder)
+  @ManyToOne(() => NotificationOrmEntity, (notification) => notification.customerOrder, { onDelete: 'SET NULL' })
+  @JoinColumn({ name: 'notification_id' })
   notification: NotificationOrmEntity;
 }

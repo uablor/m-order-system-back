@@ -24,6 +24,18 @@ export class NotificationController {
     private readonly notificationQueryService: NotificationQueryService,
   ) {}
 
+  @Get()
+  @ApiOperation({ summary: 'List notifications with pagination and filters' })
+  @ApiBearerAuth('BearerAuth')
+  @ApiOkResponseBase()
+  @ApiUnauthorizedBase()
+  async getList(
+    @Query() query: NotificationListQueryDto,
+    @CurrentUser() user: CurrentUserPayload,
+  ) {
+    return this.notificationQueryService.getList(query, user);
+  }
+
   @Post('create')
   @ApiOperation({ summary: 'Create notifications for customer orders' })
   @ApiBearerAuth('BearerAuth')

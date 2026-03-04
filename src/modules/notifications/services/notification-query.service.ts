@@ -13,7 +13,7 @@ export class NotificationQueryService {
   constructor(
     private readonly notificationRepository: NotificationRepository,
     private readonly notificationQueryRepository: NotificationQueryRepository,
-  ) { }s
+  ) {}
 
   async getById(id: number): Promise<NotificationResponseDto | null> {
     const entity = await this.notificationQueryRepository.repository.findOne({
