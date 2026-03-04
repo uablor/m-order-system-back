@@ -24,7 +24,7 @@ export class CustomerOrderQueryRepository extends BaseQueryRepository<CustomerOr
   ): Promise<ResponseWithPaginationInterface<CustomerOrderOrmEntity>> {
     const repo = this.getRepo(manager);
   const qb = repo.createQueryBuilder('customerOrder')
-    .leftJoinAndSelect('customerOrder.order', 'order')
+    .leftJoinAndSelect('customerOrder.order', 'ord')
     .leftJoinAndSelect('customerOrder.notification', 'notification')
     .leftJoinAndSelect('customerOrder.customer', 'customer')
     .leftJoinAndSelect('customerOrder.customerOrderItems', 'customerOrderItems')
@@ -32,7 +32,11 @@ export class CustomerOrderQueryRepository extends BaseQueryRepository<CustomerOr
 
   // Apply filters
   if (options.orderId != null) {
-    qb.andWhere('order.id = :orderId', { orderId: options.orderId });
+    qb.andWhere('ord.id = :orderId', { orderId: options.orderId });
+  }
+
+  if (options.customerOrderId != null) {
+    qb.andWhere('customerOrder.id = :customerOrderId', { customerOrderId: options.customerOrderId });
   }
   
   if (options.customerId != null) {
@@ -53,9 +57,9 @@ export class CustomerOrderQueryRepository extends BaseQueryRepository<CustomerOr
   
   if (options.isArrived !== undefined) {
     if (options.isArrived) {
-      qb.andWhere('order.arrivedAt IS NOT NULL');
+      qb.andWhere('ord.arrivedAt IS NOT NULL');
     } else {
-      qb.andWhere('order.arrivedAt IS NULL');
+      qb.andWhere('ord.arrivedAt IS NULL');
     }
   }
   
@@ -66,6 +70,10 @@ export class CustomerOrderQueryRepository extends BaseQueryRepository<CustomerOr
   
   if (options.endDate) {
     qb.andWhere('customerOrder.createdAt <= :endDate', { endDate: new Date(options.endDate) });
+  }
+
+  if (options.paymentStatus) {
+    qb.andWhere('customerOrder.paymentStatus = :paymentStatus', { paymentStatus: options.paymentStatus });
   }
 
   return fetchWithPagination({

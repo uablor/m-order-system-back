@@ -26,6 +26,17 @@ export class CustomerOrderListQueryDto extends IntersectionType(
   @IsInt()
   orderId?: number;
 
+  @ApiPropertyOptional({ description: 'Filter by order code (partial match)', example: 'ORD-001' })
+  @IsOptional()
+  @IsString()
+  orderCode?: string;
+
+  @ApiPropertyOptional({ description: 'Filter by customer order ID (the # shown to customer)' })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  customerOrderId?: number;
+
   @ApiPropertyOptional({ description: 'Filter by customer ID' })
   @IsOptional()
   @Type(() => Number)

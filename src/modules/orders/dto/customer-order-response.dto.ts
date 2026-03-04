@@ -79,6 +79,9 @@ export class CustomerOrderResponseDto {
   @ApiProperty()
   orderId: number;
 
+  @ApiProperty({ description: 'Order code from order table (e.g. ORD-001)' })
+  orderCode: string | null;
+
   @ApiProperty()
   customerId: number;
 

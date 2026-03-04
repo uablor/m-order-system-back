@@ -36,6 +36,7 @@ export class CustomerOrderQueryService {
       page: query.page,
       limit: query.limit,
       orderId: query.orderId,
+      customerOrderId: query.customerOrderId,
       customerId: query.customerId,
       customerToken: query.customerToken,
       notificationToken: query.notificationToken,
@@ -43,7 +44,7 @@ export class CustomerOrderQueryService {
       isArrived: query.isArrived,
       startDate: query.startDate,
       endDate: query.endDate,
-
+      paymentStatus: query.paymentStatus,
     });
     return createPaginatedResponse(
       result.results.map((e) => this.toResponse(e)),
@@ -151,6 +152,7 @@ GROUP BY
     return {
       id: entity.id,
       orderId: entity.order?.id ?? 0,
+      orderCode: entity.order?.orderCode ?? null,
       customerId: entity.customer?.id ?? 0,
       customerName: entity.customer?.contactLine || '',
       customerToken: entity.customer?.uniqueToken || '',
