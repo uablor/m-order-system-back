@@ -64,5 +64,15 @@ export class ArrivalListQueryDto extends BaseQueryDto {
   @Type(() => Number)
   @IsInt()
   customerId?: number;
+
+  @ApiPropertyOptional({ description: 'Filter by notification status' })
+  @IsOptional()
+  @IsBoolean()
+  @Transform(({ value }) => {
+    if (value === 'true') return true;
+    if (value === 'false') return false;
+    return value;
+  })
+  notification?: boolean;
 }
 

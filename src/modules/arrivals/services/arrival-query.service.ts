@@ -55,6 +55,7 @@ export class ArrivalQueryService {
       arrivalTime: query.arrivalTime,
       arrival: query.arrival,
       customerId: query.customerId,
+      notification: query.notification,
     });
     return createPaginatedResponse(
       result.results,

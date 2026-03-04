@@ -92,6 +92,14 @@ export class ArrivalQueryRepository extends BaseQueryRepository<ArrivalOrmEntity
       qb.andWhere('customer.id = :customerId', { customerId: options.customerId });
     }
 
+    if (options.notification !== undefined) {
+      if (options.notification) {
+        qb.andWhere('notification.id IS NOT NULL');
+      } else {
+        qb.andWhere('notification.id IS NULL');
+      }
+    }
+
     return fetchWithPagination({
       qb,
       page: options.page ?? 1,

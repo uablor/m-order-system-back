@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { TransactionService } from '../../../common/transaction/transaction.service';
 import { NotificationRepository } from '../repositories/notification.repository';
 import { NotificationUpdateDto } from '../dto/notification-update.dto';
@@ -14,12 +14,14 @@ import { CustomerOrderQueryRepository } from 'src/modules/orders/repositories/cu
 import { CustomerOrderOrmEntity } from 'src/modules/orders/entities/customer-order.orm-entity';
 import { EntityManager, In } from 'typeorm';
 import { MerchantQueryRepository } from 'src/modules/merchants/repositories/merchant.query-repository';
+import { NotificationQueryRepository } from '../repositories/notification.query-repository';
 
 @Injectable()
 export class NotificationCommandService {
   constructor(
     private readonly transactionService: TransactionService,
     private readonly notificationRepository: NotificationRepository,
+    private readonly notificationQueryRepository: NotificationQueryRepository,
     private readonly configService: ConfigService,
     private readonly customerQueryRepository: CustomerQueryRepository,
   ) { }
@@ -114,6 +116,11 @@ export class NotificationCommandService {
 
     if (customerOrders.length !== dto.customerOrderIds.length) {
       throw new NotFoundException('Some orders not found');
+    }
+
+    const notificationQuery = await this.notificationQueryRepository.findCustomerOrderBy(dto.customerOrderIds, manager);
+    if (notificationQuery.length > 0) {
+      throw new BadRequestException('Some orders already have notifications');
     }
 
     const baseUrl = (this.configService.get<string>('FRONTEND_URL') || '').replace(/\/$/, '');

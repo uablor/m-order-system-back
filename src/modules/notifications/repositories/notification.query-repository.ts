@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import { BaseQueryRepository } from '../../../common/base/repositories/base.query-repository';
 import { NotificationOrmEntity } from '../entities/notification.orm-entity';
 import { fetchWithPagination } from '../../../common/utils/pagination.util';
@@ -69,6 +69,22 @@ export class NotificationQueryRepository extends BaseQueryRepository<Notificatio
       search: options.search ? { kw: options.search, field: 'recipientContact' } : undefined,
       sort: 'DESC' as SortDirection,
       manager: manager || repo.manager,
+    });
+  }
+
+
+  /**
+   * Retrieves notifications related to the given order IDs.
+   *
+   * @param {number[]} id - An array of order IDs.
+   * @param {import('typeorm').EntityManager} [manager] - An optional TypeORM entity manager.
+   * @return {Promise<NotificationOrmEntity[]>} A promise that resolves to an array of notification entities.
+   */
+  async findCustomerOrderBy(id: number[], manager?: import('typeorm').EntityManager) {
+    const repo = this.getRepo(manager);
+    return repo.find({
+      where: { relatedOrders: In(id) },
+      relations: ['customer', 'merchant'],
     });
   }
 }
