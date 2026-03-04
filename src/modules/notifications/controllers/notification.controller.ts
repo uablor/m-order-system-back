@@ -6,7 +6,7 @@ import { NotificationUpdateDto } from '../dto/notification-update.dto';
 import { NotificationStatusUpdateDto } from '../dto/notification-status-update.dto';
 import { NotificationListQueryDto } from '../dto/notification-list-query.dto';
 import { NotificationResponseDto } from '../dto/notification-response.dto';
-import { CreateNotificationDto } from '../dto/create-notification.dto';
+import { CreateNotificationDto, CreateNotificationMultipleDto } from '../dto/create-notification.dto';
 import { CurrentUser } from 'src/common/decorators/current-user.decorator';
 import type { CurrentUserPayload } from 'src/common/decorators/current-user.decorator';
 import {
@@ -47,6 +47,22 @@ export class NotificationController {
     @CurrentUser() user: CurrentUserPayload,
   ) {
     return this.notificationCommandService.create(
+      dto,
+      user,
+    );
+  }
+
+  @Post('create-multiple')
+  @ApiOperation({ summary: 'Create multiple notifications for customer orders' })
+  @ApiBearerAuth('BearerAuth')
+  @ApiOkResponseBase()
+  @ApiBadRequestBase()
+  @ApiUnauthorizedBase()
+  async createMultipleNotifications(
+    @Body() dto: CreateNotificationMultipleDto,
+    @CurrentUser() user: CurrentUserPayload,
+  ) {
+    return this.notificationCommandService.createMultiple(
       dto,
       user,
     );

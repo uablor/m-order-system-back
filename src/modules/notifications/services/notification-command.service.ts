@@ -8,11 +8,11 @@ import { CurrentUserPayload } from 'src/common/decorators/current-user.decorator
 import { generateUniqueToken } from 'src/common/utils/generate-unique-token.utils';
 import { ConfigService } from '@nestjs/config';
 import { CustomerQueryRepository } from 'src/modules/customers/repositories/customer.query-repository';
-import { CreateNotificationDto } from '../dto/create-notification.dto';
+import { CreateNotificationDto, CreateNotificationMultipleDto } from '../dto/create-notification.dto';
 import { NotificationChannel, NotificationStatus, NotificationType } from '../enum/notification.enum';
 import { CustomerOrderQueryRepository } from 'src/modules/orders/repositories/customer-order.query-repository';
 import { CustomerOrderOrmEntity } from 'src/modules/orders/entities/customer-order.orm-entity';
-import { In } from 'typeorm';
+import { EntityManager, In } from 'typeorm';
 import { MerchantQueryRepository } from 'src/modules/merchants/repositories/merchant.query-repository';
 
 @Injectable()
@@ -52,7 +52,6 @@ export class NotificationCommandService {
           updateData.sentAt = new Date();
         }
       }
-
       await this.notificationRepository.update(id, updateData, manager);
     });
   }
@@ -66,10 +65,26 @@ export class NotificationCommandService {
   }
 
   async create(
-  dto: CreateNotificationDto,
-  currentUser: CurrentUserPayload,
-): Promise<any> {
-  return this.transactionService.run(async (manager) => {
+    dto: CreateNotificationDto,
+    currentUser: CurrentUserPayload,
+    manager?: EntityManager,
+  ): Promise<NotificationOrmEntity> {
+
+    if (manager) {
+      return this.createInternal(dto, currentUser, manager);
+    }
+
+    return this.transactionService.run(async (manager) => {
+      return this.createInternal(dto, currentUser, manager);
+    });
+  }
+
+
+  private async createInternal(
+    dto: CreateNotificationDto,
+    currentUser: CurrentUserPayload,
+    manager: EntityManager,
+  ): Promise<NotificationOrmEntity> {
 
     const notificationsToken = generateUniqueToken();
 
@@ -93,9 +108,7 @@ export class NotificationCommandService {
       relations: ['order'],
       select: {
         id: true,
-        order: {
-          id: true,
-        },
+        order: { id: true },
       },
     });
 
@@ -104,42 +117,59 @@ export class NotificationCommandService {
     }
 
     const baseUrl = (this.configService.get<string>('FRONTEND_URL') || '').replace(/\/$/, '');
-    const notificationLink = `${baseUrl}/customer/item-arrived?customerToken=${customer.uniqueToken}&notificationToken=${notificationsToken}`;
+
+    const notificationLink =
+      `${baseUrl}/customer/item-arrived?customerToken=${customer.uniqueToken}&notificationToken=${notificationsToken}`;
 
     const notification = await this.notificationRepository.create({
       customer: { id: customer.id } as any,
       merchant: { id: currentUser.merchantId } as any,
-
       messageContent: dto.message || 'Your order has been updated',
-
       notificationLink,
-
       uniqueToken: notificationsToken,
-
       channel: NotificationChannel.FB,
-
       notificationType: NotificationType.ARRIVAL,
-
       recipientContact: customer.contactPhone || '',
-
       status: NotificationStatus.PENDING,
-
       sentAt: new Date(),
-
       retryCount: 0,
-
       relatedOrders: customerOrders.map((co) => co.id),
-
     }, manager);
 
-    // ตั้ง notification_id ใน customer_orders เพื่อให้ by-token query ทำงานได้
     const coRepo = manager.getRepository(CustomerOrderOrmEntity);
+
     await coRepo.update(
       { id: In(customerOrders.map((c) => c.id)) },
       { notification: notification },
     );
 
     return notification;
-  });
-}
+  }
+
+  async createMultiple(
+    dto: CreateNotificationMultipleDto,
+    currentUser: CurrentUserPayload,
+  ): Promise<NotificationOrmEntity[]> {
+
+    return this.transactionService.run(async (manager) => {
+
+      const results: NotificationOrmEntity[] = [];
+
+      for (const notificationData of dto.notifications) {
+
+        const notification = await this.create(
+          notificationData,
+          currentUser,
+          manager,
+        );
+
+        results.push(notification);
+
+      }
+
+      return results;
+
+    });
+
+  }
 }

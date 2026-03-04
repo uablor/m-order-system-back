@@ -216,9 +216,16 @@ GROUP BY ers.base_currency, ers.rate
       const totalPaid = Number(r.totalPaid ?? 0);
       const rate = Number(r.rate ?? 1);
 
-      lakTotalAll += totalAll * rate;
-      lakTotalUnpaid += totalUnpaid * rate;
-      lakTotalPaid += totalPaid * rate;
+      // check currency
+      if (baseCurrency === "LAK") {
+        lakTotalAll += totalAll;
+        lakTotalUnpaid += totalUnpaid;
+        lakTotalPaid += totalPaid;
+      } else {
+        lakTotalAll += totalAll * rate;
+        lakTotalUnpaid += totalUnpaid * rate;
+        lakTotalPaid += totalPaid * rate;
+      }
 
       if (grouped.has(baseCurrency)) {
         const existing = grouped.get(baseCurrency)!;
@@ -226,7 +233,12 @@ GROUP BY ers.base_currency, ers.rate
         existing.totalUnpaid += totalUnpaid;
         existing.totalPaid += totalPaid;
       } else {
-        grouped.set(baseCurrency, { baseCurrency, totalAll, totalUnpaid, totalPaid });
+        grouped.set(baseCurrency, {
+          baseCurrency,
+          totalAll,
+          totalUnpaid,
+          totalPaid
+        });
       }
     }
 
@@ -242,22 +254,22 @@ GROUP BY ers.base_currency, ers.rate
     return result;
   }
 
-  async getMerchantPriceCurrencySummaryByDate(
-    merchantId: number,
-    startDate?: Date,
-    endDate?: Date
-  ): Promise<any> {
+async getMerchantPriceCurrencySummaryByDate(
+  merchantId: number,
+  startDate?: Date,
+  endDate?: Date
+): Promise<any> {
 
-    if (!startDate) {
-      startDate = new Date(new Date().getFullYear(), 0, 1);
-    }
+  if (!startDate) {
+    startDate = new Date(new Date().getFullYear(), 0, 1);
+  }
 
-    if (!endDate) {
-      endDate = new Date(new Date().getFullYear(), 11, 31);
-    }
+  if (!endDate) {
+    endDate = new Date(new Date().getFullYear(), 11, 31);
+  }
 
-    // Query 1: Buy rate (final cost)
-    const buyQuery = `
+  // BUY query
+  const buyQuery = `
     SELECT 
       YEAR(o.created_at) as year,
       MONTH(o.created_at) as month,
@@ -274,8 +286,8 @@ GROUP BY ers.base_currency, ers.rate
     GROUP BY YEAR(o.created_at), MONTH(o.created_at), erb.base_currency, erb.rate
   `;
 
-    // Query 2: Sell rate (selling amount)
-    const sellQuery = `
+  // SELL query
+  const sellQuery = `
     SELECT 
       YEAR(o.created_at) as year,
       MONTH(o.created_at) as month,
@@ -292,127 +304,140 @@ GROUP BY ers.base_currency, ers.rate
     GROUP BY YEAR(o.created_at), MONTH(o.created_at), ers.base_currency, ers.rate
   `;
 
-    const [buyRows, sellRows] = await Promise.all([
-      this.dataSource.query(buyQuery, [merchantId, startDate, endDate]),
-      this.dataSource.query(sellQuery, [merchantId, startDate, endDate]),
-    ]);
+  const [buyRows, sellRows] = await Promise.all([
+    this.dataSource.query(buyQuery, [merchantId, startDate, endDate]),
+    this.dataSource.query(sellQuery, [merchantId, startDate, endDate]),
+  ]);
 
-    // Generate all year-month keys between startDate and endDate
-    const monthMap: Record<string, {
-      year: number,
-      month: number,
-      buyRows: any[],
-      sellRows: any[],
-    }> = {};
+  // create month map
+  const monthMap: Record<string, {
+    year: number,
+    month: number,
+    buyRows: any[],
+    sellRows: any[],
+  }> = {};
 
-    const cursor = new Date(startDate);
-    cursor.setDate(1);
+  const cursor = new Date(startDate);
+  cursor.setDate(1);
 
-    while (
-      cursor.getFullYear() < endDate.getFullYear() ||
-      (cursor.getFullYear() === endDate.getFullYear() && cursor.getMonth() <= endDate.getMonth())
-    ) {
-      const key = `${cursor.getFullYear()}-${cursor.getMonth() + 1}`;
-      monthMap[key] = {
-        year: cursor.getFullYear(),
-        month: cursor.getMonth() + 1,
-        buyRows: [],
-        sellRows: [],
-      };
-      cursor.setMonth(cursor.getMonth() + 1);
-    }
+  while (
+    cursor.getFullYear() < endDate.getFullYear() ||
+    (cursor.getFullYear() === endDate.getFullYear() &&
+      cursor.getMonth() <= endDate.getMonth())
+  ) {
+    const key = `${cursor.getFullYear()}-${cursor.getMonth() + 1}`;
 
-    // Fill rows into map
+    monthMap[key] = {
+      year: cursor.getFullYear(),
+      month: cursor.getMonth() + 1,
+      buyRows: [],
+      sellRows: [],
+    };
+
+    cursor.setMonth(cursor.getMonth() + 1);
+  }
+
+  // fill rows
+  for (const r of buyRows) {
+    const key = `${Number(r.year)}-${Number(r.month)}`;
+    if (monthMap[key]) monthMap[key].buyRows.push(r);
+  }
+
+  for (const r of sellRows) {
+    const key = `${Number(r.year)}-${Number(r.month)}`;
+    if (monthMap[key]) monthMap[key].sellRows.push(r);
+  }
+
+  let totalLakAll = 0;
+  let totalLakUnpaid = 0;
+  let totalLakPaid = 0;
+
+  const months = Object.values(monthMap).map(({ year, month, buyRows, sellRows }) => {
+
+    let lakTotalAll = 0;
+    let lakTotalUnpaid = 0;
+    let lakTotalPaid = 0;
+
+    const currencyMap = new Map<string, any>();
+
+    const processRow = (type: 'BUY' | 'SELL', r: any) => {
+
+      const baseCurrency = r.baseCurrency;
+
+      const totalAll = Number(r.totalAll ?? 0);
+      const totalUnpaid = Number(r.totalUnpaid ?? 0);
+      const totalPaid = Number(r.totalPaid ?? 0);
+      const rate = Number(r.rate ?? 1);
+
+      const key = `${type}-${baseCurrency}`;
+
+      if (!currencyMap.has(key)) {
+        currencyMap.set(key, {
+          type,
+          baseCurrency,
+          totalAll: 0,
+          totalUnpaid: 0,
+          totalPaid: 0,
+        });
+      }
+
+      const existing = currencyMap.get(key);
+
+      existing.totalAll += totalAll;
+      existing.totalUnpaid += totalUnpaid;
+      existing.totalPaid += totalPaid;
+
+      // convert to LAK
+      if (baseCurrency === "LAK") {
+        lakTotalAll += totalAll;
+        lakTotalUnpaid += totalUnpaid;
+        lakTotalPaid += totalPaid;
+      } else {
+        lakTotalAll += totalAll * rate;
+        lakTotalUnpaid += totalUnpaid * rate;
+        lakTotalPaid += totalPaid * rate;
+      }
+    };
+
+    // process BUY
     for (const r of buyRows) {
-      const key = `${Number(r.year)}-${Number(r.month)}`;
-      if (monthMap[key]) monthMap[key].buyRows.push(r);
+      processRow("BUY", r);
     }
+
+    // process SELL
     for (const r of sellRows) {
-      const key = `${Number(r.year)}-${Number(r.month)}`;
-      if (monthMap[key]) monthMap[key].sellRows.push(r);
+      processRow("SELL", r);
     }
 
-    // Yearly accumulator (LAK)
-    let totalLakAll = 0;
-    let totalLakUnpaid = 0;
-    let totalLakPaid = 0;
-
-    const months = Object.values(monthMap).map(({ year, month, buyRows, sellRows }) => {
-      let lakTotalAll = 0;
-      let lakTotalUnpaid = 0;
-      let lakTotalPaid = 0;
-
-      const currencies: any[] = [];
-
-      // Buy side
-      for (const r of buyRows) {
-        const totalAll = Number(r.totalAll ?? 0);
-        const totalUnpaid = Number(r.totalUnpaid ?? 0);
-        const totalPaid = Number(r.totalPaid ?? 0);
-        const rate = Number(r.rate ?? 1);
-
-        lakTotalAll += totalAll * rate;
-        lakTotalUnpaid += totalUnpaid * rate;
-        lakTotalPaid += totalPaid * rate;
-
-        currencies.push({
-          type: 'BUY',
-          baseCurrency: r.baseCurrency,
-          totalAll,
-          totalUnpaid,
-          totalPaid,
-        });
-      }
-
-      // Sell side
-      for (const r of sellRows) {
-        const totalAll = Number(r.totalAll ?? 0);
-        const totalUnpaid = Number(r.totalUnpaid ?? 0);
-        const totalPaid = Number(r.totalPaid ?? 0);
-        const rate = Number(r.rate ?? 1);
-
-        lakTotalAll += totalAll * rate;
-        lakTotalUnpaid += totalUnpaid * rate;
-        lakTotalPaid += totalPaid * rate;
-
-        currencies.push({
-          type: 'SELL',
-          baseCurrency: r.baseCurrency,
-          totalAll,
-          totalUnpaid,
-          totalPaid,
-        });
-      }
-
-      totalLakAll += lakTotalAll;
-      totalLakUnpaid += lakTotalUnpaid;
-      totalLakPaid += lakTotalPaid;
-
-      return {
-        year,
-        month,
-        currencies,
-        summary: {
-          targetCurrency: 'LAK',
-          totalAll: lakTotalAll,
-          totalUnpaid: lakTotalUnpaid,
-          totalPaid: lakTotalPaid,
-        },
-      };
-    });
+    totalLakAll += lakTotalAll;
+    totalLakUnpaid += lakTotalUnpaid;
+    totalLakPaid += lakTotalPaid;
 
     return {
-      startDate,
-      endDate,
-      months,
-      totalSummary: {
-        targetCurrency: 'LAK',
-        totalAll: totalLakAll,
-        totalUnpaid: totalLakUnpaid,
-        totalPaid: totalLakPaid,
+      year,
+      month,
+      currencies: Array.from(currencyMap.values()),
+      summary: {
+        targetCurrency: "LAK",
+        totalAll: lakTotalAll,
+        totalUnpaid: lakTotalUnpaid,
+        totalPaid: lakTotalPaid,
       },
     };
-  }
+  });
+
+  return {
+    startDate,
+    endDate,
+    months,
+    totalSummary: {
+      targetCurrency: "LAK",
+      totalAll: totalLakAll,
+      totalUnpaid: totalLakUnpaid,
+      totalPaid: totalLakPaid,
+    },
+  };
+}
 
   async getTopCustomersByBuyOrder(merchantId: number): Promise<TopCustomersResponseDto> {
     const query = `

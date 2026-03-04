@@ -25,6 +25,20 @@ export class CreateNotificationDto {
   })
   @IsNumber()
   customerId: number;
+}
 
-
+export class CreateNotificationMultipleDto {
+  @ApiProperty({
+    description: 'Array of notification data',
+    example: [
+      {
+        customerOrderIds: [123, 124, 125],
+        message: 'Your orders have arrived!',
+        customerId: 1,
+      },
+    ],
+  })
+  @IsArray()
+  notifications: CreateNotificationDto[];
+  
 }
