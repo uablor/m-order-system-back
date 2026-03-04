@@ -19,6 +19,7 @@ import { OrderItemOrmEntity } from '../../orders/entities/order-item.orm-entity'
 import { CurrentUserPayload } from 'src/common/decorators/current-user.decorator';
 import { formatTime } from 'src/common/utils/dayjs.util';
 import { NotificationCommandService } from 'src/modules/notifications/services/notification-command.service';
+import { NotificationOrmEntity } from 'src/modules/notifications/entities/notification.orm-entity';
 
 @Injectable()
 export class ArrivalCommandService {
@@ -219,6 +220,7 @@ export class ArrivalCommandService {
     message: string;
     processedOrders: number;
     failedOrders: Array<{ orderId: number; error: string }>;
+    notifications: NotificationOrmEntity[];
   }> {
     return this.transactionService.run(async (manager) => {
       const merchant = await this.merchantRepository.findOneById(
@@ -357,12 +359,14 @@ export class ArrivalCommandService {
           });
         }
       }
-
+      
+      let notifications : NotificationOrmEntity[] = [];
       if (dto.notification && dto.notis && dto.notis.length > 0) {
-        await this.notificationCommandService.createMultiple(
+         notifications = await this.notificationCommandService.createMultiple(
           { notifications: dto.notis },
           currentUser,
         );
+       ;
       }
 
       return {
@@ -371,7 +375,7 @@ export class ArrivalCommandService {
         message: `Processed ${processedOrders} orders successfully${failedOrders.length > 0 ? ` with ${failedOrders.length} failures` : ''}`,
         processedOrders,
         failedOrders,
-        notifications: dto.notification ? 'Notifications created' : 'No notifications',
+        notifications,
       };
     });
   }

@@ -188,4 +188,5 @@ export class MerchantQueryService {
       updatedAt: entity.updatedAt,
     };
   }
+
 }

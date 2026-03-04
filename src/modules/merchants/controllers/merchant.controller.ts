@@ -32,6 +32,9 @@ import {
   ApiUnauthorizedBase,
   ApiNotFoundBase,
 } from '../../../common/swagger/swagger.decorators';
+import { createSingleResponse } from 'src/common/base/helpers/response.helper';
+import { MerchantGetPriceCurrencySummaryDto, MerchantPriceCurrencySummaryDto } from 'src/modules/dashboard/dto/merchant-price-currency-summary.dto';
+import { DashboardQueryService } from 'src/modules/dashboard/services/dashboard-query.service';
 
 @ApiTags('Merchants')
 @Controller('merchants')
@@ -39,7 +42,8 @@ export class MerchantController {
   constructor(
     protected readonly commandService: MerchantCommandService,
     protected readonly queryService: MerchantQueryService,
-  ) {}
+    protected readonly dashboardQueryService: DashboardQueryService,
+  ) { }
 
   @Post()
   @ApiOperation({ summary: 'Create merchant for current user' })
@@ -91,6 +95,26 @@ export class MerchantController {
   @NoCache()
   async getDetailById(@Param('id', ParseIntPipe) id: number) {
     return this.queryService.getDetailById(id);
+  }
+  @Post('merchant/price-currency-summary')
+  @ApiOperation({ summary: 'Merchant price currency summary - grouped by target currency' })
+  @ApiBearerAuth('BearerAuth')
+  @ApiOkResponseBase(MerchantPriceCurrencySummaryDto)
+  @ApiUnauthorizedBase()
+  async merchantGetPriceCurrencySummary(@CurrentUser() currentUser: CurrentUserPayload) {
+    const data = await this.dashboardQueryService.getMerchantPriceCurrencySummary(currentUser.merchantId!);
+    return createSingleResponse(data);
+  }
+
+  @Post('merchant/price-currency-summary-by-date')
+  @ApiOperation({ summary: 'Merchant price currency summary - grouped by target currency' })
+  @ApiBearerAuth('BearerAuth')
+  @ApiOkResponseBase(MerchantPriceCurrencySummaryDto)
+  @ApiUnauthorizedBase()
+  async getMerchantPriceCurrencySummaryByDate(@CurrentUser() currentUser: CurrentUserPayload
+    , @Body() body: MerchantGetPriceCurrencySummaryDto) {
+    const data = await this.dashboardQueryService.getMerchantPriceCurrencySummaryByDate(currentUser.merchantId!, body.startDate, body.endDate);
+    return createSingleResponse(data);
   }
 
   @Get(':id')
