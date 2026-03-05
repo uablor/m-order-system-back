@@ -29,7 +29,7 @@ export class ArrivalQueryRepository extends BaseQueryRepository<ArrivalOrmEntity
       .leftJoinAndSelect('arrival.arrivalItems', 'arrivalItems')
       .leftJoinAndSelect('order.customerOrders', 'customerOrders')
       .leftJoinAndSelect('customerOrders.customer', 'customer')
-      .leftJoinAndSelect('customerOrders.notifications', 'notifications');
+      .leftJoinAndSelect('customerOrders.notification', 'notification');
       
 
     if (options.merchantId != null) {

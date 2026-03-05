@@ -73,6 +73,11 @@ export class CreateMultipleArrivalsDto {
   @IsBoolean()
   notification?: boolean;
 
+  @ApiPropertyOptional({ enum: ['en', 'th', 'la'], description: 'Language for notification message template' })
+  @IsOptional()
+  @IsIn(['en', 'th', 'la'])
+  language?: 'en' | 'th' | 'la';
+
   @ApiProperty({
     description: 'Array of notification data',
     example: [

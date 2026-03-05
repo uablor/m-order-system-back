@@ -11,6 +11,8 @@ import { ImageQueryRepository } from 'src/modules/images/repositories/image.quer
 import { OrderOrmEntity } from 'src/modules/orders/entities/order.orm-entity';
 import { PaymentStatusEnum, PaymentVerificationStatusEnum } from '../enum/payment.enum';
 import { EntityManager } from 'typeorm';
+import { CustomerOrderRepository } from 'src/modules/orders/repositories/customer-order.repository';
+import { OrderRepository } from 'src/modules/orders/repositories/order.repository';
 
 @Injectable()
 export class PaymentCommandService {
@@ -18,6 +20,8 @@ export class PaymentCommandService {
     private readonly paymentRepository: PaymentRepository,
     private readonly transactionService: TransactionService,
     private readonly imageQueryRepository: ImageQueryRepository,
+    private readonly orderRepository: OrderRepository,
+    private readonly customerOrderRepository: CustomerOrderRepository,
   ) { }
 
   async create(
@@ -116,6 +120,17 @@ export class PaymentCommandService {
       throw new BadRequestException('Only pending payments can be rejected');
     }
 
+    const customerOrder = await this.customerOrderRepository.findOneById(
+      payment.customerOrderId,
+    );
+    if (!customerOrder) {
+      throw new NotFoundException('Customer order not found');
+    }
+
+    const order = await this.orderRepository.findOneById(
+      payment.customerOrder?.order?.id,
+    );
+
     const paymentMerchantId = payment.customerOrder?.order?.merchant?.id;
     if (typeof currentUser.merchantId === 'number' && typeof paymentMerchantId === 'number') {
       if (paymentMerchantId !== currentUser.merchantId) {
@@ -123,7 +138,7 @@ export class PaymentCommandService {
       }
     }
 
-    return this.paymentRepository.update(
+    const paymenht= this.paymentRepository.update(
       id,
       {
         status: PaymentVerificationStatusEnum.REJECTED,
@@ -133,6 +148,30 @@ export class PaymentCommandService {
       },
       manager,
     );
+
+      await this.customerOrderRepository.update(
+        customerOrder.id,
+        {
+          paymentStatus: PaymentStatusEnum.UNPAID,
+        },
+        manager,
+      );
+    
+
+  
+
+    await this.orderRepository.update(
+      order?.id!,
+      {
+        paymentStatus: PaymentStatusEnum.UNPAID,
+      },
+      manager,
+    );
+
+    
+
+    return paymenht
+
   }
 
   async reject(
@@ -191,6 +230,22 @@ export class PaymentCommandService {
         throw new ForbiddenException('You can only verify payments for your own store');
       }
     }
+    const customerOrderRepo = manager.getRepository(CustomerOrderOrmEntity);
+
+    const customerOrder = await customerOrderRepo.findOne({
+      where: { id: payment.customerOrderId },
+      relations: ['order'],
+    });
+
+    if (!customerOrder) {
+      throw new NotFoundException('Customer order not found');
+    }
+
+    const orderRepo = manager.getRepository(OrderOrmEntity);
+    const orderEntity = await orderRepo.findOne({
+      where: { id: customerOrder?.order.id },
+    });
+
 
     const updatedPayment = await this.paymentRepository.update(
       id,
@@ -202,31 +257,22 @@ export class PaymentCommandService {
       manager,
     );
 
-    const customerOrderRepo = manager.getRepository(CustomerOrderOrmEntity);
-    const customerOrder = await customerOrderRepo.findOne({
-      where: { id: updatedPayment.customerOrderId },
-      relations: ['order'],
-    });
 
     let remainingAmount: number | undefined;
-    if (customerOrder) {
+
       const currentPaid = Number(customerOrder.totalPaid) || 0;
       const paymentAmount = Number(updatedPayment.paymentAmount) || 0;
       const currentRemaining = Number(customerOrder.remainingAmount) || 0;
       const newPaid = currentPaid + paymentAmount;
       remainingAmount = currentRemaining - paymentAmount;
 
-      await customerOrderRepo.update(updatedPayment.customerOrderId, {
+      await customerOrderRepo.update(customerOrder.id, {
         totalPaid: newPaid,
         remainingAmount: remainingAmount,
-        paymentStatus: remainingAmount <= 0 ? PaymentStatusEnum.PAID : PaymentStatusEnum.UNPAID,
+        paymentStatus: PaymentStatusEnum.PAID,
       });
-    }
+    
 
-    const orderRepo = manager.getRepository(OrderOrmEntity);
-    const orderEntity = await orderRepo.findOne({
-      where: { id: customerOrder?.order.id },
-    });
 
     if (orderEntity && remainingAmount !== undefined) {
       await orderRepo.update(orderEntity.id, {

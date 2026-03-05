@@ -220,7 +220,7 @@ export class ArrivalCommandService {
     message: string;
     processedOrders: number;
     failedOrders: Array<{ orderId: number; error: string }>;
-    notifications: NotificationOrmEntity[];
+    notifications: Array<{ recipientContact: string; notificationLink: string | null; language: string | null; customer?: { customerName?: string } | null; relatedOrders: number[] | null }>;
   }> {
     return this.transactionService.run(async (manager) => {
       const merchant = await this.merchantRepository.findOneById(
@@ -360,13 +360,12 @@ export class ArrivalCommandService {
         }
       }
       
-      let notifications : NotificationOrmEntity[] = [];
+      let notifications: Array<{ recipientContact: string; notificationLink: string | null; language: string | null; customer?: { customerName?: string } | null; relatedOrders: number[] | null }> = [];
       if (dto.notification && dto.notis && dto.notis.length > 0) {
-         notifications = await this.notificationCommandService.createMultiple(
-          { notifications: dto.notis },
+        notifications = await this.notificationCommandService.createMultiple(
+          { notifications: dto.notis, language: dto.language ?? 'en' },
           currentUser,
         );
-       ;
       }
 
       return {

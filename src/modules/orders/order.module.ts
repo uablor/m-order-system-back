@@ -68,6 +68,7 @@ import { ExchangeRateModule } from '../exchange-rates/exchange-rate.module';
     OrderItemRepository,
     OrderItemQueryRepository,
     OrderItemQueryService,
+    CustomerOrderRepository,
     CustomerOrderQueryRepository,
     CustomerOrderQueryService,
     CustomerOrderItemQueryRepository,

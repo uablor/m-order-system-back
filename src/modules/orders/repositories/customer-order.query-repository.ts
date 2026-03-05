@@ -25,9 +25,12 @@ export class CustomerOrderQueryRepository extends BaseQueryRepository<CustomerOr
     const repo = this.getRepo(manager);
   const qb = repo.createQueryBuilder('customerOrder')
     .leftJoinAndSelect('customerOrder.order', 'ord')
+    .leftJoinAndSelect('ord.exchangeRateBuy', 'exchangeRateBuy')
+    .leftJoinAndSelect('ord.exchangeRateSell', 'exchangeRateSell')
     .leftJoinAndSelect('customerOrder.notification', 'notification')
     .leftJoinAndSelect('customerOrder.customer', 'customer')
     .leftJoinAndSelect('customerOrder.customerOrderItems', 'customerOrderItems')
+    
     .leftJoinAndSelect('customerOrderItems.orderItem', 'orderItem');
 
   // Apply filters

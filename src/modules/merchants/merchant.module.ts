@@ -8,11 +8,13 @@ import { MerchantQueryService } from './services/merchant-query.service';
 import { MerchantController } from './controllers/merchant.controller';
 import { TransactionService } from '../../common/transaction/transaction.service';
 import { ImageModule } from '../images/image.module';
+import { DashboardModule } from '../dashboard/dashboard.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([MerchantOrmEntity]),
     forwardRef(() => ImageModule),
+    DashboardModule,
   ],
   controllers: [MerchantController],
   providers: [

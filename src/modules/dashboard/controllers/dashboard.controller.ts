@@ -58,6 +58,16 @@ export class DashboardController {
     const data = await this.dashboardQueryService.getMerchantPriceCurrencySummary(currentUser.merchantId!);
     return createSingleResponse(data);
   }
+
+  @Post('admin/merchant-price-currency-summary')
+  @ApiOperation({ summary: 'Admin: Get merchant price currency summary by merchant ID' })
+  @ApiBearerAuth('BearerAuth')
+  @ApiOkResponseBase(MerchantPriceCurrencySummaryDto)
+  @ApiUnauthorizedBase()
+  async adminGetMerchantPriceCurrencySummary(@CurrentUser() currentUser: CurrentUserPayload, @Body() body: { merchantId: number }) {
+    const data = await this.dashboardQueryService.getMerchantPriceCurrencySummary(body.merchantId);
+    return createSingleResponse(data);
+  }
   
   @Post('merchant/price-currency-summary-by-date')
   @ApiOperation({ summary: 'Merchant price currency summary - grouped by target currency' })

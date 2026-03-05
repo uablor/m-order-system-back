@@ -9,11 +9,13 @@ import { TransactionService } from '../../common/transaction/transaction.service
 import { PermissionsGuard } from '../../common/policies/permissions.guard';
 import { RolesGuard } from '../../common/policies/roles.guard';
 import { ImageModule } from '../images/image.module';
+import { OrderModule } from '../orders/order.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([PaymentOrmEntity]),
     ImageModule,
+    OrderModule,
   ],
   controllers: [PaymentController],
   providers: [

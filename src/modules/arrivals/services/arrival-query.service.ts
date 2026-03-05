@@ -83,6 +83,7 @@ export class ArrivalQueryService {
       arrivalTime: query.arrivalTime,
       arrival: query.arrival,
       customerId: query.customerId,
+      notification: query.notification,
     });
     return createPaginatedResponse(
       result.results.map((e) => this.toResponse(e)),
@@ -118,24 +119,29 @@ export class ArrivalQueryService {
       entity.arrivedDate instanceof Date
         ? entity.arrivedDate.toISOString().slice(0, 10)
         : String(entity.arrivedDate);
+    const orderDto: ArrivalResponseDto['order'] = entity.order
+      ? {
+          id: entity.order.id,
+          orderCode: entity.order.orderCode,
+          orderDate:
+            entity.order.orderDate instanceof Date
+              ? entity.order.orderDate.toISOString().slice(0, 10)
+              : String(entity.order.orderDate),
+          totalAmount: 0, // TODO: Calculate from order items
+          currency: 'LAK', // TODO: Get from order
+          status: entity.order.arrivalStatus ?? 'PENDING',
+          paymentStatus: 'PENDING', // TODO: Get from customer orders
+          customer: null, // TODO: Get from customer orders
+          customerOrders: (entity.order.customerOrders ?? []).map((co) => ({
+            id: co.id,
+            customerId: co.customer?.id ?? (co as { customerId?: number }).customerId ?? 0,
+          })),
+        }
+      : null;
     return {
       id: entity.id,
       orderId: entity.order?.id ?? 0,
-      order: entity.order
-        ? {
-            id: entity.order.id,
-            orderCode: entity.order.orderCode,
-            orderDate:
-              entity.order.orderDate instanceof Date
-                ? entity.order.orderDate.toISOString().slice(0, 10)
-                : String(entity.order.orderDate),
-            totalAmount: 0, // TODO: Calculate from order items
-            currency: 'LAK', // TODO: Get from order
-            status: entity.order.arrivalStatus ?? 'PENDING',
-            paymentStatus: 'PENDING', // TODO: Get from customer orders
-            customer: null, // TODO: Get from customer orders
-          }
-        : null,
+      order: orderDto,
       merchantId: entity.merchant?.id ?? 0,
       arrivedDate,
       arrivedTime: entity.arrivedTime,

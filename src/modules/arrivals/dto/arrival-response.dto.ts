@@ -65,8 +65,8 @@ export class ArrivalResponseDto {
       id: number;
       fullName: string;
       email: string;
-      
     } | null;
+    customerOrders?: { id: number; customerId: number }[];
   } | null;
 
   @ApiProperty()

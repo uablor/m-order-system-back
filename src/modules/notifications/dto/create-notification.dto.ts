@@ -1,5 +1,5 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { IsArray, IsNumber, IsOptional, IsString } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsArray, IsIn, IsNumber, IsOptional, IsString } from 'class-validator';
 
 export class CreateNotificationDto {
   @ApiProperty({
@@ -25,6 +25,11 @@ export class CreateNotificationDto {
   })
   @IsNumber()
   customerId: number;
+
+  @ApiPropertyOptional({ enum: ['en', 'th', 'la'] })
+  @IsOptional()
+  @IsIn(['en', 'th', 'la'])
+  language?: 'en' | 'th' | 'la';
 }
 
 export class CreateNotificationMultipleDto {
@@ -41,5 +46,9 @@ export class CreateNotificationMultipleDto {
   @IsArray()
   @IsOptional()
   notifications: CreateNotificationDto[];
-  
+
+  @ApiPropertyOptional({ enum: ['en', 'th', 'la'], description: 'Language for notification message template' })
+  @IsOptional()
+  @IsIn(['en', 'th', 'la'])
+  language?: 'en' | 'th' | 'la';
 }

@@ -29,7 +29,7 @@ export class OrderOrmEntity extends BaseOrmEntity {
   orderDate: Date;
 
   // สถานะการมาถึงของสินค้า (เช่น ยังไม่ถึง, ถึงแล้ว)
-  @Column({ type: 'enum', enum: ArrivalStatusEnum, default: ArrivalStatusEnum.NOT_ARRIVED })
+  @Column({ name: 'arrival_status', type: 'enum', enum: ArrivalStatusEnum, default: ArrivalStatusEnum.NOT_ARRIVED })
   arrivalStatus: ArrivalStatusEnum;
 
   // วันเวลาที่สินค้ามาถึงจริง
@@ -87,7 +87,7 @@ export class OrderOrmEntity extends BaseOrmEntity {
   totalProfit: number;
 
   // สถานะการชำระเงิน (เช่น ยังไม่จ่าย, จ่ายบางส่วน, จ่ายครบแล้ว)
-  @Column({ type: 'enum', enum: PaymentStatusEnum, default: PaymentStatusEnum.NOT_CREATED })
+  @Column({ name: 'payment_status', type: 'enum', enum: PaymentStatusEnum, default: PaymentStatusEnum.NOT_CREATED })
   paymentStatus: PaymentStatusEnum;
 
   // รายการสินค้าในออเดอร์นี้ (1 ออเดอร์ มีหลายสินค้า)

@@ -73,20 +73,55 @@ export class NotificationCommandService {
   ): Promise<NotificationOrmEntity> {
 
     if (manager) {
-      return this.createInternal(dto, currentUser, manager);
+      const { notification } = await this.createInternalWithCustomer(dto, currentUser, manager);
+      return notification;
     }
 
     return this.transactionService.run(async (manager) => {
-      return this.createInternal(dto, currentUser, manager);
+      const { notification } = await this.createInternalWithCustomer(dto, currentUser, manager);
+      return notification;
     });
   }
 
+  async createMultiple(
+    dto: CreateNotificationMultipleDto,
+    currentUser: CurrentUserPayload,
+  ): Promise<Array<{ recipientContact: string; notificationLink: string | null; language: string | null; customer?: { customerName?: string } | null; relatedOrders: number[] | null }>> {
 
-  private async createInternal(
+    return this.transactionService.run(async (manager) => {
+
+      const results: Array<{ recipientContact: string; notificationLink: string | null; language: string | null; customer?: { customerName?: string } | null; relatedOrders: number[] | null }> = [];
+
+      const language = dto.language ?? 'en';
+
+      for (const notificationData of dto.notifications) {
+        const { notification, customer } = await this.createInternalWithCustomer(
+          { ...notificationData, language } as CreateNotificationDto,
+          currentUser,
+          manager,
+        );
+
+        results.push({
+          recipientContact: notification.recipientContact,
+          notificationLink: notification.notificationLink,
+          language: notification.language ?? language,
+          customer: customer ? { customerName: customer.customerName } : null,
+          relatedOrders: notification.relatedOrders,
+        });
+      }
+
+      return results;
+
+    });
+
+  }
+
+  /** createInternal ที่ return notification และ customer สำหรับใช้ใน createMultiple response */
+  private async createInternalWithCustomer(
     dto: CreateNotificationDto,
     currentUser: CurrentUserPayload,
     manager: EntityManager,
-  ): Promise<NotificationOrmEntity> {
+  ): Promise<{ notification: NotificationOrmEntity; customer: { id: number; customerName: string } }> {
 
     const notificationsToken = generateUniqueToken();
 
@@ -136,11 +171,12 @@ export class NotificationCommandService {
       uniqueToken: notificationsToken,
       channel: NotificationChannel.FB,
       notificationType: NotificationType.ARRIVAL,
-      recipientContact: customer.contactPhone || '',
+      recipientContact: customer.contactWhatsapp || customer.contactPhone || '',
       status: NotificationStatus.PENDING,
       sentAt: new Date(),
       retryCount: 0,
       relatedOrders: customerOrders.map((co) => co.id),
+      language: dto.language ?? 'en',
     }, manager);
 
     const coRepo = manager.getRepository(CustomerOrderOrmEntity);
@@ -150,33 +186,6 @@ export class NotificationCommandService {
       { notification: notification },
     );
 
-    return notification;
-  }
-
-  async createMultiple(
-    dto: CreateNotificationMultipleDto,
-    currentUser: CurrentUserPayload,
-  ): Promise<NotificationOrmEntity[]> {
-
-    return this.transactionService.run(async (manager) => {
-
-      const results: NotificationOrmEntity[] = [];
-
-      for (const notificationData of dto.notifications) {
-
-        const notification = await this.create(
-          notificationData,
-          currentUser,
-          manager,
-        );
-
-        results.push(notification);
-
-      }
-
-      return results;
-
-    });
-
+    return { notification, customer: { id: customer.id, customerName: customer.customerName } };
   }
 }

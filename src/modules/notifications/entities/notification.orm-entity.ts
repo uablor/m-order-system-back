@@ -54,4 +54,7 @@ export class NotificationOrmEntity extends BaseOrmEntity {
 
   @Column({ name: 'related_orders', type: 'json', nullable: true })
   relatedOrders: number[] | null;
+
+  @Column({ name: 'language', type: 'varchar', length: 10, nullable: true, default: 'en' })
+  language: string | null;
 }
