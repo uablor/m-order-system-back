@@ -21,8 +21,8 @@ import { PaymentStatusEnum } from 'src/modules/payments/enum/payment.enum';
 
 const ZERO = 0;
 
-function calcPaymentStatus(total: number, paid: number): 'UNPAID' | 'PARTIAL' | 'PAID' {
-  if (paid <= 0) return 'UNPAID';
+function calcPaymentStatus(total: number, paid: number): 'NOT_CREATED' | 'UNPAID' | 'PARTIAL' | 'PAID' {
+  if (paid <= 0) return 'NOT_CREATED';  // New orders with no payments
   if (paid >= total) return 'PAID';
   return 'PARTIAL';
 }

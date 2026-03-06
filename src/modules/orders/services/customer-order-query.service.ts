@@ -165,7 +165,7 @@ GROUP BY
       targetCurrencyTotalPaid: convertToTargetCurrency(entity.totalPaid, entity.order?.exchangeRateSell),
       targetCurrencyRemainingAmount: convertToTargetCurrency(entity.remainingAmount, entity.order?.exchangeRateSell),
       paymentStatus: entity.paymentStatus,
-      
+      hasPendingPayment: entity.paymentStatus === 'UNPAID',
       customerOrderItems: entity.customerOrderItems?.map(item => ({
         id: item.id,
         orderItemId: item.orderItem?.id ?? 0,

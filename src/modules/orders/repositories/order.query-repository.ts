@@ -14,9 +14,6 @@ export interface OrderSummary {
   notArrivedOrders: number;
   paidOrders: number;
   unpaidOrders: number;
-  totalFinalCost: string;
-  totalSellingAmount: string;
-  totalProfit: string;
 }
 
 export interface OrderPaginatedResult {
@@ -158,12 +155,7 @@ export class OrderQueryRepository extends BaseQueryRepository<OrderOrmEntity> {
       .addSelect("COALESCE(SUM(CASE WHEN order.arrivalStatus = 'ARRIVED' THEN 1 ELSE 0 END), 0)", 'arrivedOrders')
       .addSelect("COALESCE(SUM(CASE WHEN order.arrivalStatus = 'NOT_ARRIVED' THEN 1 ELSE 0 END), 0)", 'notArrivedOrders')
       .addSelect("COALESCE(SUM(CASE WHEN order.paymentStatus = 'PAID' THEN 1 ELSE 0 END), 0)", 'paidOrders')
-      .addSelect("COALESCE(SUM(CASE WHEN order.paymentStatus = 'UNPAID' THEN 1 ELSE 0 END), 0)", 'unpaidOrders')
-      .addSelect('COALESCE(SUM(order.totalFinalCost), 0)', 'totalFinalCostLak')
-      .addSelect('COALESCE(SUM(order.totalSellingAmount), 0)', 'totalSellingAmountLak')
-      .addSelect('COALESCE(SUM(order.totalProfit), 0)', 'totalProfitLak')
-      .addSelect('COALESCE(SUM(customerOrders.totalPaid), 0)', 'totalPaidAmount')
-      .addSelect('COALESCE(SUM(customerOrders.remainingAmount), 0)', 'totalRemainingAmount');
+      .addSelect("COALESCE(SUM(CASE WHEN customerOrders.paymentStatus IN ('NOT_CREATED', 'UNPAID') THEN 1 ELSE 0 END), 0)", 'unpaidOrders');
 
     buildFilters(aggQb);
     const aggRaw = await aggQb.getRawOne<Record<string, string>>();
@@ -174,9 +166,6 @@ export class OrderQueryRepository extends BaseQueryRepository<OrderOrmEntity> {
       notArrivedOrders: Number(aggRaw?.notArrivedOrders ?? 0),
       paidOrders: Number(aggRaw?.paidOrders ?? 0),
       unpaidOrders: Number(aggRaw?.unpaidOrders ?? 0),
-      totalFinalCost: aggRaw?.totalFinalCost ?? '0',
-      totalSellingAmount: aggRaw?.totalSellingAmount ?? '0',
-      totalProfit: aggRaw?.totalProfitLak ?? '0',
     };
   }
 }

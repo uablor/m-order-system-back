@@ -116,7 +116,7 @@ export class OrderQueryService {
     };
   }
 
-  async getSummary(query: OrderListQueryDto): Promise<{ totalOrders: number; arrivedOrders: number; notArrivedOrders: number; paidOrders: number; unpaidOrders: number; totalFinalCostLak: string; totalSellingAmountLak: string; totalProfitLak: string }> {
+  async getSummary(query: OrderListQueryDto): Promise<{ totalOrders: number; arrivedOrders: number; notArrivedOrders: number; paidOrders: number; unpaidOrders: number; }> {
     const summary = await this.orderQueryRepository.getSummary({
       merchantId: query.merchantId,
       customerId: query.customerId,
@@ -134,16 +134,13 @@ export class OrderQueryService {
       notArrivedOrders: summary.notArrivedOrders,
       paidOrders: summary.paidOrders,
       unpaidOrders: summary.unpaidOrders,
-      totalFinalCostLak: summary.totalFinalCost,
-      totalSellingAmountLak: summary.totalSellingAmount,
-      totalProfitLak: summary.totalProfit,
     };
   }
 
   async getSummaryByMerchant(
     query: OrderListQueryDto,
     currentUser: import('../../../common/decorators/current-user.decorator').CurrentUserPayload,
-  ): Promise<{ totalOrders: number; arrivedOrders: number; notArrivedOrders: number; paidOrders: number; unpaidOrders: number; totalFinalCostLak: string; totalSellingAmountLak: string; totalProfitLak: string }> {
+  ): Promise<{ totalOrders: number; arrivedOrders: number; notArrivedOrders: number; paidOrders: number; unpaidOrders: number; }> {
     return this.getSummary({
       ...query,
       merchantId: currentUser.merchantId!,
