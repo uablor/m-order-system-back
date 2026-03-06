@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsDate, IsOptional } from 'class-validator';
+import { IsDate, IsInt, IsNotEmpty, IsNumber, IsOptional, Min } from 'class-validator';
 import { Transform } from 'class-transformer';
 
 export class MerchantPriceCurrencySummaryDto {
@@ -37,4 +37,9 @@ export class MerchantGetPriceCurrencySummaryDto {
   @IsDate()
   @Transform(({ value }) => value ? new Date(value) : undefined)
   endDate?: Date;
+
+  @ApiProperty({ description: 'Merchant ID', required: true })
+  @IsOptional()
+  @IsInt()
+  merchantId?: number;
 }

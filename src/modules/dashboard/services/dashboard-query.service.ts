@@ -305,6 +305,8 @@ async getMerchantPriceCurrencySummaryByDate(
     GROUP BY YEAR(o.created_at), MONTH(o.created_at), ers.base_currency, ers.rate
   `;
 
+  console.log(buyQuery, sellQuery, merchantId, startDate, endDate);
+
   const [buyRows, sellRows] = await Promise.all([
     this.dataSource.query(buyQuery, [merchantId, startDate, endDate]),
     this.dataSource.query(sellQuery, [merchantId, startDate, endDate]),

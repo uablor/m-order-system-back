@@ -6,6 +6,8 @@ import { CustomerOrderResponseDto } from '../dto/customer-order-response.dto';
 import type { ResponseInterface, ResponseWithPaginationInterface } from '../../../common/base/interfaces/response.interface';
 import { createPaginatedResponse, createSingleResponse } from '../../../common/base/helpers/response.helper';
 import { convertToTargetCurrency } from 'src/common/utils/convert-to-target-currency.utils';
+// import { PaymentVerificationStatusEnum } from '../../payments/enum/payment.enum';
+// import { PaymentOrmEntity } from '../../payments/entities/payment.orm-entity';
 import { DataSource } from 'typeorm';
 
 @Injectable()
@@ -163,6 +165,7 @@ GROUP BY
       targetCurrencyTotalPaid: convertToTargetCurrency(entity.totalPaid, entity.order?.exchangeRateSell),
       targetCurrencyRemainingAmount: convertToTargetCurrency(entity.remainingAmount, entity.order?.exchangeRateSell),
       paymentStatus: entity.paymentStatus,
+      
       customerOrderItems: entity.customerOrderItems?.map(item => ({
         id: item.id,
         orderItemId: item.orderItem?.id ?? 0,

@@ -116,7 +116,7 @@ export class OrderQueryService {
     };
   }
 
-  async getSummary(query: OrderListQueryDto): Promise<{ totalOrders: number; totalFinalCostLak: string; totalSellingAmountLak: string; totalProfitLak: string }> {
+  async getSummary(query: OrderListQueryDto): Promise<{ totalOrders: number; arrivedOrders: number; notArrivedOrders: number; paidOrders: number; unpaidOrders: number; totalFinalCostLak: string; totalSellingAmountLak: string; totalProfitLak: string }> {
     const summary = await this.orderQueryRepository.getSummary({
       merchantId: query.merchantId,
       customerId: query.customerId,
@@ -130,6 +130,10 @@ export class OrderQueryService {
     });
     return {
       totalOrders: summary.totalOrders,
+      arrivedOrders: summary.arrivedOrders,
+      notArrivedOrders: summary.notArrivedOrders,
+      paidOrders: summary.paidOrders,
+      unpaidOrders: summary.unpaidOrders,
       totalFinalCostLak: summary.totalFinalCost,
       totalSellingAmountLak: summary.totalSellingAmount,
       totalProfitLak: summary.totalProfit,
@@ -139,7 +143,7 @@ export class OrderQueryService {
   async getSummaryByMerchant(
     query: OrderListQueryDto,
     currentUser: import('../../../common/decorators/current-user.decorator').CurrentUserPayload,
-  ): Promise<{ totalOrders: number; totalFinalCostLak: string; totalSellingAmountLak: string; totalProfitLak: string }> {
+  ): Promise<{ totalOrders: number; arrivedOrders: number; notArrivedOrders: number; paidOrders: number; unpaidOrders: number; totalFinalCostLak: string; totalSellingAmountLak: string; totalProfitLak: string }> {
     return this.getSummary({
       ...query,
       merchantId: currentUser.merchantId!,
@@ -309,6 +313,7 @@ export class OrderQueryService {
         targetCurrencyPaidAmount: this.convertToTargetCurrency(customerOrder.totalPaid, entity.exchangeRateSell),
         targetCurrencyRemainingAmount: this.convertToTargetCurrency(customerOrder.remainingAmount, entity.exchangeRateSell),
         paymentStatus: customerOrder.paymentStatus,
+        // hasPendingPayment: customerOrder.paymentStatus === 'UNPAID',
         customerOrderItems: (customerOrder.customerOrderItems ?? []).map((item) => ({
           id: item.id,
           customerOrderId: item.customerOrder?.id ?? 0,

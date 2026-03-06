@@ -101,7 +101,7 @@ export class MerchantController {
   @ApiBearerAuth('BearerAuth')
   @ApiOkResponseBase(MerchantPriceCurrencySummaryDto)
   @ApiUnauthorizedBase()
-  async merchantGetPriceCurrencySummary(@CurrentUser() currentUser: CurrentUserPayload) {
+  async adminGetMerchantPriceCurrencySummary(@CurrentUser() currentUser: CurrentUserPayload) {
     const data = await this.dashboardQueryService.getMerchantPriceCurrencySummary(currentUser.merchantId!);
     return createSingleResponse(data);
   }
@@ -111,9 +111,9 @@ export class MerchantController {
   @ApiBearerAuth('BearerAuth')
   @ApiOkResponseBase(MerchantPriceCurrencySummaryDto)
   @ApiUnauthorizedBase()
-  async getMerchantPriceCurrencySummaryByDate(@CurrentUser() currentUser: CurrentUserPayload
-    , @Body() body: MerchantGetPriceCurrencySummaryDto) {
-    const data = await this.dashboardQueryService.getMerchantPriceCurrencySummaryByDate(currentUser.merchantId!, body.startDate, body.endDate);
+  async adminGetMerchantPriceCurrencySummaryByDate(
+    @Body() body: MerchantGetPriceCurrencySummaryDto) {
+    const data = await this.dashboardQueryService.getMerchantPriceCurrencySummaryByDate(body.merchantId!, body.startDate, body.endDate);
     return createSingleResponse(data);
   }
 

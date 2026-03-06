@@ -42,7 +42,9 @@ export class PaymentCommandService {
         throw new BadRequestException('Order must be arrived before making a payment');
       }
 
-      if (currentUser.merchantId && currentUser.merchantId !== customerOrder.order.merchant.id) {
+      // For public customer payments, we don't check merchant authorization
+      // The customer can only pay for their own orders via token-based access
+      if (currentUser && currentUser.merchantId && currentUser.merchantId !== customerOrder.order.merchant.id) {
         throw new ForbiddenException('You are not authorized to make a payment for this order');
       }
 
@@ -74,6 +76,13 @@ export class PaymentCommandService {
         },
         manager,
       );
+
+      // // Update customer order payment status to UNPAID (waiting for approval)
+      await customerOrderRepo.update(customerOrder.id, {
+        paymentStatus: PaymentStatusEnum.NOT_CREATED,
+      });
+      //  await customerOrderRepo.update(customerOrder.id, {
+      //   paymentStatus: PaymentVerificationStatusEnum.PENDING, })
 
       return newPayment;
     });

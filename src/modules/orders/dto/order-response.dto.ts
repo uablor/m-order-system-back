@@ -84,6 +84,9 @@ export class CustomerOrderResponseDto {
   @ApiProperty()
   paymentStatus: string;
 
+  // @ApiProperty({ description: 'Whether this order has a pending payment waiting for approval' })
+  // hasPendingPayment: boolean;
+
   @ApiProperty({ type: [CustomerOrderItemResponseDto] })
   customerOrderItems: CustomerOrderItemResponseDto[];
 
