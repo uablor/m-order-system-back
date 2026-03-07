@@ -252,7 +252,7 @@ export class PaymentCommandService {
 
     const orderRepo = manager.getRepository(OrderOrmEntity);
     const orderEntity = await orderRepo.findOne({
-      where: { id: customerOrder?.order.id },
+      where: { id: customerOrder?.order.id }, relations: ['merchant', 'customerOrders'],
     });
 
 
@@ -278,21 +278,20 @@ export class PaymentCommandService {
       await customerOrderRepo.update(customerOrder.id, {
         totalPaid: newPaid,
         remainingAmount: remainingAmount,
+        // ຍັງບໍາໄດ້ເຮັດເລື່ອງ remainingAmount ແລະ paymentStatus ສໍາລັບ customerOrder
         paymentStatus: PaymentStatusEnum.PAID,
       });
     
 
-
-    if (orderEntity && remainingAmount !== undefined) {
+      const isPaid = orderEntity?.customerOrders?.every(co => co.paymentStatus === PaymentStatusEnum.PAID);
+      if (orderEntity && isPaid !== undefined) {
       await orderRepo.update(orderEntity.id, {
-        paymentStatus: remainingAmount <= 0 ? PaymentStatusEnum.PAID : PaymentStatusEnum.UNPAID,
+        paymentStatus: isPaid ? PaymentStatusEnum.PAID : PaymentStatusEnum.UNPAID,
       });
     }
 
     return updatedPayment;
   }
-
-
 
   async verify(
     id: number,

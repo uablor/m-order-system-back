@@ -156,7 +156,7 @@ GROUP BY
       orderId: entity.order?.id ?? 0,
       orderCode: entity.order?.orderCode ?? null,
       customerId: entity.customer?.id ?? 0,
-      customerName: entity.customer?.contactLine || '',
+      customerName: entity.customer?.customerName || '',
       customerToken: entity.customer?.uniqueToken || '',
       totalSellingAmount: entity.totalSellingAmount,
       totalPaid: entity.totalPaid,

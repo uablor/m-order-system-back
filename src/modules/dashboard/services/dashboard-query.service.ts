@@ -167,6 +167,7 @@ export class DashboardQueryService {
       totalOrderItems: Number(orderItemStats[0]?.total ?? 0),
     };
   }
+  
   /**
    * Retrieves the summary of the merchant's price and currency.
    *
