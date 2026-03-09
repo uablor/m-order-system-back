@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsDate, IsInt, IsNotEmpty, IsNumber, IsOptional, Min } from 'class-validator';
+import { IsDate, IsInt, IsOptional } from 'class-validator';
 import { Transform } from 'class-transformer';
 
 export class MerchantPriceCurrencySummaryDto {

@@ -168,93 +168,93 @@ export class DashboardQueryService {
     };
   }
   
-  /**
-   * Retrieves the summary of the merchant's price and currency.
-   *
-   * @param {number} merchantId - The ID of the merchant.
-   * @returns {Promise<any[]>} - A promise that resolves to an array of currency summaries.
-   */
-  async getMerchantPriceCurrencySummary(merchantId: number): Promise<any[]> {
-    const query = `
-      SELECT
-        erb.base_currency AS baseCurrency,
-        SUM(o.total_final_cost) AS totalAll,
-        SUM(CASE WHEN o.payment_status = 'UNPAID' THEN o.total_final_cost ELSE 0 END) AS totalUnpaid,
-        SUM(CASE WHEN o.payment_status = 'PAID' THEN o.total_final_cost ELSE 0 END) AS totalPaid,
-        erb.rate AS rate
-      FROM
-        orders o
-        LEFT JOIN exchange_rates erb ON erb.id = o.exchange_rate_buy_id
-      WHERE
-        o.merchant_id = ?
-      GROUP BY
-        erb.base_currency,
-        erb.rate
-      UNION ALL
-      SELECT
-        ers.base_currency AS baseCurrency,
-        SUM(o.total_selling_amount) AS totalAll,
-        SUM(CASE WHEN o.payment_status = 'UNPAID' THEN o.total_selling_amount ELSE 0 END) AS totalUnpaid,
-        SUM(CASE WHEN o.payment_status = 'PAID' THEN o.total_selling_amount ELSE 0 END) AS totalPaid,
-        ers.rate AS rate
-      FROM
-        orders o
-        LEFT JOIN exchange_rates ers ON ers.id = o.exchange_rate_sell_id
-      WHERE
-        o.merchant_id = ?
-      GROUP BY
-        ers.base_currency,
-        ers.rate
-    `;
 
-    const rows = await this.dataSource.query(query, [merchantId, merchantId]);
+async getMerchantPriceCurrencySummary(merchantId: number): Promise<any[]> {
+  const query = `
+    SELECT
+      erb.base_currency AS baseCurrency,
+      SUM(o.total_final_cost) AS totalAll,
+      SUM(CASE WHEN co.payment_status = 'UNPAID' THEN o.total_final_cost ELSE 0 END) AS totalUnpaid,
+      SUM(CASE WHEN co.payment_status = 'PAID' THEN o.total_final_cost ELSE 0 END) AS totalPaid,
+      erb.rate AS rate
+    FROM
+      orders o
+      LEFT JOIN customer_orders co ON co.order_id = o.id
+      LEFT JOIN exchange_rates erb ON erb.id = o.exchange_rate_buy_id
+    WHERE
+      o.merchant_id = ?
+    GROUP BY
+      erb.base_currency,
+      erb.rate
 
-    const currencyMap = new Map<string, any>();
-    let lakTotalAll = 0;
-    let lakTotalUnpaid = 0;
-    let lakTotalPaid = 0;
+    UNION ALL
 
-    for (const row of rows) {
-      const { baseCurrency, totalAll, totalUnpaid, totalPaid, rate } = row;
+    SELECT
+      ers.base_currency AS baseCurrency,
+      SUM(o.total_selling_amount) AS totalAll,
+      SUM(CASE WHEN co.payment_status = 'UNPAID' THEN o.total_selling_amount ELSE 0 END) AS totalUnpaid,
+      SUM(CASE WHEN co.payment_status = 'PAID' THEN o.total_selling_amount ELSE 0 END) AS totalPaid,
+      ers.rate AS rate
+    FROM
+      orders o
+      LEFT JOIN customer_orders co ON co.order_id = o.id
+      LEFT JOIN exchange_rates ers ON ers.id = o.exchange_rate_sell_id
+    WHERE
+      o.merchant_id = ?
+    GROUP BY
+      ers.base_currency,
+      ers.rate
+  `;
 
-      const key = `${baseCurrency}`;
+  const rows = await this.dataSource.query(query, [merchantId, merchantId]);
 
-      if (!currencyMap.has(key)) {
-        currencyMap.set(key, {
-          baseCurrency,
-          totalAll: 0,
-          totalUnpaid: 0,
-          totalPaid: 0,
-        });
-      }
+  const currencyMap = new Map<string, any>();
+  let lakTotalAll = 0;
+  let lakTotalUnpaid = 0;
+  let lakTotalPaid = 0;
 
-      const existing = currencyMap.get(key);
+  for (const row of rows) {
+    const { baseCurrency, totalAll, totalUnpaid, totalPaid, rate } = row;
 
-      existing.totalAll += totalAll;
-      existing.totalUnpaid += totalUnpaid;
-      existing.totalPaid += totalPaid;
+    const key = `${baseCurrency}`;
 
-      if (baseCurrency === "LAK") {
-        lakTotalAll += totalAll;
-        lakTotalUnpaid += totalUnpaid;
-        lakTotalPaid += totalPaid;
-      } else {
-        lakTotalAll += totalAll * rate;
-        lakTotalUnpaid += totalUnpaid * rate;
-        lakTotalPaid += totalPaid * rate;
-      }
+    if (!currencyMap.has(key)) {
+      currencyMap.set(key, {
+        baseCurrency,
+        totalAll: 0,
+        totalUnpaid: 0,
+        totalPaid: 0,
+      });
     }
 
-    const result = Array.from(currencyMap.values());
-    result.push({
-      targetCurrency: "LAK",
-      totalAll: lakTotalAll,
-      totalUnpaid: lakTotalUnpaid,
-      totalPaid: lakTotalPaid,
-    });
+    const existing = currencyMap.get(key);
 
-    return result;
+    existing.totalAll += Number(totalAll);
+    existing.totalUnpaid += Number(totalUnpaid);
+    existing.totalPaid += Number(totalPaid);
+
+    if (baseCurrency === "LAK") {
+      lakTotalAll += Number(totalAll);
+      lakTotalUnpaid += Number(totalUnpaid);
+      lakTotalPaid += Number(totalPaid);
+    } else {
+      lakTotalAll += Number(totalAll) * Number(rate);
+      lakTotalUnpaid += Number(totalUnpaid) * Number(rate);
+      lakTotalPaid += Number(totalPaid) * Number(rate);
+    }
   }
+
+  const result = Array.from(currencyMap.values());
+
+  result.push({
+    targetCurrency: "LAK",
+    totalAll: lakTotalAll,
+    totalUnpaid: lakTotalUnpaid,
+    totalPaid: lakTotalPaid,
+  });
+
+  return result;
+}
 
 async getMerchantPriceCurrencySummaryByDate(
   merchantId: number,
@@ -270,17 +270,17 @@ async getMerchantPriceCurrencySummaryByDate(
     endDate = new Date(new Date().getFullYear(), 11, 31);
   }
 
-  // BUY query
   const buyQuery = `
     SELECT 
       YEAR(o.created_at) as year,
       MONTH(o.created_at) as month,
       erb.base_currency as baseCurrency,
       SUM(o.total_final_cost) as totalAll,
-      SUM(CASE WHEN o.payment_status = 'UNPAID' THEN o.total_final_cost ELSE 0 END) as totalUnpaid,
-      SUM(CASE WHEN o.payment_status = 'PAID' THEN o.total_final_cost ELSE 0 END) as totalPaid,
+      SUM(CASE WHEN co.payment_status = 'UNPAID' THEN o.total_final_cost ELSE 0 END) as totalUnpaid,
+      SUM(CASE WHEN co.payment_status = 'PAID' THEN o.total_final_cost ELSE 0 END) as totalPaid,
       erb.rate as rate
     FROM orders o
+    LEFT JOIN customer_orders co ON co.order_id = o.id
     LEFT JOIN exchange_rates erb ON erb.id = o.exchange_rate_buy_id
     WHERE o.merchant_id = ?
       AND o.created_at >= ?
@@ -288,17 +288,17 @@ async getMerchantPriceCurrencySummaryByDate(
     GROUP BY YEAR(o.created_at), MONTH(o.created_at), erb.base_currency, erb.rate
   `;
 
-  // SELL query
   const sellQuery = `
     SELECT 
       YEAR(o.created_at) as year,
       MONTH(o.created_at) as month,
       ers.base_currency as baseCurrency,
       SUM(o.total_selling_amount) as totalAll,
-      SUM(CASE WHEN o.payment_status = 'UNPAID' THEN o.total_selling_amount ELSE 0 END) as totalUnpaid,
-      SUM(CASE WHEN o.payment_status = 'PAID' THEN o.total_selling_amount ELSE 0 END) as totalPaid,
+      SUM(CASE WHEN co.payment_status = 'UNPAID' THEN o.total_selling_amount ELSE 0 END) as totalUnpaid,
+      SUM(CASE WHEN co.payment_status = 'PAID' THEN o.total_selling_amount ELSE 0 END) as totalPaid,
       ers.rate as rate
     FROM orders o
+    LEFT JOIN customer_orders co ON co.order_id = o.id
     LEFT JOIN exchange_rates ers ON ers.id = o.exchange_rate_sell_id
     WHERE o.merchant_id = ?
       AND o.created_at >= ?
@@ -306,20 +306,12 @@ async getMerchantPriceCurrencySummaryByDate(
     GROUP BY YEAR(o.created_at), MONTH(o.created_at), ers.base_currency, ers.rate
   `;
 
-  console.log(buyQuery, sellQuery, merchantId, startDate, endDate);
-
   const [buyRows, sellRows] = await Promise.all([
     this.dataSource.query(buyQuery, [merchantId, startDate, endDate]),
     this.dataSource.query(sellQuery, [merchantId, startDate, endDate]),
   ]);
 
-  // create month map
-  const monthMap: Record<string, {
-    year: number,
-    month: number,
-    buyRows: any[],
-    sellRows: any[],
-  }> = {};
+  const monthMap: Record<string, any> = {};
 
   const cursor = new Date(startDate);
   cursor.setDate(1);
@@ -341,7 +333,6 @@ async getMerchantPriceCurrencySummaryByDate(
     cursor.setMonth(cursor.getMonth() + 1);
   }
 
-  // fill rows
   for (const r of buyRows) {
     const key = `${Number(r.year)}-${Number(r.month)}`;
     if (monthMap[key]) monthMap[key].buyRows.push(r);
@@ -391,7 +382,6 @@ async getMerchantPriceCurrencySummaryByDate(
       existing.totalUnpaid += totalUnpaid;
       existing.totalPaid += totalPaid;
 
-      // convert to LAK
       if (baseCurrency === "LAK") {
         lakTotalAll += totalAll;
         lakTotalUnpaid += totalUnpaid;
@@ -403,15 +393,8 @@ async getMerchantPriceCurrencySummaryByDate(
       }
     };
 
-    // process BUY
-    for (const r of buyRows) {
-      processRow("BUY", r);
-    }
-
-    // process SELL
-    for (const r of sellRows) {
-      processRow("SELL", r);
-    }
+    for (const r of buyRows) processRow("BUY", r);
+    for (const r of sellRows) processRow("SELL", r);
 
     totalLakAll += lakTotalAll;
     totalLakUnpaid += lakTotalUnpaid;
@@ -443,7 +426,7 @@ async getMerchantPriceCurrencySummaryByDate(
   };
 }
 
-  async getTopCustomersByBuyOrder(merchantId: number): Promise<TopCustomersResponseDto> {
+async getTopCustomersByBuyOrder(merchantId: number): Promise<TopCustomersResponseDto> {
     const query = `
     SELECT 
       u.id as customerId,
