@@ -52,7 +52,8 @@ export class PaymentRepository {
       .leftJoinAndSelect('payment.customerOrder', 'customerOrder')
       .leftJoinAndSelect('customerOrder.order', 'order')
       .leftJoinAndSelect('customerOrder.customer', 'customer')
-      .leftJoinAndSelect('order.merchant', 'merchant');
+      .leftJoinAndSelect('order.merchant', 'merchant')
+      .leftJoinAndSelect('payment.paymentProofImage', 'paymentProofImage');
 
     // ถ้า merchantId > 0 ให้กรองตาม merchant ถ้าเป็น 0 (admin) ดูทั้งหมด
     if (merchantId > 0) {
@@ -94,6 +95,7 @@ export class PaymentRepository {
       .leftJoinAndSelect('payment.customerOrder', 'customerOrder')
       .leftJoinAndSelect('customerOrder.order', 'order')
       .leftJoinAndSelect('customerOrder.customer', 'customer')
+      .leftJoinAndSelect('payment.paymentProofImage', 'paymentProofImage')
       .where('customerOrder.customerId = :customerId', { customerId });
 
     // Apply filters
@@ -177,5 +179,15 @@ export class PaymentRepository {
       totalVerified: Number(raw?.totalVerified ?? 0),
       totalRejected: Number(raw?.totalRejected ?? 0),
     };
+  }
+
+  async findByCustomerOrderId(
+    customerOrderId: number,
+    relations: string[] = [],
+  ): Promise<PaymentOrmEntity | null> {
+    return this.repository.findOne({
+      where: { customerOrderId },
+      relations: ['paymentProofImage', ...relations],
+    });
   }
 }

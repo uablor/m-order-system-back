@@ -26,6 +26,18 @@ export class AuthUserDto {
     description: 'Permission codes (e.g. arrival-items:delete)',
   })
   permissions?: string[];
+
+  @ApiProperty()
+  isActive: boolean;
+
+  @ApiProperty()
+  createdAt: Date;
+
+  @ApiProperty()
+  updatedAt: Date;
+
+  @ApiProperty({ nullable: true })
+  lastLogin: Date | null;
 }
 
 export class AuthResponseDto {

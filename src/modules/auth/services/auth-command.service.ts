@@ -21,14 +21,14 @@ export class AuthCommandService {
       relations: ['role', 'merchant'],
     });
     if (!entity) {
-      throw new UnauthorizedException('Invalid email or password');
+      throw new UnauthorizedException('Email not found');
     }
     if (!entity.isActive) {
       throw new UnauthorizedException('Account is inactive');
     }
     const match = await comparePassword(dto.password, entity.passwordHash);
     if (!match) {
-      throw new UnauthorizedException('Invalid email or password');
+      throw new UnauthorizedException('Incorrect password');
     }
 
     entity.lastLogin = new Date();
@@ -58,6 +58,11 @@ export class AuthCommandService {
         roleId: entity.roleId,
         roleName: entity.role?.roleName,
         merchantId: merchantId ?? undefined,
+        permissions: permissionCodes,
+        isActive: entity.isActive,
+        createdAt: entity.createdAt,
+        updatedAt: entity.updatedAt,
+        lastLogin: entity.lastLogin,
       },
     };
   }

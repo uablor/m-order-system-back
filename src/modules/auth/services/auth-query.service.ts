@@ -32,6 +32,10 @@ export class AuthQueryService {
       roleName: entity.role?.roleName,
       merchantId: merchantId ?? undefined,
       permissions: permissionCodes,
+      isActive: entity.isActive,
+      createdAt: entity.createdAt,
+      updatedAt: entity.updatedAt,
+      lastLogin: entity.lastLogin,
     };
     return createSingleResponse(profile);
   }

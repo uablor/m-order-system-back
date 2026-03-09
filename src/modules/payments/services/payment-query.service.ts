@@ -143,4 +143,42 @@ export class PaymentQueryService {
     
     return createPaginatedResponse(transformedResults, response.pagination, 'Payments retrieved successfully');
   }
+
+  async getByCustomerOrderId(
+    customerOrderId: number,
+    currentUser?: CurrentUserPayload,
+  ): Promise<ResponseInterface<PaymentResponseDto> | null> {
+    const payment = await this.paymentRepository.findByCustomerOrderId(customerOrderId, [
+      'customerOrder',
+      'customerOrder.order',
+      'customerOrder.customer',
+      'verifiedBy',
+      'rejectedBy',
+    ]);
+
+    if (!payment) {
+      return null;
+    }
+
+    // If currentUser is provided, check ownership
+    if (currentUser) {
+      if (currentUser.roleName === 'CUSTOMER') {
+        // Customer can only view their own payments
+        if (payment.customerOrder.customer.id !== currentUser.userId) {
+          throw new ForbiddenException('You can only view your own payments');
+        }
+      } else if (currentUser.roleName === 'MERCHANT') {
+        // Merchant can only view payments for their orders
+        if (payment.customerOrder.order.merchant.id !== currentUser.merchantId) {
+          throw new ForbiddenException('You can only view payments for your own orders');
+        }
+      }
+      // Staff and Admin can view all payments
+    }
+
+    return createSingleResponse({
+      ...payment,
+      paymentProofUrl: extractPaymentProofUrl(payment.paymentProofImage),
+    }, 'Payment retrieved successfully');
+  }
 }

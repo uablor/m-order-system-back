@@ -9,6 +9,7 @@ import {
   Query,
   UseGuards,
   Delete,
+  NotFoundException,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiParam, ApiBearerAuth } from '@nestjs/swagger';
 import { PaymentCommandService } from '../services/payment-command.service';
@@ -83,6 +84,25 @@ export class PaymentController {
     @CurrentUser() currentUser: CurrentUserPayload,
   ) {
     return this.queryService.getListByCustomer(query, currentUser);
+  }
+
+  @Get('by-customer-order/:customerOrderId')
+  @ApiOperation({ summary: 'Get payment by customer order ID' })
+  @ApiBearerAuth('BearerAuth')
+  @ApiParam({ name: 'customerOrderId', description: 'Customer Order ID' })
+  @ApiOkResponseBase(PaymentResponseDto)
+  @ApiNotFoundBase()
+  @ApiUnauthorizedBase()
+  @ApiForbiddenBase()
+  async getByCustomerOrderId(
+    @Param('customerOrderId', ParseIntPipe) customerOrderId: number,
+    @CurrentUser() currentUser: CurrentUserPayload,
+  ) {
+    const result = await this.queryService.getByCustomerOrderId(customerOrderId, currentUser);
+    if (!result) {
+      throw new NotFoundException('Payment not found for this customer order');
+    }
+    return result;
   }
 
   // ─── Merchant: payments for their orders ───────────────────────────────
