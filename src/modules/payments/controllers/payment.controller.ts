@@ -131,6 +131,17 @@ export class PaymentController {
     return this.queryService.getSummaryByMerchant(query, currentUser);
   }
 
+  @Get('merchant/unread')
+  @ApiOperation({ summary: 'Get unread payments for merchant notifications' })
+  @ApiBearerAuth('BearerAuth')
+  @ApiOkResponseBase()
+  @ApiUnauthorizedBase()
+  async getUnreadMerchantPayments(
+    @CurrentUser() currentUser: CurrentUserPayload,
+  ) {
+    return this.queryService.getUnreadPaymentsByMerchant(currentUser);
+  }
+
   // ─── Admin: full payment list ───────────────────────────────────────────
 
   @Get()
@@ -215,6 +226,20 @@ export class PaymentController {
     @CurrentUser() currentUser: CurrentUserPayload,
   ) {
     return this.commandService.reject(id, dto, currentUser);
+  }
+
+  @Patch(':id/read')
+  @ApiOperation({ summary: 'Mark payment as read (merchant)' })
+  @ApiBearerAuth('BearerAuth')
+  @ApiParam({ name: 'id', description: 'Payment ID' })
+  @ApiOkResponseBase()
+  @ApiNotFoundBase()
+  @ApiUnauthorizedBase()
+  async markAsRead(
+    @Param('id', ParseIntPipe) id: number,
+    @CurrentUser() currentUser: CurrentUserPayload,
+  ) {
+    return this.commandService.markAsRead(id, currentUser);
   }
 
   // ─── Delete ─────────────────────────────────────────────────────────────

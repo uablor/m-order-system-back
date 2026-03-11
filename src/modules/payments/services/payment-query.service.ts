@@ -110,6 +110,34 @@ export class PaymentQueryService {
     return createPaginatedResponse(transformedResults, response.pagination, 'Payments retrieved successfully');
   }
 
+  async getUnreadPaymentsByMerchant(
+    currentUser: CurrentUserPayload,
+  ): Promise<ResponseInterface<PaymentResponseDto[]>> {
+    if (!currentUser.merchantId) {
+      throw new ForbiddenException('Only merchants can view their unread payments');
+    }
+
+    // Query for unread pending payments
+    const unreadQuery: PaymentListQueryDto = {
+      status: 'PENDING',
+      readAt: null, // Custom filter for unread payments
+      limit: 10, // Limit for notifications
+    };
+
+    const response = await this.paymentRepository.findByMerchant(
+      currentUser.merchantId,
+      unreadQuery,
+    );
+    
+    // Transform results to include paymentProofUrl
+    const transformedResults = response.results.map(payment => ({
+      ...payment,
+      paymentProofUrl: extractPaymentProofUrl(payment.paymentProofImage),
+    }));
+    
+    return createSingleResponse(transformedResults, 'Unread payments retrieved successfully');
+  }
+
   async getSummaryByMerchant(
     query: PaymentListQueryDto,
     currentUser: CurrentUserPayload,

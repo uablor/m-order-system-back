@@ -176,6 +176,7 @@ export class OrderCommandService {
             productName: it.productName,
             variant: it.variant ?? null,
             quantity: it.quantity,
+            imageId: it.imageId ?? null,
             exchangeRateBuy: buyRateEntity,
             exchangeRateSell: sellRateEntity,
             exchangeRateBuyValue: Number(buyRateEntity.rate),

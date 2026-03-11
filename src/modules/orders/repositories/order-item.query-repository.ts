@@ -27,7 +27,7 @@ export class OrderItemQueryRepository extends BaseQueryRepository<OrderItemOrmEn
     else if (options.merchantId != null) where.order = { merchant: { id: options.merchantId } };
     const [data, total] = await repo.findAndCount({
       where: Object.keys(where).length ? where : undefined,
-      relations: ['order'],
+      relations: ['order', 'image'],
       order: { id: 'DESC' as const },
       skip,
       take: limit,

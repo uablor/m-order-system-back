@@ -45,7 +45,7 @@ export class PaymentRepository {
     query: PaymentListQueryDto,
     manager?: EntityManager,
   ) {
-    const { page = 1, limit = 10, status, customerOrderId, customerId, paymentDateFrom, paymentDateTo, search, searchField, sort } = query;
+    const { page = 1, limit = 10, status, customerOrderId, customerId, paymentDateFrom, paymentDateTo, search, searchField, sort, readAt } = query;
 
     const repo = manager ? manager.getRepository(PaymentOrmEntity) : this.repository;
     const qb = repo.createQueryBuilder('payment')
@@ -65,6 +65,8 @@ export class PaymentRepository {
     if (customerId) qb.andWhere('customerOrder.customerId = :customerId', { customerId });
     if (paymentDateFrom) qb.andWhere('payment.paymentDate >= :paymentDateFrom', { paymentDateFrom });
     if (paymentDateTo) qb.andWhere('payment.paymentDate <= :paymentDateTo', { paymentDateTo });
+    if (readAt === null) qb.andWhere('payment.readAt IS NULL');
+    if (readAt !== null && readAt !== undefined) qb.andWhere('payment.readAt = :readAt', { readAt });
 
     // ค้นหาจาก customer name หรือ order code
     if (search) {
@@ -74,13 +76,15 @@ export class PaymentRepository {
       );
     }
 
-    return fetchWithPagination({
+    const result = await fetchWithPagination({
       qb,
       sort: sort as SortDirection,
       page,
       limit,
       manager: manager || repo.manager,
     });
+    
+    return result;
   }
 
   async findByCustomer(

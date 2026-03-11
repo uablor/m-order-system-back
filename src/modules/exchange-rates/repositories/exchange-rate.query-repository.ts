@@ -63,11 +63,30 @@ export class ExchangeRateQueryRepository extends BaseQueryRepository<ExchangeRat
       });
     }
 
+    // Handle search with proper field mapping for exchange rates
+    let searchField = options.searchField;
+    if (options.search && !searchField) {
+      searchField = 'baseCurrency'; // Default search field
+    }
+    
+    // Map search field to actual database column (without alias since pagination utility adds it)
+    const searchFieldMapping: Record<string, string> = {
+      baseCurrency: 'baseCurrency',
+      targetCurrency: 'targetCurrency', 
+      rateType: 'rateType',
+      rate: 'rate',
+    };
+    
+    const actualSearchField = searchFieldMapping[searchField || ''] || 'baseCurrency';
+
     return fetchWithPagination<ExchangeRateOrmEntity>({
       qb,
       sort: options.sort,
       search: options.search
-        ? { kw: options.search, field: options.searchField || 'name' }
+        ? { 
+            kw: options.search, 
+            field: actualSearchField
+          }
         : undefined,
       page: options.page ?? 1,
       limit: options.limit ?? 10,

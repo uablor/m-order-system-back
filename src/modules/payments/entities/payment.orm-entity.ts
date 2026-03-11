@@ -58,4 +58,7 @@ export class PaymentOrmEntity extends BaseOrmEntity {
 
   @Column({ name: 'notes', type: 'text', nullable: true })
   notes: string;
+
+  @Column({ name: 'read_at', type: 'timestamp', nullable: true })
+  readAt: Date;
 }

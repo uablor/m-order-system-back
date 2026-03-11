@@ -36,4 +36,8 @@ export class PaymentListQueryDto extends BaseQueryDto {
   @IsOptional()
   @Type(() => Date)
   paymentDateTo?: Date;
+
+  @ApiPropertyOptional({ description: 'Filter by read status (null for unread)' })
+  @IsOptional()
+  readAt?: Date | null;
 }

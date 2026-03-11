@@ -56,6 +56,9 @@ export class ExchangeRateQueryService {
           baseCurrency: query.baseCurrency,
           targetCurrency: query.targetCurrency,
           isActive: query.isActive,
+          search: query.search,
+          searchField: query.searchField,
+          sort: query.sort,
         },
         manager,
       );

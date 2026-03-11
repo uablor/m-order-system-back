@@ -18,7 +18,7 @@ export class OrderItemQueryService {
   async getById(id: number): Promise<OrderItemResponseDto | null> {
     const entity = await this.orderItemQueryRepository.repository.findOne({
       where: { id },
-      relations: ['order', 'exchangeRateBuy', 'exchangeRateSell'],
+      relations: ['order', 'exchangeRateBuy', 'exchangeRateSell', 'image'],
     });
     if (!entity) return null;
     return this.toResponse(entity);
@@ -105,6 +105,13 @@ export class OrderItemQueryService {
       productName: entity.productName,
       variant: entity.variant,
       quantity: entity.quantity,
+      imageId: entity.imageId,
+      image: entity.image ? {
+        id: entity.image.id,
+        publicUrl: entity.image.publicUrl,
+        fileName: entity.image.fileName,
+        originalName: entity.image.originalName,
+      } : null,
       exchangeRateBuy: entity.exchangeRateBuy ? {
         id: entity.exchangeRateBuy.id,
         baseCurrency: entity.exchangeRateBuy.baseCurrency,

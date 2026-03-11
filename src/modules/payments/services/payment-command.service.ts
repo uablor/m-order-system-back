@@ -318,4 +318,34 @@ export class PaymentCommandService {
     });
   }
 
+  async markAsRead(
+    id: number,
+    currentUser: CurrentUserPayload,
+  ): Promise<PaymentOrmEntity> {
+    const payment = await this.paymentRepository.findById(id);
+    
+    if (!payment) {
+      throw new NotFoundException('Payment not found');
+    }
+
+    // Check if user can mark this payment as read
+    if (currentUser.roleName === 'MERCHANT') {
+      if (!payment.customerOrder?.order?.merchant) {
+        throw new NotFoundException('Payment order not found');
+      }
+      if (payment.customerOrder.order.merchant.id !== currentUser.merchantId) {
+        throw new ForbiddenException('You can only mark your own payments as read');
+      }
+    }
+
+    // Update readAt timestamp
+    await this.paymentRepository.update(id, {
+      readAt: new Date(),
+    });
+
+    // Return updated payment
+    const updatedPayment = await this.paymentRepository.findById(id);
+    return updatedPayment!;
+  }
+
 }

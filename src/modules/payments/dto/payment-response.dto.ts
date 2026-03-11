@@ -40,6 +40,9 @@ export class PaymentResponseDto {
   @ApiProperty()
   notes: string;
 
+  @ApiProperty({ nullable: true })
+  readAt: Date | null;
+
   @ApiProperty()
   createdAt: Date;
 

@@ -17,6 +17,17 @@ export class OrderItemResponseDto {
   quantity: number;
 
   @ApiPropertyOptional({ nullable: true })
+  imageId: number | null;
+
+  @ApiPropertyOptional({ nullable: true })
+  image: {
+    id: number;
+    publicUrl: string | null;
+    fileName: string;
+    originalName: string;
+  } | null;
+
+  @ApiPropertyOptional({ nullable: true })
   exchangeRateBuy: {
     id: number;
     baseCurrency: string;

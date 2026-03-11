@@ -59,6 +59,11 @@ export class CreateFullOrderItemDto {
   @IsNumber()
   @Min(0)
   sellingPriceForeign: number;
+
+  @ApiPropertyOptional({ description: 'Product image ID' })
+  @IsOptional()
+  @IsNumber()
+  imageId?: number;
 }
 
 export class CreateFullCustomerOrderItemDto {
