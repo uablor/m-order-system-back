@@ -22,6 +22,7 @@ describe('OrderCommandService', () => {
   let transactionService: { run: jest.Mock };
   let orderRepository: Record<string, jest.Mock>;
   let orderItemRepository: Record<string, jest.Mock>;
+  let orderItemSkuRepository: Record<string, jest.Mock>;
   let customerOrderRepository: Record<string, jest.Mock>;
   let customerOrderItemRepository: Record<string, jest.Mock>;
   let merchantRepository: Record<string, jest.Mock>;
@@ -40,8 +41,17 @@ describe('OrderCommandService', () => {
       getRepo: jest.fn().mockReturnValue({ findOne: jest.fn().mockResolvedValue(null) }),
     };
     orderItemRepository = {
-      create: jest.fn(),
-      update: jest.fn(),
+      create: jest.fn().mockImplementation((data) =>
+        Promise.resolve({ ...data, id: 1, quantityRemaining: data.quantity }),
+      ),
+      update: jest.fn().mockImplementation((id, data) =>
+        Promise.resolve({ id, ...data }),
+      ),
+    };
+    orderItemSkuRepository = {
+      create: jest.fn().mockImplementation((data) =>
+        Promise.resolve({ ...data, id: 1 }),
+      ),
     };
     customerOrderRepository = {
       create: jest.fn(),
@@ -51,6 +61,7 @@ describe('OrderCommandService', () => {
     };
     merchantRepository = {
       findOneById: jest.fn(),
+      getRepo: jest.fn().mockReturnValue({ findOne: jest.fn() }),
     };
     customerRepository = {
       findOneById: jest.fn(),
@@ -66,6 +77,7 @@ describe('OrderCommandService', () => {
       transactionService as unknown as TransactionService,
       orderRepository as any,
       orderItemRepository as any,
+      orderItemSkuRepository as any,
       customerOrderRepository as any,
       customerOrderItemRepository as any,
       merchantRepository as any,
@@ -190,6 +202,14 @@ describe('OrderCommandService', () => {
       purchasePrice: 100,
       shippingPrice: 10,
       sellingPriceForeign: 150,
+      skus: [
+        {
+          variant: 'Default',
+          quantity: 1,
+          purchasePrice: 100,
+          sellingPriceForeign: 150,
+        },
+      ],
     };
 
     const baseDto = {
@@ -334,14 +354,11 @@ describe('OrderCommandService', () => {
         ...baseDto,
         items: [{ ...baseItem, discountType: 'cash', discountValue: 5 }],
       };
-      orderItemRepository.create.mockImplementation((data) =>
-        Promise.resolve({ ...data, id: 1, quantityRemaining: data.quantity }),
-      );
 
       await service.createFull(dtoWithDiscount as any, mockCurrentUser);
 
-      const itemArg = orderItemRepository.create.mock.calls[0][0];
-      expect(itemArg.discountAmountLak).toBe('3250');
+      const updateArg = orderItemRepository.update.mock.calls[0][1];
+      expect(updateArg.discountAmount).toBe(3250);
     });
 
     it('ควรคำนวณ discount percent = subtotal × % (71500 × 10% = 7150)', async () => {
@@ -349,14 +366,11 @@ describe('OrderCommandService', () => {
         ...baseDto,
         items: [{ ...baseItem, discountType: 'percent', discountValue: 10 }],
       };
-      orderItemRepository.create.mockImplementation((data) =>
-        Promise.resolve({ ...data, id: 1, quantityRemaining: data.quantity }),
-      );
 
       await service.createFull(dtoWithDiscount as any, mockCurrentUser);
 
-      const itemArg = orderItemRepository.create.mock.calls[0][0];
-      expect(itemArg.discountAmountLak).toBe('7150');
+      const updateArg = orderItemRepository.update.mock.calls[0][1];
+      expect(updateArg.discountAmount).toBe(7150);
     });
 
     it('ควรคำนวณ final_buy_lak ตัวอย่าง plan: 71500 - 3250 = 68250', async () => {
@@ -364,25 +378,18 @@ describe('OrderCommandService', () => {
         ...baseDto,
         items: [{ ...baseItem, discountType: 'cash', discountValue: 5 }],
       };
-      orderItemRepository.create.mockImplementation((data) =>
-        Promise.resolve({ ...data, id: 1, quantityRemaining: data.quantity }),
-      );
 
       await service.createFull(dtoWithDiscount as any, mockCurrentUser);
 
-      const itemArg = orderItemRepository.create.mock.calls[0][0];
-      expect(itemArg.finalCostLak).toBe('68250');
+      const updateArg = orderItemRepository.update.mock.calls[0][1];
+      expect(updateArg.finalCost).toBe(68250);
     });
 
     it('ควรคำนวณ sell_price_lak = sell_price × qty × sellRate (150 × 1 × 670 = 100500)', async () => {
-      orderItemRepository.create.mockImplementation((data) =>
-        Promise.resolve({ ...data, id: 1, quantityRemaining: data.quantity }),
-      );
-
       await service.createFull(baseDto as any, mockCurrentUser);
 
-      const itemArg = orderItemRepository.create.mock.calls[0][0];
-      expect(itemArg.sellingTotalLak).toBe('100500');
+      const updateArg = orderItemRepository.update.mock.calls[0][1];
+      expect(updateArg.sellingTotal).toBe(100500);
     });
 
     it('ควรคำนวณ profit_lak ตัวอย่าง plan: 100500 - 68250 = 32250', async () => {
@@ -390,14 +397,11 @@ describe('OrderCommandService', () => {
         ...baseDto,
         items: [{ ...baseItem, discountType: 'cash', discountValue: 5 }],
       };
-      orderItemRepository.create.mockImplementation((data) =>
-        Promise.resolve({ ...data, id: 1, quantityRemaining: data.quantity }),
-      );
 
       await service.createFull(dtoWithDiscount as any, mockCurrentUser);
 
-      const itemArg = orderItemRepository.create.mock.calls[0][0];
-      expect(itemArg.profitLak).toBe('32250');
+      const updateArg = orderItemRepository.update.mock.calls[0][1];
+      expect(updateArg.profit).toBe(32250);
     });
 
     it('ควรคำนวณ profit_thb = profit_lak / sellRate (32250 / 670 ≈ 48.13)', async () => {
@@ -405,14 +409,11 @@ describe('OrderCommandService', () => {
         ...baseDto,
         items: [{ ...baseItem, discountType: 'cash', discountValue: 5 }],
       };
-      orderItemRepository.create.mockImplementation((data) =>
-        Promise.resolve({ ...data, id: 1, quantityRemaining: data.quantity }),
-      );
 
       await service.createFull(dtoWithDiscount as any, mockCurrentUser);
 
-      const itemArg = orderItemRepository.create.mock.calls[0][0];
-      expect(Number(itemArg.profitThb)).toBeCloseTo(32250 / 670, 2);
+      const updateArg = orderItemRepository.update.mock.calls[0][1];
+      expect(updateArg.profit / 670).toBeCloseTo(32250 / 670, 2);
     });
 
     it('ควร map discountType: cash → FIX ใน entity', async () => {
@@ -420,14 +421,11 @@ describe('OrderCommandService', () => {
         ...baseDto,
         items: [{ ...baseItem, discountType: 'cash', discountValue: 5 }],
       };
-      orderItemRepository.create.mockImplementation((data) =>
-        Promise.resolve({ ...data, id: 1, quantityRemaining: data.quantity }),
-      );
 
       await service.createFull(dtoWithDiscount as any, mockCurrentUser);
 
-      const itemArg = orderItemRepository.create.mock.calls[0][0];
-      expect(itemArg.discountType).toBe('FIX');
+      const createArg = orderItemRepository.create.mock.calls[0][0];
+      expect(createArg.discountType).toBe('FIX');
     });
 
     it('ควร map discountType: percent → PERCENT ใน entity', async () => {
@@ -435,14 +433,11 @@ describe('OrderCommandService', () => {
         ...baseDto,
         items: [{ ...baseItem, discountType: 'percent', discountValue: 10 }],
       };
-      orderItemRepository.create.mockImplementation((data) =>
-        Promise.resolve({ ...data, id: 1, quantityRemaining: data.quantity }),
-      );
 
       await service.createFull(dtoWithDiscount as any, mockCurrentUser);
 
-      const itemArg = orderItemRepository.create.mock.calls[0][0];
-      expect(itemArg.discountType).toBe('PERCENT');
+      const createArg = orderItemRepository.create.mock.calls[0][0];
+      expect(createArg.discountType).toBe('PERCENT');
     });
 
     it('ควรจัดการกรณีไม่มี shippingPrice (default 0)', async () => {
@@ -450,15 +445,12 @@ describe('OrderCommandService', () => {
         ...baseDto,
         items: [{ ...baseItem, shippingPrice: undefined }],
       };
-      orderItemRepository.create.mockImplementation((data) =>
-        Promise.resolve({ ...data, id: 1, quantityRemaining: data.quantity }),
-      );
 
       await service.createFull(dtoNoShipping as any, mockCurrentUser);
 
-      const itemArg = orderItemRepository.create.mock.calls[0][0];
-      expect(itemArg.shippingLak).toBe('0');
-      expect(itemArg.totalCostBeforeDiscountLak).toBe('65000');
+      const updateArg = orderItemRepository.update.mock.calls[0][1];
+      expect(updateArg.shippingTotal).toBe(0);
+      expect(updateArg.totalCostBeforeDiscount).toBe(65000);
     });
 
     it('ควร throw BadRequestException เมื่อ orderItemIndex ไม่ถูกต้อง', async () => {
@@ -488,13 +480,10 @@ describe('OrderCommandService', () => {
         customerOrders: [
           {
             customerId: 1,
-            items: [{ orderItemIndex: 0, quantity: 999 }],
+            items: [{ orderItemIndex: 0, skuIndex: 0, quantity: 999 }],
           },
         ],
       };
-      orderItemRepository.create.mockImplementation((data) =>
-        Promise.resolve({ ...data, id: 1, quantityRemaining: data.quantity, quantity: data.quantity }),
-      );
 
       await expect(
         service.createFull(dtoOverStock as any, mockCurrentUser),

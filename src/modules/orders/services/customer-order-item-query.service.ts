@@ -16,7 +16,7 @@ export class CustomerOrderItemQueryService {
   async getById(id: number): Promise<CustomerOrderItemResponseDto | null> {
     const entity = await this.customerOrderItemQueryRepository.repository.findOne({
       where: { id },
-      relations: ['customerOrder', 'orderItem'],
+      relations: ['customerOrder', 'orderItemSku'],
     });
     if (!entity) return null;
     return this.toResponse(entity);
@@ -33,7 +33,7 @@ export class CustomerOrderItemQueryService {
       page: query.page,
       limit: query.limit,
       customerOrderId: query.customerOrderId,
-      orderItemId: query.orderItemId,
+      orderItemSkuId: query.orderItemSkuId,
     });
     return createPaginatedResponse(
       result.results.map((e) => this.toResponse(e)),
@@ -45,7 +45,7 @@ export class CustomerOrderItemQueryService {
     return {
       id: entity.id,
       customerOrderId: entity.customerOrder?.id ?? 0,
-      orderItemId: entity.orderItem?.id ?? 0,
+      orderItemSkuId: entity.orderItemSku?.id ?? 0,
       quantity: entity.quantity,
       sellingPriceForeign: entity.sellingPriceForeign.toString(),
       sellingTotal: entity.sellingTotal.toString(),

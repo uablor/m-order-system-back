@@ -3,7 +3,7 @@ import { BaseOrmEntity } from '../../../common/base/enities/base.orm-entities';
 import { OrderOrmEntity } from '../../orders/entities/order.orm-entity';
 import { MerchantOrmEntity } from '../../merchants/entities/merchant.orm-entity';
 import { UserOrmEntity } from '../../users/entities/user.orm-entity';
-import { ArrivalItemOrmEntity } from './arrival-item.orm-entity';
+// import { ArrivalItemOrmEntity } from './arrival-item.orm-entity';
 
 @Entity('arrivals')
 export class ArrivalOrmEntity extends BaseOrmEntity {
@@ -28,6 +28,6 @@ export class ArrivalOrmEntity extends BaseOrmEntity {
   @Column({ type: 'text', nullable: true })
   notes: string | null;
 
-  @OneToMany(() => ArrivalItemOrmEntity, (ai) => ai.arrival)
-  arrivalItems: ArrivalItemOrmEntity[];
+  // @OneToMany(() => ArrivalItemOrmEntity, (ai) => ai.arrival)
+  // arrivalItems: ArrivalItemOrmEntity[];
 }

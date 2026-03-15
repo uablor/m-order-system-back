@@ -89,9 +89,4 @@ export class DashboardController {
     const data = await this.dashboardQueryService.getTopCustomersByBuyOrder(currentUser.merchantId!);
     return createSingleResponse(data);
   }
-
-
-  
-
-
 }

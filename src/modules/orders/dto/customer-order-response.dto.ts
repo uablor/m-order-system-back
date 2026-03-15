@@ -6,10 +6,7 @@ class CustomerOrderItemResponseDto {
   id: number;
 
   @ApiProperty()
-  orderItemId: number;
-
-  @ApiProperty()
-  productName: string;
+  orderItemSkuId: number;
 
   @ApiProperty()
   variant: string | null;
@@ -18,58 +15,13 @@ class CustomerOrderItemResponseDto {
   quantity: number;
 
   @ApiProperty()
-  exchangeRateBuy: {
-    id: number;
-    baseCurrency: string;
-    targetCurrency: string;
-    rate: number;
-    rateType: string;
-    rateDate: Date;
-    isActive: boolean;
-  } | null;
-  
-  @ApiProperty()
-  exchangeRateSell: {
-    id: number;
-    baseCurrency: string;
-    targetCurrency: string;
-    rate: number;
-    rateType: string;
-    rateDate: Date;
-    isActive: boolean;
-  } | null;
-  
-  @ApiProperty()
-  exchangeRateBuyValue: number | null;
-  
-  @ApiProperty()
-  exchangeRateSellValue: number | null;
-  
-  @ApiProperty()
-  image: {
-    originalName: string;
-    fileName: string;
-    filePath: string;
-    fileKey: string;
-    fileSize: number;
-    mimeType: string;
-    publicUrl: string | null;
-    isActive: boolean;
-    tags: string[] | null;
-    description: string | null;
-  } | null;
-
-  @ApiProperty()
   sellingPriceForeign: number;
 
   @ApiProperty()
   sellingTotal: number;
 
   @ApiProperty()
-  targetCurrencySellingPriceForeign: number;
-
-  @ApiProperty()
-  targetCurrencySellingTotal: number;
+  profit: number;
 }
 
 export class CustomerOrderResponseDto {

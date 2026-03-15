@@ -2,11 +2,13 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { OrderOrmEntity } from './entities/order.orm-entity';
 import { OrderItemOrmEntity } from './entities/order-item.orm-entity';
+import { OrderItemSkuOrmEntity } from './entities/order-item-sku.orm-entity';
 import { CustomerOrderOrmEntity } from './entities/customer-order.orm-entity';
 import { CustomerOrderItemOrmEntity } from './entities/customer-order-item.orm-entity';
 import { OrderRepository } from './repositories/order.repository';
 import { OrderQueryRepository } from './repositories/order.query-repository';
 import { OrderItemRepository } from './repositories/order-item.repository';
+import { OrderItemSkuRepository } from './repositories/order-item-sku.repository';
 import { OrderItemQueryRepository } from './repositories/order-item.query-repository';
 import { CustomerOrderRepository } from './repositories/customer-order.repository';
 import { CustomerOrderQueryRepository } from './repositories/customer-order.query-repository';
@@ -31,6 +33,7 @@ import { ExchangeRateModule } from '../exchange-rates/exchange-rate.module';
     TypeOrmModule.forFeature([
       OrderOrmEntity,
       OrderItemOrmEntity,
+      OrderItemSkuOrmEntity,
       CustomerOrderOrmEntity,
       CustomerOrderItemOrmEntity,
     ]),
@@ -48,6 +51,7 @@ import { ExchangeRateModule } from '../exchange-rates/exchange-rate.module';
     OrderRepository,
     OrderQueryRepository,
     OrderItemRepository,
+    OrderItemSkuRepository,
     OrderItemQueryRepository,
     CustomerOrderRepository,
     CustomerOrderQueryRepository,
@@ -66,6 +70,7 @@ import { ExchangeRateModule } from '../exchange-rates/exchange-rate.module';
     OrderCommandService,
     OrderQueryService,
     OrderItemRepository,
+    OrderItemSkuRepository,
     OrderItemQueryRepository,
     OrderItemQueryService,
     CustomerOrderRepository,

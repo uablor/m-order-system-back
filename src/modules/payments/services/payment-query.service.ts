@@ -12,8 +12,8 @@ function extractPaymentProofUrl(paymentProofImage: any): string {
   if (!paymentProofImage) {
     return '';
   }
-  
-  return paymentProofImage.publicUrl || 
+
+  return paymentProofImage.publicUrl ||
     `${process.env.R2_PUBLIC_URL}/${paymentProofImage.fileKey}`;
 }
 
@@ -78,13 +78,13 @@ export class PaymentQueryService {
 
   async getList(query: PaymentListQueryDto): Promise<ResponseWithPaginationInterface<PaymentResponseDto>> {
     const response = await this.paymentRepository.findByMerchant(0, query); // สำหรับ admin (merchantId = 0 หมายถึงทั้งหมด)
-    
+
     // Transform results to include paymentProofUrl
     const transformedResults = response.results.map(payment => ({
       ...payment,
       paymentProofUrl: extractPaymentProofUrl(payment.paymentProofImage),
     }));
-    
+
     return createPaginatedResponse(transformedResults, response.pagination, 'Payments retrieved successfully');
   }
 
@@ -100,13 +100,13 @@ export class PaymentQueryService {
       currentUser.merchantId,
       query,
     );
-    
+
     // Transform results to include paymentProofUrl
     const transformedResults = response.results.map(payment => ({
       ...payment,
       paymentProofUrl: extractPaymentProofUrl(payment.paymentProofImage),
     }));
-    
+
     return createPaginatedResponse(transformedResults, response.pagination, 'Payments retrieved successfully');
   }
 
@@ -128,13 +128,13 @@ export class PaymentQueryService {
       currentUser.merchantId,
       unreadQuery,
     );
-    
+
     // Transform results to include paymentProofUrl
     const transformedResults = response.results.map(payment => ({
       ...payment,
       paymentProofUrl: extractPaymentProofUrl(payment.paymentProofImage),
     }));
-    
+
     return createSingleResponse(transformedResults, 'Unread payments retrieved successfully');
   }
 
@@ -162,13 +162,13 @@ export class PaymentQueryService {
       currentUser.userId,
       query,
     );
-    
+
     // Transform results to include paymentProofUrl
     const transformedResults = response.results.map(payment => ({
       ...payment,
       paymentProofUrl: extractPaymentProofUrl(payment.paymentProofImage),
     }));
-    
+
     return createPaginatedResponse(transformedResults, response.pagination, 'Payments retrieved successfully');
   }
 

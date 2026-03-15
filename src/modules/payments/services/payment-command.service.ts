@@ -58,7 +58,7 @@ export class PaymentCommandService {
           `Payment amount (${dto.paymentAmount}) cannot exceed remaining amount (${customerOrder.remainingAmount})`,
         );
       }
-      console.log('customerOrder.paymentStatus', customerOrder.paymentStatus);
+
       // ตรวจสอบว่าสถานะยังสามารถชำระได้
       if (customerOrder.paymentStatus != PaymentStatusEnum.NOT_CREATED) {
         throw new BadRequestException('This order already has a payment created');

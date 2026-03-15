@@ -24,9 +24,9 @@ export class CustomerOrderItemListQueryDto {
   @IsInt()
   customerOrderId?: number;
 
-  @ApiPropertyOptional({ description: 'Filter by order item ID' })
+  @ApiPropertyOptional({ description: 'Filter by order item SKU ID' })
   @IsOptional()
   @Type(() => Number)
   @IsInt()
-  orderItemId?: number;
+  orderItemSkuId?: number;
 }

@@ -8,7 +8,7 @@ export class CustomerOrderItemResponseDto {
   customerOrderId: number;
 
   @ApiProperty()
-  orderItemId: number;
+  orderItemSkuId: number;
 
   @ApiProperty()
   quantity: number;

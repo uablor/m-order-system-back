@@ -46,6 +46,7 @@ describe('ArrivalCommandService', () => {
     };
     merchantRepository = {
       findOneById: jest.fn(),
+      getRepo: jest.fn().mockReturnValue({ findOne: jest.fn() }),
     };
     notificationSendService = {
       sendArrivalNotifications: jest.fn(),
@@ -56,7 +57,6 @@ describe('ArrivalCommandService', () => {
       arrivalRepository as any,
       arrivalItemRepository as any,
       orderRepository as any,
-      orderItemRepository as any,
       merchantRepository as any,
       notificationSendService as any,
     );

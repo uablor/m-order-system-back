@@ -11,22 +11,11 @@ import {
 import { Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
-export class CreateFullOrderItemDto {
-  @ApiProperty({ description: 'Index of order item in the items array (0-based)' })
-  @IsNumber()
-  @Min(0)
-  Index: number = 0;
-
+export class CreateFullOrderItemSkuDto {
   @ApiProperty()
   @IsString()
   @MaxLength(255)
-  productName: string;
-
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsString()
-  @MaxLength(255)
-  variant?: string;
+  variant: string;
 
   @ApiProperty()
   @IsNumber()
@@ -38,16 +27,45 @@ export class CreateFullOrderItemDto {
   @Min(0)
   purchasePrice: number;
 
-  @ApiPropertyOptional({ example: 10, default: 0, description: 'ຄ່າຂົນສົ່ງໃນສະກຸນເງິນຊື້ (shipping price in buy currency)' })
-  @IsOptional()
+  @ApiProperty({ example: 150 })
   @IsNumber()
   @Min(0)
-  shippingPrice?: number;
+  sellingPriceForeign: number;
 
-  @ApiPropertyOptional({ enum: ['percent', 'cash'], description: 'percent = ສ່ວນຫຼຸດເປີເຊັນ, cash = ສ່ວນຫຼຸດເງິນສົດ (in buy currency)' })
+  @ApiPropertyOptional({ description: 'Exchange rate ID for purchase (foreign -> LAK)' })
   @IsOptional()
-  @IsIn(['percent', 'cash'])
-  discountType?: 'percent' | 'cash';
+  @IsNumber()
+  @Min(1)
+  exchangeRateBuyId?: number;
+
+  @ApiPropertyOptional({ description: 'Exchange rate ID for selling (LAK -> foreign)' })
+  @IsOptional()
+  @IsNumber()
+  @Min(1)
+  exchangeRateSellId?: number;
+}
+
+export class CreateFullOrderItemDto {
+  @ApiProperty({ description: 'Index of order item in the items array (0-based)' })
+  @IsNumber()
+  @Min(0)
+  Index: number = 0;
+
+  @ApiProperty()
+  @IsString()
+  @MaxLength(255)
+  productName: string;
+
+  @ApiProperty({ type: [CreateFullOrderItemSkuDto], description: 'SKUs for this order item' })
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => CreateFullOrderItemSkuDto)
+  skus: CreateFullOrderItemSkuDto[];
+
+  @ApiPropertyOptional({ enum: ['PERCENT', 'FIX'], description: 'PERCENT = ສ່ວນຫຼຸດເປີເຊັນ, FIX = ສ່ວນຫຼຸດເງິນສົດ (in buy currency)' })
+  @IsOptional()
+  @IsIn(['PERCENT', 'FIX'])
+  discountType?: 'PERCENT' | 'FIX';
 
   @ApiPropertyOptional({ example: 10 })
   @IsOptional()
@@ -55,15 +73,16 @@ export class CreateFullOrderItemDto {
   @Min(0)
   discountValue?: number;
 
-  @ApiProperty({ example: 150 })
-  @IsNumber()
-  @Min(0)
-  sellingPriceForeign: number;
-
   @ApiPropertyOptional({ description: 'Product image ID' })
   @IsOptional()
   @IsNumber()
   imageId?: number;
+
+  @ApiPropertyOptional({ description: 'Shipping price per unit in foreign currency' })
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  shippingPrice?: number;
 }
 
 export class CreateFullCustomerOrderItemDto {
@@ -71,6 +90,11 @@ export class CreateFullCustomerOrderItemDto {
   @IsNumber()
   @Min(0)
   orderItemIndex: number;
+
+  @ApiProperty({ description: 'Index of SKU within the order item (0-based)' })
+  @IsNumber()
+  @Min(0)
+  skuIndex: number;
 
   @ApiProperty()
   @IsNumber()
@@ -82,7 +106,6 @@ export class CreateFullCustomerOrderItemDto {
   @IsNumber()
   @Min(0)
   sellingPriceForeign?: number;
-
 }
 
 export class CreateFullCustomerOrderDto {

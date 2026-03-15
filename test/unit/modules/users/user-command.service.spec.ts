@@ -8,6 +8,7 @@ import { UserRepository } from '../../../../src/modules/users/repositories/user.
 import { RoleRepository } from '../../../../src/modules/roles/repositories/role.repository';
 import { MerchantRepository } from '../../../../src/modules/merchants/repositories/merchant.repository';
 import { TransactionService } from '../../../../src/common/transaction/transaction.service';
+import { ImageQueryRepository } from '../../../../src/modules/images/repositories/image.query-repository';
 
 const mockManager = {} as any;
 
@@ -22,6 +23,7 @@ describe('UserCommandService', () => {
   let userRepository: Record<string, jest.Mock>;
   let roleRepository: Record<string, jest.Mock>;
   let merchantRepository: Record<string, jest.Mock>;
+  let imageQueryRepository: Record<string, jest.Mock>;
   let transactionService: { run: jest.Mock };
 
   beforeEach(() => {
@@ -39,6 +41,10 @@ describe('UserCommandService', () => {
     merchantRepository = {
       create: jest.fn(),
       findOneById: jest.fn(),
+      findOneByOwnerUserId: jest.fn(),
+    };
+    imageQueryRepository = {
+      findOne: jest.fn(),
     };
     transactionService = createMockTransactionService();
 
@@ -47,6 +53,7 @@ describe('UserCommandService', () => {
       roleRepository as unknown as RoleRepository,
       merchantRepository as unknown as MerchantRepository,
       transactionService as unknown as TransactionService,
+      imageQueryRepository as unknown as ImageQueryRepository,
     );
   });
 
@@ -187,11 +194,12 @@ describe('UserCommandService', () => {
       await expect(service.delete(1)).rejects.toThrow(NotFoundException);
     });
 
-    it('ควร throw ConflictException เมื่อ user มี role', async () => {
+    it('ควร throw ConflictException เมื่อ user เป็นเจ้าของ merchant', async () => {
       userRepository.findOneById.mockResolvedValue({
         id: 1,
         role: { id: 1, roleName: 'ADMIN' },
       });
+      merchantRepository.findOneByOwnerUserId.mockResolvedValue({ id: 10 });
 
       await expect(service.delete(1)).rejects.toThrow(ConflictException);
     });

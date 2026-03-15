@@ -1,35 +1,17 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { OrderItemSkuResponseDto } from './order-item-sku-response.dto';
 
-export class OrderItemResponseDto {
+export class OrderItemSkuResponseDto {
   @ApiProperty()
   id: number;
 
   @ApiProperty()
-  orderId: number;
+  orderItemId: number;
+
+  @ApiPropertyOptional({ nullable: true })
+  variant: string | null;
 
   @ApiProperty()
-  productName: string;
-
-  @ApiProperty()
-  orderItemIndex: number | null;
-
-  @ApiPropertyOptional({ nullable: true })
-  imageId: number | null;
-
-  @ApiPropertyOptional({ nullable: true })
-  image: {
-    id: number;
-    publicUrl: string | null;
-    fileName: string;
-    originalName: string;
-  } | null;
-
-  @ApiPropertyOptional({ nullable: true })
-  discountType: string | null;
-
-  @ApiPropertyOptional({ nullable: true })
-  discountValue: string | null;
+  quantity: number;
 
   @ApiPropertyOptional({ nullable: true })
   exchangeRateBuy: {
@@ -60,31 +42,19 @@ export class OrderItemResponseDto {
   exchangeRateSellValue: string | null;
 
   @ApiProperty()
-  quantity: number;
+  purchasePrice: string;
 
   @ApiProperty()
   purchaseTotal: string;
 
   @ApiProperty()
-  shippingTotal: string;
-
-  @ApiProperty()
-  totalCostBeforeDiscount: string;
-
-  @ApiProperty()
-  discountAmount: string;
-
-  @ApiProperty()
-  finalCost: string;
+  sellingPriceForeign: string;
 
   @ApiProperty()
   sellingTotal: string;
 
   @ApiProperty()
   profit: string;
-
-  @ApiProperty({ type: [OrderItemSkuResponseDto] })
-  skus: OrderItemSkuResponseDto[];
 
   @ApiProperty()
   createdAt: Date;

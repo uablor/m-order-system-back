@@ -7,6 +7,7 @@ describe('CustomerQueryService', () => {
   let customerQueryRepository: {
     findOneByIdWithMerchant: jest.Mock;
     findWithPagination: jest.Mock;
+    getSummary: jest.Mock;
   };
 
   const mockCustomer = {
@@ -34,6 +35,7 @@ describe('CustomerQueryService', () => {
     customerQueryRepository = {
       findOneByIdWithMerchant: jest.fn(),
       findWithPagination: jest.fn(),
+      getSummary: jest.fn(),
     };
 
     service = new CustomerQueryService(
@@ -42,10 +44,12 @@ describe('CustomerQueryService', () => {
   });
 
   describe('getById', () => {
+    const mockAuth = { userId: 1, email: 'test@test.com', roleId: 1, merchantId: 10 };
+    
     it('ควร return customer เมื่อเจอ', async () => {
       customerQueryRepository.findOneByIdWithMerchant.mockResolvedValue(mockCustomer);
 
-      const result = await service.getById(1);
+      const result = await service.getById(1, mockAuth);
 
       expect(result).toBeDefined();
       expect(result!.id).toBe(1);
@@ -55,17 +59,19 @@ describe('CustomerQueryService', () => {
     it('ควร return null เมื่อหาไม่เจอ', async () => {
       customerQueryRepository.findOneByIdWithMerchant.mockResolvedValue(null);
 
-      const result = await service.getById(999);
+      const result = await service.getById(999, mockAuth);
 
       expect(result).toBeNull();
     });
   });
 
   describe('getByIdOrFail', () => {
+    const mockAuth = { userId: 1, email: 'test@test.com', roleId: 1, merchantId: 10 };
+    
     it('ควร throw NotFoundException เมื่อหาไม่เจอ', async () => {
       customerQueryRepository.findOneByIdWithMerchant.mockResolvedValue(null);
 
-      await expect(service.getByIdOrFail(999)).rejects.toThrow(
+      await expect(service.getByIdOrFail(999, mockAuth)).rejects.toThrow(
         NotFoundException,
       );
     });
@@ -73,10 +79,11 @@ describe('CustomerQueryService', () => {
     it('ควร return wrapped response เมื่อเจอ', async () => {
       customerQueryRepository.findOneByIdWithMerchant.mockResolvedValue(mockCustomer);
 
-      const result = await service.getByIdOrFail(1);
+      const result = await service.getByIdOrFail(1, mockAuth);
 
       expect(result.success).toBe(true);
-      expect(result.results).toHaveLength(1);
+      expect(result.results).toBeDefined();
+      expect(result.results).toHaveProperty('id', 1);
     });
   });
 
@@ -89,11 +96,13 @@ describe('CustomerQueryService', () => {
           totalPages: 1, hasNextPage: false, hasPreviousPage: false,
         },
       });
+      customerQueryRepository.getSummary.mockResolvedValue({ totalCustomers: 1 });
 
       const result = await service.getList({ page: 1, limit: 10 });
 
       expect(result.success).toBe(true);
       expect(result.results).toHaveLength(1);
+      expect(result.summary).toEqual({ totalCustomers: 1 });
     });
 
     it('ควรใช้ merchantId จาก currentUser เมื่อมี', async () => {
@@ -104,6 +113,7 @@ describe('CustomerQueryService', () => {
           totalPages: 0, hasNextPage: false, hasPreviousPage: false,
         },
       });
+      customerQueryRepository.getSummary.mockResolvedValue({});
 
       await service.getList(
         { page: 1, limit: 10 },
@@ -113,6 +123,10 @@ describe('CustomerQueryService', () => {
       expect(customerQueryRepository.findWithPagination).toHaveBeenCalledWith(
         expect.objectContaining({ merchantId: 5 }),
       );
+      expect(customerQueryRepository.getSummary).toHaveBeenCalledWith({
+        merchantId: 5,
+        search: undefined,
+      });
     });
   });
 });
