@@ -176,6 +176,8 @@ GROUP BY
         exchangeRateBuyValue: item.orderItemSku?.exchangeRateBuyValue || null,
         exchangeRateSellValue: item.orderItemSku?.exchangeRateSellValue || null,
         sellingPriceForeign: item.sellingPriceForeign,
+        purchasePrice: item.purchasePrice,
+        purchaseTotal: item.purchaseTotal,
         sellingTotal: item.sellingTotal,
         profit: item.profit,
         targetCurrencySellingPriceForeign: convertToTargetCurrency(item.sellingPriceForeign, item.orderItemSku?.exchangeRateSell),

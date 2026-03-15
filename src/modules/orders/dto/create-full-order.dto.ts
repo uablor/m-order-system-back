@@ -12,6 +12,11 @@ import { Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class CreateFullOrderItemSkuDto {
+
+  @ApiProperty()
+  @IsNumber()
+  orderItemSkuIndex: number;
+
   @ApiProperty()
   @IsString()
   @MaxLength(255)

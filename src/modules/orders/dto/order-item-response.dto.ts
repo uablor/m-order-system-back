@@ -83,6 +83,33 @@ export class OrderItemResponseDto {
   @ApiProperty()
   profit: string;
 
+  @ApiProperty()
+  targetCurrencyPurchasePrice: string;
+
+  @ApiProperty()
+  targetCurrencySellingPriceForeign: string;
+
+  @ApiProperty()
+  targetCurrencyPurchaseTotal: string;
+
+  @ApiProperty()
+  targetCurrencySellingTotal: string;
+
+  @ApiProperty()
+  targetCurrencyProfit: string;
+
+  @ApiProperty()
+  targetCurrencyDiscountAmount: string;
+
+  @ApiProperty()
+  targetCurrencyFinalCost: string;
+
+  @ApiProperty()
+  targetCurrencyTotalCostBeforeDiscount: string;
+
+  @ApiProperty()
+  targetCurrencyShippingTotal: string;
+
   @ApiProperty({ type: [OrderItemSkuResponseDto] })
   skus: OrderItemSkuResponseDto[];
 

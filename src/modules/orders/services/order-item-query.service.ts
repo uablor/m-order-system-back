@@ -141,9 +141,22 @@ export class OrderItemQueryService {
       finalCost: entity.finalCost.toString(),
       sellingTotal: entity.sellingTotal.toString(),
       profit: entity.profit.toString(),
+
+      targetCurrencyPurchaseTotal: entity.order?.exchangeRateSell ? this.convertToTargetCurrency(entity.purchaseTotal, entity.order.exchangeRateSell) : '0',
+      targetCurrencyShippingTotal: entity.order?.exchangeRateSell ? this.convertToTargetCurrency(entity.shippingTotal, entity.order.exchangeRateSell) : '0',
+      targetCurrencySellingTotal: entity.order?.exchangeRateSell ? this.convertToTargetCurrency(entity.sellingTotal, entity.order.exchangeRateSell) : '0',
+      targetCurrencyProfit: entity.order?.exchangeRateSell ? this.convertToTargetCurrency(entity.profit, entity.order.exchangeRateSell) : '0',
+      targetCurrencyDiscountAmount: entity.order?.exchangeRateSell ? this.convertToTargetCurrency(entity.discountAmount, entity.order.exchangeRateSell) : '0',
+      targetCurrencyFinalCost: entity.order?.exchangeRateSell ? this.convertToTargetCurrency(entity.finalCost, entity.order.exchangeRateSell) : '0',
+      targetCurrencyTotalCostBeforeDiscount: entity.order?.exchangeRateSell ? this.convertToTargetCurrency(entity.totalCostBeforeDiscount, entity.order.exchangeRateSell) : '0',
+      targetCurrencyPurchasePrice: entity.order?.exchangeRateSell && entity.quantity > 0 ? this.convertToTargetCurrency(entity.purchaseTotal / entity.quantity, entity.order.exchangeRateSell) : '0',
+      targetCurrencySellingPriceForeign: entity.order?.exchangeRateSell && entity.quantity > 0 ? this.convertToTargetCurrency(entity.sellingTotal / entity.quantity, entity.order.exchangeRateSell) : '0',
+
+
       skus: entity.skus?.map(sku => ({
             id: sku.id,
             orderItemId: entity.id,
+            orderItemSkuIndex: sku.orderItemSkuIndex,
             variant: sku.variant,
             quantity: sku.quantity,
             exchangeRateBuy: sku.exchangeRateBuy ? {
@@ -171,6 +184,13 @@ export class OrderItemQueryService {
             sellingPriceForeign: sku.sellingPriceForeign.toString(),
             sellingTotal: sku.sellingTotal.toString(),
             profit: sku.profit.toString(),
+
+            targetCurrencyPurchaseTotal: sku.exchangeRateSell ? this.convertToTargetCurrency(sku.purchaseTotal, sku.exchangeRateSell) : '0',
+            targetCurrencyPurchasePrice: sku.exchangeRateSell ? this.convertToTargetCurrency(sku.purchasePrice, sku.exchangeRateSell) : '0',
+            targetCurrencySellingPriceForeign: sku.exchangeRateSell ? this.convertToTargetCurrency(sku.sellingPriceForeign, sku.exchangeRateSell) : '0',
+            targetCurrencySellingTotal: sku.exchangeRateSell ? this.convertToTargetCurrency(sku.sellingTotal, sku.exchangeRateSell) : '0',
+            targetCurrencyProfit: sku.exchangeRateSell ? this.convertToTargetCurrency(sku.profit, sku.exchangeRateSell) : '0',
+            
             createdAt: sku.createdAt,
             updatedAt: sku.updatedAt,
           })) || [],

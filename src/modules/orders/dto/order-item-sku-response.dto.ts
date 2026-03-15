@@ -8,6 +8,9 @@ export class OrderItemSkuResponseDto {
   orderItemId: number;
 
   @ApiPropertyOptional({ nullable: true })
+  orderItemSkuIndex: number | null;
+
+  @ApiPropertyOptional({ nullable: true })
   variant: string | null;
 
   @ApiProperty()
@@ -55,6 +58,21 @@ export class OrderItemSkuResponseDto {
 
   @ApiProperty()
   profit: string;
+
+  @ApiPropertyOptional({ nullable: true })
+  targetCurrencyPurchaseTotal: string;
+
+  @ApiPropertyOptional({ nullable: true })
+  targetCurrencyPurchasePrice: string;
+
+  @ApiPropertyOptional({ nullable: true })
+  targetCurrencySellingPriceForeign: string;
+
+  @ApiPropertyOptional({ nullable: true })
+  targetCurrencySellingTotal: string;
+
+  @ApiPropertyOptional({ nullable: true })
+  targetCurrencyProfit: string;
 
   @ApiProperty()
   createdAt: Date;

@@ -180,7 +180,7 @@ export class OrderCommandService {
           const skuEntity = await this.orderItemSkuRepository.create(
             {
               orderItem: itemEntity,
-              orderItemSkuIndex: i,
+              orderItemSkuIndex: skuDto.orderItemSkuIndex,
               variant: skuDto.variant,
               quantity: skuDto.quantity,
               exchangeRateBuy: buyRateEntity,
@@ -358,12 +358,12 @@ export class OrderCommandService {
           const exchangeRateSellValue = coItem.orderItemSku.exchangeRateSellValue || sellRateEntity.rate;
           const sellingTotal = coItem.quantity * sellingPrice * exchangeRateSellValue;
           
-          // Cost allocation based on SKU's purchase cost per unit
-          const costPerUnit = Number(coItem.orderItemSku.purchaseTotal) / coItem.orderItemSku.quantity;
-          const costAllocated = costPerUnit * coItem.quantity;
+          // Calculate purchase total proportionally based on quantity
+          const purchaseTotalPerUnit = Number(coItem.orderItemSku.purchaseTotal) / coItem.orderItemSku.quantity;
+          const purchaseTotalForQuantity = purchaseTotalPerUnit * coItem.quantity;
           
           // Profit calculation for customer order item
-          const profit = sellingTotal - costAllocated;
+          const profit = sellingTotal - purchaseTotalForQuantity;
 
           await this.customerOrderItemRepository.create(
             {
@@ -371,6 +371,8 @@ export class OrderCommandService {
               orderItemSku: coItem.orderItemSku,
               quantity: coItem.quantity,
               sellingPriceForeign: coItem.sellingPriceForeign,
+              purchasePrice: coItem.orderItemSku.purchasePrice,
+              purchaseTotal: purchaseTotalForQuantity,
               sellingTotal: Number(sellingTotal),
               profit: Number(profit),
             } as Partial<CustomerOrderItemOrmEntity>,

@@ -23,6 +23,12 @@ export class CustomerOrderItemResponseDto {
   sellingPriceForeign: string;
 
   @ApiProperty()
+  purchasePrice: string;
+
+  @ApiProperty()
+  purchaseTotal: string;
+
+  @ApiProperty()
   sellingTotal: string;
 
   @ApiProperty()

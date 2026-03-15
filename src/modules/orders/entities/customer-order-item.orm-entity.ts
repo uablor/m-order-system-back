@@ -19,6 +19,12 @@ export class CustomerOrderItemOrmEntity extends BaseOrmEntity {
   @Column({ name: 'selling_price_foreign', type: 'decimal', precision: 18, scale: 4, default: 0 })
   sellingPriceForeign: number;
 
+  @Column({ name: 'purchase_price', type: 'decimal', precision: 18, scale: 4, default: 0 })
+  purchasePrice: number;
+
+  @Column({ name: 'purchase_total', type: 'decimal', precision: 18, scale: 2, default: 0 })
+  purchaseTotal: number;
+
   @Column({ name: 'selling_total', type: 'decimal', precision: 18, scale: 2, default: 0 })
   sellingTotal: number;
 

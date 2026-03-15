@@ -18,6 +18,12 @@ class CustomerOrderItemResponseDto {
   sellingPriceForeign: number;
 
   @ApiProperty()
+  purchasePrice: number;
+
+  @ApiProperty()
+  purchaseTotal: number;
+
+  @ApiProperty()
   sellingTotal: number;
 
   @ApiProperty()
