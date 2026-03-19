@@ -5,6 +5,8 @@ import { OrderItemOrmEntity } from './entities/order-item.orm-entity';
 import { OrderItemSkuOrmEntity } from './entities/order-item-sku.orm-entity';
 import { CustomerOrderOrmEntity } from './entities/customer-order.orm-entity';
 import { CustomerOrderItemOrmEntity } from './entities/customer-order-item.orm-entity';
+import { ExchangeRateOrmEntity } from '../exchange-rates/entities/exchange-rate.orm-entity';
+import { ImageOrmEntity } from '../images/entities/image.orm-entity';
 import { OrderRepository } from './repositories/order.repository';
 import { OrderQueryRepository } from './repositories/order.query-repository';
 import { OrderItemRepository } from './repositories/order-item.repository';
@@ -27,6 +29,7 @@ import { TransactionService } from '../../common/transaction/transaction.service
 import { MerchantModule } from '../merchants/merchant.module';
 import { CustomerModule } from '../customers/customer.module';
 import { ExchangeRateModule } from '../exchange-rates/exchange-rate.module';
+import { UserModule } from '../users/user.module';
 
 @Module({
   imports: [
@@ -36,10 +39,13 @@ import { ExchangeRateModule } from '../exchange-rates/exchange-rate.module';
       OrderItemSkuOrmEntity,
       CustomerOrderOrmEntity,
       CustomerOrderItemOrmEntity,
+      ExchangeRateOrmEntity,
+      ImageOrmEntity,
     ]),
     MerchantModule,
     CustomerModule,
     ExchangeRateModule,
+    UserModule,
   ],
   controllers: [
     OrderController,

@@ -18,7 +18,7 @@ export class OrderItemQueryService {
   async getById(id: number): Promise<OrderItemResponseDto | null> {
     const entity = await this.orderItemQueryRepository.repository.findOne({
       where: { id },
-      relations: ['order', 'exchangeRateBuy', 'exchangeRateSell', 'image'],
+      relations: ['order', 'order.exchangeRateBuy', 'order.exchangeRateSell', 'image', 'order.merchant', 'skus','skus.exchangeRateSell', 'skus.exchangeRateBuy'],
     });
     if (!entity) return null;
     return this.toResponse(entity);
@@ -99,6 +99,7 @@ export class OrderItemQueryService {
     }
   
   private toResponse(entity: import('../entities/order-item.orm-entity').OrderItemOrmEntity): OrderItemResponseDto {
+    console.log('entity', entity);
     return {
       id: entity.id,
       orderId: entity.order?.id ?? 0,

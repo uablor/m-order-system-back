@@ -1,5 +1,5 @@
 import { NestFactory } from '@nestjs/core';
-import { AppModule } from '../app.module';
+import { AppModule } from '../app/app.module';
 import { PermissionGeneratorService } from '../modules/permissions/services/permission-generator.service';
 import { RoleRepository } from '../modules/roles/repositories/role.repository';
 import { PermissionRepository } from '../modules/permissions/repositories/permission.repository';

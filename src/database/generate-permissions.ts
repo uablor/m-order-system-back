@@ -1,5 +1,5 @@
 import { NestFactory } from '@nestjs/core';
-import { AppModule } from '../app.module';
+import { AppModule } from '../app/app.module';
 import { PermissionGeneratorService } from '../modules/permissions/services/permission-generator.service';
 
 async function generatePermissions(): Promise<void> {

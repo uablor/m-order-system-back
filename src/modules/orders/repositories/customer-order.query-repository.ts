@@ -31,7 +31,7 @@ export class CustomerOrderQueryRepository extends BaseQueryRepository<CustomerOr
     .leftJoinAndSelect('customerOrder.customer', 'customer')
     .leftJoinAndSelect('customerOrder.customerOrderItems', 'customerOrderItems')
     
-    .leftJoinAndSelect('customerOrderItems.orderItem', 'orderItem');
+    .leftJoinAndSelect('customerOrderItems.orderItemSku', 'orderItemSku');
 
   // Apply filters
   if (options.orderId != null) {
@@ -83,7 +83,8 @@ export class CustomerOrderQueryRepository extends BaseQueryRepository<CustomerOr
     qb,
     page: options.page ?? 1,
     limit: options.limit ?? 10,
-    sort: SortDirection.ASC, // Default sort direction
+    search: options.search ? { kw: options.search, field: options.searchField ?? 'customerOrder.id' } : undefined,
+    sort: options.sort ?? SortDirection.DESC,
     manager: manager!,
   });
   }

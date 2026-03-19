@@ -81,10 +81,12 @@ export class OrderQueryRepository extends BaseQueryRepository<OrderOrmEntity> {
       .leftJoinAndSelect('order.customerOrders', 'customerOrders')
       .leftJoinAndSelect('customerOrders.customerOrderItems', 'customerOrderItems')
       .leftJoinAndSelect('customerOrders.customer', 'customer')
+      .leftJoinAndSelect('orderItems.image', 'image')
+      .leftJoinAndSelect('orderItems.skus', 'skus')
       .leftJoinAndSelect('order.exchangeRateBuy', 'exchangeRateBuy')
       .leftJoinAndSelect('order.exchangeRateSell', 'exchangeRateSell')
-      .leftJoinAndSelect('orderItems.exchangeRateBuy', 'orderItems.exchangeRateBuy')
-      .leftJoinAndSelect('orderItems.exchangeRateSell', 'orderItems.exchangeRateSell');
+      .leftJoinAndSelect('skus.exchangeRateBuy', 'skusExchangeRateBuy')
+      .leftJoinAndSelect('skus.exchangeRateSell', 'skusExchangeRateSell');
 
     buildFilters(qb);
     const sortDir = options.sort === 'ASC' ? 'ASC' : 'DESC';

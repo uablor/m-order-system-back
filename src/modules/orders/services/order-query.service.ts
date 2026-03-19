@@ -25,13 +25,14 @@ export class OrderQueryService {
             'exchangeRateBuy',
             'exchangeRateSell',
             'orderItems',
-            'orderItems.exchangeRateBuy',
-            'orderItems.exchangeRateSell',
             'orderItems.image',
+            'orderItems.skus',
+            'orderItems.skus.exchangeRateBuy',
+            'orderItems.skus.exchangeRateSell',
             'customerOrders',
             'customerOrders.customer',
             'customerOrders.customerOrderItems',
-            'customerOrders.customerOrderItems.orderItem',
+            'customerOrders.customerOrderItems.orderItemSku',
           ],
         })
       : await this.orderRepository.findOneById(id);
@@ -54,13 +55,14 @@ export class OrderQueryService {
         'exchangeRateBuy',
         'exchangeRateSell',
         'orderItems',
-        'orderItems.exchangeRateBuy',
-        'orderItems.exchangeRateSell',
         'orderItems.image',
+        'orderItems.skus',
+        'orderItems.skus.exchangeRateBuy',
+        'orderItems.skus.exchangeRateSell',
         'customerOrders',
         'customerOrders.customer',
         'customerOrders.customerOrderItems',
-        'customerOrders.customerOrderItems.orderItem',
+        'customerOrders.customerOrderItems.orderItemSku',
       ],
     });
     if (!entity) return null;
@@ -178,7 +180,7 @@ export class OrderQueryService {
   }
 
   private toResponse(entity: import('../entities/order.orm-entity').OrderOrmEntity): OrderResponseDto {
-
+    console.log('entity', entity);
 
     return {
       id: entity.id,
