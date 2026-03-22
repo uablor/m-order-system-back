@@ -172,9 +172,9 @@ export class OrderCommandService {
         for (let j = 0; j < itemDto.skus.length; j++) {
           const skuDto = itemDto.skus[j];
           
-          // คำนวณค่าสำหรับ SKU ตาม CALCULATION RULES
-          const purchaseTotal = skuDto.purchasePrice * skuDto.quantity * buyRateEntity.rate;
-          const sellingTotal = skuDto.sellingPriceForeign * skuDto.quantity * sellRateEntity.rate;
+          // คำนวณค่าสำหรับ SKU ตาม CALCULATION RULES (ไม่คูณ exchange rate - ใช้ค่าดิบ)
+          const purchaseTotal = skuDto.purchasePrice * skuDto.quantity;
+          const sellingTotal  = skuDto.sellingPriceForeign * skuDto.quantity;
           const profit = sellingTotal - purchaseTotal;
 
           const skuEntity = await this.orderItemSkuRepository.create(
@@ -213,9 +213,9 @@ export class OrderCommandService {
           totalProfit += Number(sku.profit);
         }
 
-        // Shipping at ITEM level
+        // Shipping at ITEM level (ไม่คูณ exchange rate - ใช้ค่าดิบ)
         const shippingPrice = itemDto.shippingPrice ?? 0;
-        const totalShippingCost = shippingPrice * totalQuantity * buyRateEntity.rate;
+        const totalShippingCost = shippingPrice * totalQuantity;
         const totalCostBeforeDiscount = totalPurchaseCost + totalShippingCost;
 
         // คำนวณส่วนลดระดับ item
@@ -310,6 +310,7 @@ export class OrderCommandService {
         let totalSellingAmount = 0;
         const coItemsToCreate: {
           orderItemSku: OrderItemSkuOrmEntity;
+          orderItem: OrderItemOrmEntity;
           quantity: number;
           sellingPriceForeign: number;
         }[] = [];
@@ -331,6 +332,7 @@ export class OrderCommandService {
           totalSellingAmount += lineTotal;
           coItemsToCreate.push({
             orderItemSku,
+            orderItem,
             quantity: coItemDto.quantity,
             sellingPriceForeign: sellingPrice,
           });
@@ -354,16 +356,24 @@ export class OrderCommandService {
         customerOrders.push(customerOrder);
 
         for (const coItem of coItemsToCreate) {
-          const sellingPrice = coItem.sellingPriceForeign;
-          const exchangeRateSellValue = coItem.orderItemSku.exchangeRateSellValue || sellRateEntity.rate;
-          const sellingTotal = coItem.quantity * sellingPrice * exchangeRateSellValue;
-          
-          // Calculate purchase total proportionally based on quantity
-          const purchaseTotalPerUnit = Number(coItem.orderItemSku.purchaseTotal) / coItem.orderItemSku.quantity;
-          const purchaseTotalForQuantity = purchaseTotalPerUnit * coItem.quantity;
-          
-          // Profit calculation for customer order item
-          const profit = sellingTotal - purchaseTotalForQuantity;
+          // คำนวณ sellingTotal ใน foreign currency
+          const sellingTotal = coItem.quantity * coItem.sellingPriceForeign;
+
+          // คำนวณ cost allocated จาก orderItem.finalCost แบบ proportional
+          const costPerUnit = Number(coItem.orderItem.finalCost) / coItem.orderItem.quantity;
+          const costAllocated = costPerUnit * coItem.quantity;
+
+          // Convert ทั้ง selling และ cost ไป target currency แล้วคำนวณ profit
+          const sellingTotalTargetCurrency = convertToTargetCurrency(
+            sellingTotal,
+            coItem.orderItem.order.exchangeRateSell,
+          );
+          const costAllocatedTargetCurrency = convertToTargetCurrency(
+            costAllocated,
+            coItem.orderItem.order.exchangeRateBuy,
+          );
+          const profitTargetCurrency = Number(sellingTotalTargetCurrency) - Number(costAllocatedTargetCurrency);
+          const profit = convertToBaseCurrency(profitTargetCurrency, coItem.orderItem.order.exchangeRateSell);
 
           await this.customerOrderItemRepository.create(
             {
@@ -372,7 +382,7 @@ export class OrderCommandService {
               quantity: coItem.quantity,
               sellingPriceForeign: coItem.sellingPriceForeign,
               purchasePrice: coItem.orderItemSku.purchasePrice,
-              purchaseTotal: purchaseTotalForQuantity,
+              purchaseTotal: costAllocated,
               sellingTotal: Number(sellingTotal),
               profit: Number(profit),
             } as Partial<CustomerOrderItemOrmEntity>,
