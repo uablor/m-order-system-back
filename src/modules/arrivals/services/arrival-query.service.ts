@@ -17,7 +17,7 @@ export class ArrivalQueryService {
   async getById(id: number): Promise<ArrivalResponseDto | null> {
     const entity = await this.arrivalQueryRepository.repository.findOne({
       where: { id },
-      relations: ['order', 'merchant', 'recordedByUser', 'arrivalItems', 'arrivalItems.orderItem'],
+      relations: ['order', 'merchant', 'recordedByUser', 'arrivalItems', 'arrivalItems.orderItem', 'arrivalItems.orderItem.image', 'arrivalItems.orderItem.skus'],
     });
     if (!entity) return null;
     return this.toResponse(entity);
@@ -32,7 +32,7 @@ export class ArrivalQueryService {
   async getByIdWithItems(id: number): Promise<ArrivalResponseDto | null> {
     const entity = await this.arrivalQueryRepository.repository.findOne({
       where: { id },
-      relations: ['order', 'merchant', 'recordedByUser', 'arrivalItems', 'arrivalItems.orderItem'],
+      relations: ['order', 'merchant', 'recordedByUser', 'arrivalItems', 'arrivalItems.orderItem', 'arrivalItems.orderItem.image', 'arrivalItems.orderItem.skus'],
     });
     if (!entity) return null;
     return this.toResponse(entity);
@@ -158,17 +158,20 @@ export class ArrivalQueryService {
         id: item.id,
         arrivalId: entity.id,
         orderItemId: item.orderItem?.id ?? 0,
-        variant: null,
-        quantity: item.orderItem?.quantity ?? 0,
-        purchasePrice: null,
+        variant: item.orderItem?.skus?.[0]?.variant ?? null,
+        quantity: item.arrivedQuantity ?? 0,
+        publicUrl: item.orderItem?.image?.publicUrl ?? null,
+        purchasePrice: item.orderItem?.skus?.[0]?.purchasePrice ?? null,
         purchaseTotal: item.orderItem?.purchaseTotal ?? 0,
-        shippingPrice: item.orderItem?.shippingTotal ? (item.orderItem.shippingTotal / item.orderItem?.quantity) : 0,
+        shippingPrice: item.orderItem?.shippingTotal && item.orderItem?.quantity > 0 
+          ? (item.orderItem.shippingTotal / item.orderItem.quantity) 
+          : 0,
         totalCostBeforeDiscount: item.orderItem?.totalCostBeforeDiscount ?? 0,
         discountType: item.orderItem?.discountType ?? null,
         discountValue: item.orderItem?.discountValue ?? null,
         discountAmount: item.orderItem?.discountAmount ?? 0,
         finalCost: item.orderItem?.finalCost ?? 0,
-        sellingPriceForeign: null,
+        sellingPriceForeign: item.orderItem?.skus?.[0]?.sellingPriceForeign ?? null,
         sellingTotal: item.orderItem?.sellingTotal ?? 0,
         profit: item.orderItem?.profit ?? 0,
         arrivedQuantity: item.arrivedQuantity,

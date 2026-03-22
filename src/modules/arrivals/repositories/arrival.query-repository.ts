@@ -27,6 +27,9 @@ export class ArrivalQueryRepository extends BaseQueryRepository<ArrivalOrmEntity
       .leftJoinAndSelect('arrival.merchant', 'merchant')
       .leftJoinAndSelect('arrival.recordedByUser', 'recordedByUser')
       .leftJoinAndSelect('arrival.arrivalItems', 'arrivalItems')
+      .leftJoinAndSelect('arrivalItems.orderItem', 'orderItem')
+      .leftJoinAndSelect('orderItem.image', 'image')
+      .leftJoinAndSelect('orderItem.skus', 'skus')
       .leftJoinAndSelect('order.customerOrders', 'customerOrders')
       .leftJoinAndSelect('customerOrders.customer', 'customer')
       .leftJoinAndSelect('customerOrders.notification', 'notification');
