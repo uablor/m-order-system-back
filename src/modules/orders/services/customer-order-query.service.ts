@@ -60,16 +60,16 @@ export class CustomerOrderQueryService {
 SELECT 
   er.base_currency as baseCurrency,
 
-  SUM(oi.selling_total) as totalAll,
+  SUM(ois.selling_total) as totalAll,
 
   SUM(
     CASE WHEN co.payment_status = 'UNPAID'
-    THEN oi.selling_total ELSE 0 END
+    THEN ois.selling_total ELSE 0 END
   ) as totalUnpaid,
 
   SUM(
     CASE WHEN co.payment_status = 'PAID'
-    THEN oi.selling_total ELSE 0 END
+    THEN ois.selling_total ELSE 0 END
   ) as totalPaid,
 
   er.rate as rate
@@ -85,11 +85,11 @@ JOIN customer_orders co
 JOIN customer_order_items coi
   ON coi.customer_order_id = co.id
 
-JOIN order_items oi
-  ON oi.id = coi.order_item_id
+JOIN order_item_skus ois
+  ON ois.id = coi.order_item_sku_id
 
 LEFT JOIN exchange_rates er
-  ON er.id = oi.exchange_rate_sell_id
+  ON er.id = ois.exchange_rate_sell_id
 
 WHERE
   c.unique_token = ?
