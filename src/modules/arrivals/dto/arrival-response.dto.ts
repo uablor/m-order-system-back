@@ -63,8 +63,11 @@ export class ArrivalResponseDto {
     paymentStatus: string;
     customer: {
       id: number;
-      fullName: string;
-      email: string;
+      customerName: string;
+      contactPhone: string | null;
+      contactWhatsapp: string | null;
+      contactFacebook: string | null;
+      preferredContactMethod: 'PHONE' | 'FACEBOOK' | 'WHATSAPP' | 'LINE' | null;
     } | null;
     customerOrders?: { id: number; customerId: number }[];
   } | null;

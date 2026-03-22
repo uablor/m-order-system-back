@@ -20,6 +20,17 @@ export class CustomerOrderListQueryDto extends IntersectionType(
   BaseQueryDto,
   TokenQueryDto,
 ) {
+  @ApiPropertyOptional({ description: 'Filter by notification status (null = no notification created)' })
+  @IsOptional()
+  @IsString()
+  notificationStatus?: string;
+
+  @ApiPropertyOptional({ description: 'Filter by merchant ID' })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  merchantId?: number;
+
   @ApiPropertyOptional({ description: 'Filter by order ID' })
   @IsOptional()
   @Type(() => Number)

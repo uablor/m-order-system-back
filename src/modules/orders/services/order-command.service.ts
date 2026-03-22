@@ -427,6 +427,7 @@ export class OrderCommandService {
         where: { id: order.id },
         relations: [
           'orderItems',
+          'orderItems.image',
           'orderItems.skus',
           'customerOrders',
           'customerOrders.customerOrderItems',
