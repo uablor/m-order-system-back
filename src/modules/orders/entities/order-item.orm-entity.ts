@@ -126,6 +126,9 @@ export class OrderItemOrmEntity extends BaseOrmEntity {
   @JoinColumn({ name: 'image_id' })
   image: ImageOrmEntity | null;
 
+  @Column({ name: 'image_id', type: 'int', nullable: true })
+  imageId: number | null;
+
   // variants ราคาต่างกัน → เก็บใน SKU
   @OneToMany(() => OrderItemSkuOrmEntity, (sku) => sku.orderItem, { cascade: true })
   skus: OrderItemSkuOrmEntity[];

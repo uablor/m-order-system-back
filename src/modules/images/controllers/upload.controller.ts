@@ -3,6 +3,7 @@ import {
   Post,
   Delete,
   Body,
+  Param,
   UploadedFiles,
   UseInterceptors,
   BadRequestException,
@@ -141,6 +142,20 @@ export class UploadController {
     }
 
     return this.uploadService.deleteFile_v2(deleteDto.key);
+  }
+
+  @Delete('file-v2/:id')
+  @ApiOperation({ summary: 'Delete file by image ID' })
+  @ApiBearerAuth('BearerAuth')
+  @ApiResponse({ status: 200, description: 'Image deleted successfully' })
+  async deleteFileById(@Param('id') id: string) {
+    const imageId = parseInt(id);
+    if (isNaN(imageId)) {
+      throw new BadRequestException('Invalid image ID');
+    }
+
+    await this.imageCommandService.delete(imageId);
+    return { message: 'Image deleted successfully' };
   }
 
   @Post('files-v2-public')
