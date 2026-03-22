@@ -175,7 +175,12 @@ export class OrderCommandService {
           // คำนวณค่าสำหรับ SKU ตาม CALCULATION RULES (ไม่คูณ exchange rate - ใช้ค่าดิบ)
           const purchaseTotal = skuDto.purchasePrice * skuDto.quantity;
           const sellingTotal  = skuDto.sellingPriceForeign * skuDto.quantity;
-          const profit = sellingTotal - purchaseTotal;
+          
+          // Convert ไป target currency แล้วคำนวณ profit
+          const sellingTotalTargetCurrency  = convertToTargetCurrency(sellingTotal, sellRateEntity);
+          const purchaseTotalTargetCurrency = convertToTargetCurrency(purchaseTotal, buyRateEntity);
+          const profitTargetCurrency = Number(sellingTotalTargetCurrency) - Number(purchaseTotalTargetCurrency);
+          const profit = convertToBaseCurrency(profitTargetCurrency, sellRateEntity);
 
           const skuEntity = await this.orderItemSkuRepository.create(
             {
@@ -229,7 +234,12 @@ export class OrderCommandService {
         }
 
         const finalCost = totalCostBeforeDiscount - discountAmount;
-        const itemProfit = totalSellingAmount - finalCost;
+        
+        // Convert ไป target currency แล้วคำนวณ item profit
+        const sellingTotalTargetCurrency  = convertToTargetCurrency(totalSellingAmount, sellRateEntity);
+        const finalCostTargetCurrency     = convertToTargetCurrency(finalCost, buyRateEntity);
+        const itemProfitTargetCurrency    = Number(sellingTotalTargetCurrency) - Number(finalCostTargetCurrency);
+        const itemProfit = convertToBaseCurrency(itemProfitTargetCurrency, sellRateEntity);
 
         // อัพเดต OrderItem ด้วย aggregated values
         await this.orderItemRepository.update(
