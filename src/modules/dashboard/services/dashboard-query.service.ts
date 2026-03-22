@@ -427,22 +427,21 @@ async getMerchantPriceCurrencySummaryByDate(
 }
 
 async getTopCustomersByBuyOrder(merchantId: number): Promise<TopCustomersResponseDto> {
+    // First, let's try a simpler query without the complex conditions
     const query = `
     SELECT 
-      u.id as customerId,
-      u.full_name as customerName,
-      u.email as customerEmail,
-      COALESCE(SUM(o.total_final_cost * erb.rate), 0) as totalBuyAmountLak,
+      c.id as customerId,
+      c.customer_name as customerName,
+      COALESCE(c.contact_phone, '') as customerEmail,
+      COALESCE(SUM(o.total_final_cost), 0) as totalBuyAmountLak,
       COUNT(o.id) as orderCount,
-      COALESCE(AVG(o.total_final_cost * erb.rate), 0) as averageOrderAmountLak
-    FROM users u
-    INNER JOIN customer_orders co ON co.customer_id = u.id
+      COALESCE(AVG(o.total_final_cost), 0) as averageOrderAmountLak
+    FROM customers c
+    INNER JOIN customer_orders co ON co.customer_id = c.id
     INNER JOIN orders o ON o.id = co.order_id
-    LEFT JOIN exchange_rates erb ON erb.id = o.exchange_rate_buy_id
     WHERE o.merchant_id = ?
-      AND o.payment_status = 'PAID'
-    GROUP BY u.id, u.full_name, u.email
-    HAVING totalBuyAmountLak > 0
+      AND c.is_active = 1
+    GROUP BY c.id, c.customer_name, c.contact_phone
     ORDER BY totalBuyAmountLak DESC
     LIMIT 5
   `;

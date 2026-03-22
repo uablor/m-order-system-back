@@ -5,6 +5,8 @@ import { CustomerOrderListQueryDto, TokenQueryDto } from '../dto/customer-order-
 import { CustomerOrderResponseDto } from '../dto/customer-order-response.dto';
 import { ApiOkResponseBase, ApiNotFoundBase, ApiUnauthorizedBase } from '../../../common/swagger/swagger.decorators';
 import { Public } from '../../../common/decorators/public.decorator';
+import { CurrentUser } from '../../../common/decorators/current-user.decorator';
+import type { CurrentUserPayload } from '../../../common/decorators/current-user.decorator';
 
 @ApiTags('Customer Orders')
 @Controller('customer-orders')
@@ -12,11 +14,14 @@ export class CustomerOrderController {
   constructor(private readonly customerOrderQueryService: CustomerOrderQueryService) {}
 
   @Get()
-  @Public()
-  @ApiOperation({ summary: 'List customer orders with pagination and optional token filter' })
+  @ApiBearerAuth('BearerAuth')
+  @ApiOperation({ summary: 'List customer orders for authenticated merchant (auto-filter by JWT token)' })
   @ApiOkResponseBase()
-  async getList(@Query() query: CustomerOrderListQueryDto) {
-    return this.customerOrderQueryService.getList(query);
+  @ApiUnauthorizedBase()
+  async getList(@Query() query: CustomerOrderListQueryDto, @CurrentUser() currentUser: CurrentUserPayload) {
+    // Add merchantId from JWT token to query
+    const queryWithMerchant = { ...query, merchantId: currentUser.merchantId || undefined };
+    return this.customerOrderQueryService.getList(queryWithMerchant);
   }
 
   @Get('by-token')

@@ -46,12 +46,28 @@ export class CustomerOrderQueryRepository extends BaseQueryRepository<CustomerOr
     qb.andWhere('customer.id = :customerId', { customerId: options.customerId });
   }
   
+  if (options.merchantId != null) {
+    qb.andWhere('ord.merchantId = :merchantId', { merchantId: options.merchantId });
+  }
+  
   if (options.customerToken) {
     qb.andWhere('customer.uniqueToken = :customerToken', { customerToken: options.customerToken });
   }
   
   if (options.notificationToken) {
     qb.andWhere('notification.uniqueToken = :notificationToken', { notificationToken: options.notificationToken });
+  }
+  
+  // Apply notification filter: if status is specified, use it; otherwise default to null
+  if (options.notificationStatus) {
+    if (options.notificationStatus === 'null') {
+      qb.andWhere('customerOrder.notification_id IS NULL');
+    } else {
+      qb.andWhere('customerOrder.notification_id = :notificationStatus', { notificationStatus: options.notificationStatus });
+    }
+  } else {
+    // Default: only show orders without notifications
+    qb.andWhere('customerOrder.notification_id IS NULL');
   }
   
   if (options.customerName) {
