@@ -389,6 +389,7 @@ export class OrderCommandService {
             {
               customerOrder,
               orderItemSku: coItem.orderItemSku,
+              orderItem: coItem.orderItem,
               quantity: coItem.quantity,
               sellingPriceForeign: coItem.sellingPriceForeign,
               purchasePrice: coItem.orderItemSku.purchasePrice,
