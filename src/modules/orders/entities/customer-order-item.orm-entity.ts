@@ -2,6 +2,7 @@ import { Column, Entity, JoinColumn, ManyToOne } from 'typeorm';
 import { BaseOrmEntity } from '../../../common/base/enities/base.orm-entities';
 import { CustomerOrderOrmEntity } from './customer-order.orm-entity';
 import { OrderItemSkuOrmEntity } from './order-item-sku.orm-entity';
+import { OrderItemOrmEntity } from './order-item.orm-entity';
 
 @Entity('customer_order_items')
 export class CustomerOrderItemOrmEntity extends BaseOrmEntity {
@@ -12,6 +13,10 @@ export class CustomerOrderItemOrmEntity extends BaseOrmEntity {
   @ManyToOne(() => OrderItemSkuOrmEntity, (oi) => oi.customerOrderItems, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'order_item_sku_id' })
   orderItemSku: OrderItemSkuOrmEntity;
+
+  @ManyToOne(() => OrderItemOrmEntity, (oi) => oi.customerOrderItems, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'order_item_sku_id' })
+  orderItem: OrderItemOrmEntity;
 
   @Column({ type: 'int', default: 0 })
   quantity: number;

@@ -3,6 +3,7 @@ import { BaseOrmEntity } from '../../../common/base/enities/base.orm-entities';
 import { OrderOrmEntity } from './order.orm-entity';
 import { ImageOrmEntity } from 'src/modules/images/entities/image.orm-entity';
 import { OrderItemSkuOrmEntity } from './order-item-sku.orm-entity';
+import { CustomerOrderItemOrmEntity } from './customer-order-item.orm-entity';
 
 export type DiscountType = 'PERCENT' | 'FIX';
 
@@ -121,6 +122,9 @@ export class OrderItemOrmEntity extends BaseOrmEntity {
   @ManyToOne(() => OrderOrmEntity, (o) => o.orderItems, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'order_id' })
   order: OrderOrmEntity;
+
+  @OneToMany(() => CustomerOrderItemOrmEntity, (coi) => coi.orderItemSku)
+  customerOrderItems: CustomerOrderItemOrmEntity[];
 
   @ManyToOne(() => ImageOrmEntity, { onDelete: 'SET NULL', nullable: true })
   @JoinColumn({ name: 'image_id' })
