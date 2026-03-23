@@ -59,16 +59,18 @@ export class CustomerOrderQueryRepository extends BaseQueryRepository<CustomerOr
   }
   
   // Apply notification filter: if status is specified, use it; otherwise default to null
-  if (options.notificationStatus) {
-    if (options.notificationStatus === 'null') {
-      qb.andWhere('customerOrder.notification_id IS NULL');
-    } else {
-      qb.andWhere('customerOrder.notification_id = :notificationStatus', { notificationStatus: options.notificationStatus });
-    }
-  } else {
-    // Default: only show orders without notifications
+ if (options.notificationStatus) {
+  if (options.notificationStatus === 'null') {
     qb.andWhere('customerOrder.notification_id IS NULL');
+  } else {
+    qb.andWhere('customerOrder.notification_id = :notificationStatus', {
+      notificationStatus: options.notificationStatus,
+    });
   }
+} else if (!options.notificationToken) {
+  // ❗ ใส่เงื่อนไขนี้เพิ่ม
+  qb.andWhere('customerOrder.notification_id IS NULL');
+}
   
   if (options.customerName) {
     qb.andWhere('customer.customerName LIKE :customerName', { customerName: `%${options.customerName}%` });

@@ -27,7 +27,7 @@ export class CustomerOrderController {
   @Get('by-token')
   @Public()
   @ApiOperation({ summary: 'Get customer orders by customer token (public — no JWT needed)' })
-  @ApiParam({ name: 'token', description: 'Customer unique token from URL' })
+  // @ApiParam({ name: 'token', description: 'Customer unique token from URL' })
   @ApiOkResponseBase()
   async getByToken(
     @Query() query: CustomerOrderListQueryDto,
@@ -38,7 +38,7 @@ export class CustomerOrderController {
   @Get('summary-by-token')
   @Public()
   @ApiOperation({ summary: 'Get customer orders by customer token (public — no JWT needed)' })
-  @ApiParam({ name: 'token', description: 'Customer unique token from URL' })
+  // @ApiParam({ name: 'token', description: 'Customer unique token from URL' })
   @ApiOkResponseBase()
   async getSummaryByToken(
     @Query() query: TokenQueryDto,

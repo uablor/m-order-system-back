@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { TransactionService } from '../../../common/transaction/transaction.service';
 import { NotificationRepository } from '../repositories/notification.repository';
 import { NotificationUpdateDto } from '../dto/notification-update.dto';
@@ -123,7 +123,12 @@ export class NotificationCommandService {
     manager: EntityManager,
   ): Promise<{ notification: NotificationOrmEntity; customer: { id: number; customerName: string } }> {
 
-    const notificationsToken = generateUniqueToken();
+    let notificationsToken = generateUniqueToken();
+    let exists = await this.notificationRepository.findOneBy({ uniqueToken: notificationsToken }, manager);
+    while (exists) {
+      notificationsToken = generateUniqueToken();
+      exists = await this.notificationRepository.findOneBy({ uniqueToken: notificationsToken }, manager);
+    }
 
     const customer = await this.customerQueryRepository.findOneByIdWithMerchant(
       dto.customerId,
