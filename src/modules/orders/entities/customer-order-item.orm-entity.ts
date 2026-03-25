@@ -15,7 +15,7 @@ export class CustomerOrderItemOrmEntity extends BaseOrmEntity {
   orderItemSku: OrderItemSkuOrmEntity;
 
   @ManyToOne(() => OrderItemOrmEntity, (oi) => oi.customerOrderItems, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'order_item_sku_id' })
+  @JoinColumn({ name: 'order_item_id' })
   orderItem: OrderItemOrmEntity;
 
   @Column({ type: 'int', default: 0 })

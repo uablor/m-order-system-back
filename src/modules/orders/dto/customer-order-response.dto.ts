@@ -28,6 +28,12 @@ class CustomerOrderItemResponseDto {
 
   @ApiProperty()
   profit: number;
+
+  @ApiProperty({ required: false })
+  productName: string | null;
+
+  @ApiProperty({ required: false })
+  orderItemId: number | null;
 }
 
 export class CustomerOrderResponseDto {
