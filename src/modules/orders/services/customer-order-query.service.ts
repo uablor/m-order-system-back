@@ -21,7 +21,7 @@ export class CustomerOrderQueryService {
   async getById(id: number): Promise<CustomerOrderResponseDto | null> {
     const entity = await this.customerOrderQueryRepository.repository.findOne({
       where: { id },
-      relations: ['order', 'customer', 'customerOrderItems', 'customerOrderItems.orderItemSku', 'customerOrderItems.orderItemSku.orderItem'],
+      relations: ['order', 'customer', 'customerOrderItems', 'customerOrderItems.orderItemSku', 'customerOrderItems.orderItemSku.orderItem', 'customerOrderItems.orderItemSku.exchangeRateBuy', 'customerOrderItems.orderItemSku.exchangeRateSell'],
     });
     if (!entity) return null;
     return this.toResponse(entity);
@@ -94,7 +94,7 @@ LEFT JOIN exchange_rates er
 WHERE
   c.unique_token = ?
   AND n.unique_token = ?
-  AND JSON_CONTAINS(n.related_orders, CAST(co.id AS JSON))
+  AND JSON_CONTAINS(n.related_orders, JSON_QUOTE(co.id))
 
 GROUP BY
   er.base_currency,

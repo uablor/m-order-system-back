@@ -16,4 +16,10 @@ export class OrderItemListQueryDto extends BaseQueryDto {
   @Type(() => Number)
   @IsInt()
   merchantId?: number;
+
+  @ApiPropertyOptional({ description: 'Filter by order item SKU ID' })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  orderItemSkuId?: number;
 }

@@ -30,11 +30,31 @@ export class OrderItemQueryService {
     return createSingleResponse(dto);
   }
 
+  async getByOrderItemSkuIdOrFail(orderItemSkuId: number): Promise<ResponseInterface<OrderItemResponseDto>> {
+    const query = new OrderItemListQueryDto();
+    query.orderItemSkuId = orderItemSkuId;
+    query.limit = 1;
+    query.page = 1;
+    
+    const result = await this.orderItemQueryRepository.findWithPagination(query);
+    
+    if (result.results.length === 0) {
+      throw new NotFoundException('Order item SKU not found');
+    }
+    
+    // Filter SKUs to only include the requested SKU
+    const orderItem = result.results[0];
+    const filteredResponse = this.toResponse(orderItem, orderItemSkuId);
+    
+    return createSingleResponse(filteredResponse);
+  }
+
   async getList(query: OrderItemListQueryDto): Promise<ResponseWithPaginationInterface<OrderItemResponseDto>> {
     const result = await this.orderItemQueryRepository.findWithPagination({
       page: query.page,
       limit: query.limit,
       orderId: query.orderId,
+      orderItemSkuId: query.orderItemSkuId,
     });
     return createPaginatedResponse(
       result.results.map((e) => this.toResponse(e)),
@@ -61,6 +81,7 @@ export class OrderItemQueryService {
       page: query.page,
       limit: query.limit,
       orderId: query.orderId,
+      orderItemSkuId: query.orderItemSkuId,
       merchantId,
     });
     return createPaginatedResponse(
@@ -98,13 +119,19 @@ export class OrderItemQueryService {
       }
     }
   
-  private toResponse(entity: import('../entities/order-item.orm-entity').OrderItemOrmEntity): OrderItemResponseDto {
+  private toResponse(entity: import('../entities/order-item.orm-entity').OrderItemOrmEntity, orderItemSkuId?: number): OrderItemResponseDto {
     console.log('entity', entity);
+    
+    // Filter SKUs if orderItemSkuId is provided
+    const filteredSkus = entity.skus?.filter(sku => 
+      orderItemSkuId ? sku.id === orderItemSkuId : true
+    ) || [];
+    
     return {
       id: entity.id,
       orderId: entity.order?.id ?? 0,
       productName: entity.productName,
-      orderItemIndex: entity.skus?.[0]?.orderItemSkuIndex ?? null,
+      orderItemIndex: filteredSkus[0]?.orderItemSkuIndex ?? null,
       quantity: entity.quantity,
       imageId: entity.image?.id ?? null,
       image: entity.image ? {
@@ -154,7 +181,7 @@ export class OrderItemQueryService {
       targetCurrencySellingPriceForeign: entity.order?.exchangeRateSell && entity.quantity > 0 ? this.convertToTargetCurrency(entity.sellingTotal / entity.quantity, entity.order.exchangeRateSell) : '0',
 
 
-      skus: entity.skus?.map(sku => ({
+      skus: filteredSkus?.map(sku => ({
             id: sku.id,
             orderItemId: entity.id,
             orderItemSkuIndex: sku.orderItemSkuIndex,
