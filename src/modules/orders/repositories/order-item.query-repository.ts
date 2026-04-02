@@ -38,6 +38,10 @@ export class OrderItemQueryRepository extends BaseQueryRepository<OrderItemOrmEn
       qb.andWhere('order.merchant_id = :merchantId', { merchantId: options.merchantId });
     }
 
+    if (options.orderItemSkuId != null) {
+      qb.andWhere('skus.id = :orderItemSkuId', { orderItemSkuId: options.orderItemSkuId });
+    }
+
     qb.orderBy('orderItem.id', 'DESC');
 
     return fetchWithPagination({

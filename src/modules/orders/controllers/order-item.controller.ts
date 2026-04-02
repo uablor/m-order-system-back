@@ -34,13 +34,18 @@ export class OrderItemController {
   }
 
   @Get(':id')
-  @ApiOperation({ summary: 'Get order item by ID' })
+  @ApiOperation({ summary: 'Get order item by ID or order item SKU ID' })
   @ApiBearerAuth('BearerAuth')
-  @ApiParam({ name: 'id', description: 'Order item ID' })
+  @ApiParam({ name: 'id', description: 'Order item ID or Order item SKU ID' })
   @ApiOkResponseBase(OrderItemResponseDto)
   @ApiNotFoundBase()
   @ApiUnauthorizedBase()
-  async getById(@Param('id', ParseIntPipe) id: number) {
+  async getById(@Param('id', ParseIntPipe) id: number, @Query('filter') filter?: string) {
+    // If filter is set to 'sku', treat id as orderItemSkuId
+    if (filter === 'sku') {
+      return this.orderItemQueryService.getByOrderItemSkuIdOrFail(id);
+    }
+    // Default behavior: treat id as orderItemId
     return this.orderItemQueryService.getByIdOrFail(id);
   }
 }

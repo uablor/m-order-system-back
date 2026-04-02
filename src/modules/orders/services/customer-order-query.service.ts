@@ -21,7 +21,7 @@ export class CustomerOrderQueryService {
   async getById(id: number): Promise<CustomerOrderResponseDto | null> {
     const entity = await this.customerOrderQueryRepository.repository.findOne({
       where: { id },
-      relations: ['order', 'customer', 'customerOrderItems', 'customerOrderItems.orderItem'],
+      relations: ['order', 'customer', 'customerOrderItems', 'customerOrderItems.orderItemSku', 'customerOrderItems.orderItemSku.orderItem', 'customerOrderItems.orderItemSku.exchangeRateBuy', 'customerOrderItems.orderItemSku.exchangeRateSell'],
     });
     if (!entity) return null;
     return this.toResponse(entity);
@@ -94,7 +94,7 @@ LEFT JOIN exchange_rates er
 WHERE
   c.unique_token = ?
   AND n.unique_token = ?
-  AND JSON_CONTAINS(n.related_orders, CAST(co.id AS JSON))
+  AND JSON_CONTAINS(n.related_orders, JSON_QUOTE(co.id))
 
 GROUP BY
   er.base_currency,
@@ -166,23 +166,33 @@ GROUP BY
       targetCurrencyRemainingAmount: convertToTargetCurrency(entity.remainingAmount, entity.order?.exchangeRateSell),
       paymentStatus: entity.paymentStatus,
       hasPendingPayment: entity.paymentStatus === 'UNPAID',
-      customerOrderItems: entity.customerOrderItems?.map(item => ({
-        id: item.id,
-        orderItemSkuId: item.orderItemSku?.id ?? 0,
-        variant: item.orderItemSku?.variant || null,
-        quantity: item.quantity,
-        exchangeRateBuy: item.orderItemSku?.exchangeRateBuy || null,
-        exchangeRateSell: item.orderItemSku?.exchangeRateSell || null,
-        exchangeRateBuyValue: item.orderItemSku?.exchangeRateBuyValue || null,
-        exchangeRateSellValue: item.orderItemSku?.exchangeRateSellValue || null,
-        sellingPriceForeign: item.sellingPriceForeign,
-        purchasePrice: item.purchasePrice,
-        purchaseTotal: item.purchaseTotal,
-        sellingTotal: item.sellingTotal,
-        profit: item.profit,
-        targetCurrencySellingPriceForeign: convertToTargetCurrency(item.sellingPriceForeign, item.orderItemSku?.exchangeRateSell),
-        targetCurrencySellingTotal: convertToTargetCurrency(item.sellingTotal, item.orderItemSku?.exchangeRateSell),
-      })) || [],
+      customerOrderItems: entity.customerOrderItems?.map(item => {
+        console.log('=== BACKEND: Processing CustomerOrderItem ===');
+        console.log('item.id:', item.id);
+        console.log('item.orderItemSku?.id:', item.orderItemSku?.id);
+        console.log('item.orderItemSku?.orderItem?.id:', item.orderItemSku?.orderItem?.id);
+        console.log('item.orderItemSku?.orderItem?.productName:', item.orderItemSku?.orderItem?.productName);
+        
+        return {
+          id: item.id,
+          orderItemSkuId: item.orderItemSku?.id ?? 0,
+          variant: item.orderItemSku?.variant || null,
+          quantity: item.quantity,
+          exchangeRateBuy: item.orderItemSku?.exchangeRateBuy || null,
+          exchangeRateSell: item.orderItemSku?.exchangeRateSell || null,
+          exchangeRateBuyValue: item.orderItemSku?.exchangeRateBuyValue || null,
+          exchangeRateSellValue: item.orderItemSku?.exchangeRateSellValue || null,
+          sellingPriceForeign: item.sellingPriceForeign,
+          purchasePrice: item.purchasePrice,
+          purchaseTotal: item.purchaseTotal,
+          sellingTotal: item.sellingTotal,
+          profit: item.profit,
+          targetCurrencySellingPriceForeign: convertToTargetCurrency(item.sellingPriceForeign, item.orderItemSku?.exchangeRateSell),
+          targetCurrencySellingTotal: convertToTargetCurrency(item.sellingTotal, item.orderItemSku?.exchangeRateSell),
+          productName: item.orderItemSku?.orderItem?.productName || null,
+          orderItemId: item.orderItemSku?.orderItem?.id || null,
+        };
+      }) || [],
       createdAt: entity.createdAt,
       updatedAt: entity.updatedAt,
     };

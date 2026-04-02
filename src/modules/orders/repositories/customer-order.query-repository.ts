@@ -31,7 +31,10 @@ export class CustomerOrderQueryRepository extends BaseQueryRepository<CustomerOr
     .leftJoinAndSelect('customerOrder.customer', 'customer')
     .leftJoinAndSelect('customerOrder.customerOrderItems', 'customerOrderItems')
     
-    .leftJoinAndSelect('customerOrderItems.orderItemSku', 'orderItemSku');
+    .leftJoinAndSelect('customerOrderItems.orderItemSku', 'orderItemSku')
+    .leftJoinAndSelect('orderItemSku.orderItem', 'orderItem')
+    .leftJoinAndSelect('orderItemSku.exchangeRateBuy', 'skuExchangeRateBuy')
+    .leftJoinAndSelect('orderItemSku.exchangeRateSell', 'skuExchangeRateSell');
 
   // Apply filters
   if (options.orderId != null) {
