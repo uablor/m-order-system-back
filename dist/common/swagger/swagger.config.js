@@ -14,7 +14,6 @@ exports.swaggerConfig = new swagger_1.DocumentBuilder()
     description: 'Enter JWT token',
     in: 'header',
 }, 'BearerAuth')
-    .addServer('/api')
     .build();
 exports.SWAGGER_PATH = 'docs';
 //# sourceMappingURL=swagger.config.js.map

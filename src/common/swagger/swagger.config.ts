@@ -15,7 +15,7 @@ export const swaggerConfig = new DocumentBuilder()
     },
     'BearerAuth',
   )
-    .addServer('/api') 
+    // .addServer('/api') 
   .build();
 
 export const SWAGGER_PATH = 'docs';
