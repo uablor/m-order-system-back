@@ -1,0 +1,31 @@
+import { BaseOrmEntity } from '../../../common/base/enities/base.orm-entities';
+import { MerchantOrmEntity } from '../../merchants/entities/merchant.orm-entity';
+import { UserOrmEntity } from '../../users/entities/user.orm-entity';
+import { OrderItemOrmEntity } from './order-item.orm-entity';
+import { CustomerOrderOrmEntity } from './customer-order.orm-entity';
+import { ArrivalStatusEnum } from '../enum/enum.entities';
+import { ExchangeRateOrmEntity } from 'src/modules/exchange-rates/entities/exchange-rate.orm-entity';
+import { PaymentStatusEnum } from 'src/modules/payments/enum/payment.enum';
+export declare class OrderOrmEntity extends BaseOrmEntity {
+    merchant: MerchantOrmEntity;
+    createdByUser: UserOrmEntity | null;
+    orderCode: string;
+    orderDate: Date;
+    arrivalStatus: ArrivalStatusEnum;
+    arrivedAt: Date | null;
+    notifiedAt: Date | null;
+    exchangeRateBuy: ExchangeRateOrmEntity | null;
+    exchangeRateSell: ExchangeRateOrmEntity | null;
+    exchangeRateBuyValue: number | null;
+    exchangeRateSellValue: number | null;
+    totalPurchaseCost: number;
+    totalShippingCost: number;
+    totalCostBeforeDiscount: number;
+    totalDiscount: number;
+    totalFinalCost: number;
+    totalSellingAmount: number;
+    totalProfit: number;
+    paymentStatus: PaymentStatusEnum;
+    orderItems: OrderItemOrmEntity[];
+    customerOrders: CustomerOrderOrmEntity[];
+}

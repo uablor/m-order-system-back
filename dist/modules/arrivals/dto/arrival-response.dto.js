@@ -1,0 +1,125 @@
+"use strict";
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.ArrivalResponseDto = exports.ArrivalItemResponseDto = void 0;
+const swagger_1 = require("@nestjs/swagger");
+class ArrivalItemResponseDto {
+    id;
+    arrivalId;
+    orderItemId;
+    orderItem;
+    arrivedQuantity;
+    condition;
+    notes;
+    createdAt;
+    updatedAt;
+}
+exports.ArrivalItemResponseDto = ArrivalItemResponseDto;
+__decorate([
+    (0, swagger_1.ApiProperty)(),
+    __metadata("design:type", Number)
+], ArrivalItemResponseDto.prototype, "id", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)(),
+    __metadata("design:type", Number)
+], ArrivalItemResponseDto.prototype, "arrivalId", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)(),
+    __metadata("design:type", Number)
+], ArrivalItemResponseDto.prototype, "orderItemId", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)(),
+    __metadata("design:type", Object)
+], ArrivalItemResponseDto.prototype, "orderItem", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)(),
+    __metadata("design:type", Number)
+], ArrivalItemResponseDto.prototype, "arrivedQuantity", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)({ nullable: true }),
+    __metadata("design:type", Object)
+], ArrivalItemResponseDto.prototype, "condition", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)({ nullable: true }),
+    __metadata("design:type", Object)
+], ArrivalItemResponseDto.prototype, "notes", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)(),
+    __metadata("design:type", Date)
+], ArrivalItemResponseDto.prototype, "createdAt", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)(),
+    __metadata("design:type", Date)
+], ArrivalItemResponseDto.prototype, "updatedAt", void 0);
+class ArrivalResponseDto {
+    id;
+    orderId;
+    order;
+    merchantId;
+    arrivedDate;
+    arrivedTime;
+    recordedBy;
+    recordedByUser;
+    notes;
+    arrivalItems;
+    createdAt;
+    updatedAt;
+}
+exports.ArrivalResponseDto = ArrivalResponseDto;
+__decorate([
+    (0, swagger_1.ApiProperty)(),
+    __metadata("design:type", Number)
+], ArrivalResponseDto.prototype, "id", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)(),
+    __metadata("design:type", Number)
+], ArrivalResponseDto.prototype, "orderId", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)(),
+    __metadata("design:type", Object)
+], ArrivalResponseDto.prototype, "order", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)(),
+    __metadata("design:type", Number)
+], ArrivalResponseDto.prototype, "merchantId", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)({ example: '2025-02-11' }),
+    __metadata("design:type", String)
+], ArrivalResponseDto.prototype, "arrivedDate", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)({ example: '14:30:00' }),
+    __metadata("design:type", String)
+], ArrivalResponseDto.prototype, "arrivedTime", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)({ nullable: true }),
+    __metadata("design:type", Object)
+], ArrivalResponseDto.prototype, "recordedBy", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)({ nullable: true }),
+    __metadata("design:type", Object)
+], ArrivalResponseDto.prototype, "recordedByUser", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)({ nullable: true }),
+    __metadata("design:type", Object)
+], ArrivalResponseDto.prototype, "notes", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)({ type: () => [ArrivalItemResponseDto] }),
+    __metadata("design:type", Array)
+], ArrivalResponseDto.prototype, "arrivalItems", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)(),
+    __metadata("design:type", Date)
+], ArrivalResponseDto.prototype, "createdAt", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)(),
+    __metadata("design:type", Date)
+], ArrivalResponseDto.prototype, "updatedAt", void 0);
+//# sourceMappingURL=arrival-response.dto.js.map
