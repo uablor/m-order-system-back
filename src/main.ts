@@ -7,6 +7,8 @@ import { swaggerConfig, SWAGGER_PATH } from './common/swagger/swagger.config';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
+  app.setGlobalPrefix('api');
+  
   app.enableCors({
     origin: true,
     credentials: true,
@@ -23,8 +25,6 @@ async function bootstrap() {
   SwaggerModule.setup(SWAGGER_PATH, app, document, {
     swaggerOptions: { persistAuthorization: true },
   });
-  
-  app.setGlobalPrefix('api');
   
   const port = Number(process.env.PORT) || 3000;
 
