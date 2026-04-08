@@ -96,7 +96,7 @@ LEFT JOIN exchange_rates er
 WHERE
   c.unique_token = ?
   AND n.unique_token = ?
-  AND JSON_CONTAINS(n.related_orders, JSON_QUOTE(co.id))
+  AND JSON_CONTAINS(n.related_orders, JSON_QUOTE(CAST(co.id AS CHAR(50))))
 
 GROUP BY
   er.base_currency,
