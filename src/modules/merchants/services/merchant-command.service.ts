@@ -89,11 +89,9 @@ export class MerchantCommandService {
         throw new NotFoundException('Merchant not found');
       }
       
-      const updateData: Partial<MerchantOrmEntity> = {
-        isActive: dto.isActive ?? true,
-      };
+      const isActive = dto.isActive ?? true;
       
-      await this.merchantRepository.update(id, updateData, manager);
+      await this.merchantRepository.setActive(id, isActive, manager);
     });
   }
 

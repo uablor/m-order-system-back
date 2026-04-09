@@ -51,4 +51,9 @@ export class MerchantRepository {
   ): Promise<MerchantOrmEntity | null> {
     return this.getRepo(manager).findOne({ where: { ownerUserId } });
   }
+
+  async setActive(id: number, isActive: boolean, manager?: EntityManager): Promise<void> {
+    const repo = this.getRepo(manager);
+    await repo.update({ id }, { isActive });
+  }
 }
