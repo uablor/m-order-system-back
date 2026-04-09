@@ -16,8 +16,10 @@ import { MerchantRepository } from '../../merchants/repositories/merchant.reposi
 import { UserCreateDto } from '../dto/user-create.dto';
 import { UserUpdateDto } from '../dto/user-update.dto';
 import { UserMerchantCreateDto } from '../dto/user-merchant-create.dto';
+import { ChangePasswordDto } from '../dto/change-password.dto';
 import { UserOrmEntity } from '../entities/user.orm-entity';
 import { MerchantOrmEntity } from '../../merchants/entities/merchant.orm-entity';
+import { AcitveDto } from 'src/common/base/dtos/active.dto';
 import {
   ADMIN_MERCHANT_ROLE_NAME,
   ADMIN_ROLE_NAME,
@@ -25,8 +27,6 @@ import {
   SUPERADMIN_ROLE_NAME,
 } from 'src/database/seeds/role.seeder';
 import { CurrentUserPayload } from 'src/common/decorators/current-user.decorator';
-import { ChangePasswordDto } from '../dto/change-password.dto';
-import { AcitveDto } from 'src/common/base/dtos/active.dto';
 import { ImageOrmEntity } from 'src/modules/images/entities/image.orm-entity';
 import { ImageQueryRepository } from 'src/modules/images/repositories/image.query-repository';
 

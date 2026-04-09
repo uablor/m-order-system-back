@@ -113,7 +113,7 @@ let PaymentCommandService = class PaymentCommandService {
                 throw new common_1.ForbiddenException('You can only reject payments for your own store');
             }
         }
-        const paymenht = this.paymentRepository.update(id, {
+        const updatedPayment = await this.paymentRepository.update(id, {
             status: payment_enum_1.PaymentVerificationStatusEnum.REJECTED,
             rejectedById: currentUser.userId,
             rejectedAt: new Date(),
@@ -122,10 +122,26 @@ let PaymentCommandService = class PaymentCommandService {
         await this.customerOrderRepository.update(customerOrder.id, {
             paymentStatus: payment_enum_1.PaymentStatusEnum.UNPAID,
         }, manager);
-        await this.orderRepository.update(order?.id, {
-            paymentStatus: payment_enum_1.PaymentStatusEnum.UNPAID,
+        const customerOrderRepo = manager.getRepository(customer_order_orm_entity_1.CustomerOrderOrmEntity);
+        const allCustomerOrders = await customerOrderRepo.find({
+            where: { order: { id: order.id } }
+        });
+        const allPaid = allCustomerOrders.every(co => co.paymentStatus === payment_enum_1.PaymentStatusEnum.PAID);
+        const allUnpaid = allCustomerOrders.every(co => co.paymentStatus === payment_enum_1.PaymentStatusEnum.UNPAID);
+        let orderStatus;
+        if (allPaid) {
+            orderStatus = payment_enum_1.PaymentStatusEnum.PAID;
+        }
+        else if (allUnpaid) {
+            orderStatus = payment_enum_1.PaymentStatusEnum.UNPAID;
+        }
+        else {
+            orderStatus = payment_enum_1.PaymentStatusEnum.UNPAID;
+        }
+        await this.orderRepository.update(order.id, {
+            paymentStatus: orderStatus,
         }, manager);
-        return paymenht;
+        return updatedPayment;
     }
     async reject(id, dto, currentUser) {
         return this.transactionService.run(async (manager) => {
@@ -188,12 +204,13 @@ let PaymentCommandService = class PaymentCommandService {
             remainingAmount: remainingAmount,
             paymentStatus: payment_enum_1.PaymentStatusEnum.PAID,
         });
-        const isPaid = orderEntity?.customerOrders?.every(co => co.paymentStatus === payment_enum_1.PaymentStatusEnum.PAID);
-        if (orderEntity && isPaid !== undefined) {
-            await orderRepo.update(orderEntity.id, {
-                paymentStatus: isPaid ? payment_enum_1.PaymentStatusEnum.PAID : payment_enum_1.PaymentStatusEnum.UNPAID,
-            });
-        }
+        const allCustomerOrders = await customerOrderRepo.find({
+            where: { order: { id: orderEntity.id } }
+        });
+        const allPaid = allCustomerOrders.every(co => co.paymentStatus === payment_enum_1.PaymentStatusEnum.PAID);
+        await this.orderRepository.update(orderEntity.id, {
+            paymentStatus: allPaid ? payment_enum_1.PaymentStatusEnum.PAID : payment_enum_1.PaymentStatusEnum.UNPAID,
+        }, manager);
         return updatedPayment;
     }
     async verify(id, currentUser) {

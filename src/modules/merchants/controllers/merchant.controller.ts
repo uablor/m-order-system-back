@@ -35,6 +35,7 @@ import {
 import { createSingleResponse } from 'src/common/base/helpers/response.helper';
 import { MerchantGetPriceCurrencySummaryDto, MerchantPriceCurrencySummaryDto } from 'src/modules/dashboard/dto/merchant-price-currency-summary.dto';
 import { DashboardQueryService } from 'src/modules/dashboard/services/dashboard-query.service';
+import { AcitveDto } from 'src/common/base/dtos/active.dto';
 
 @ApiTags('Merchants')
 @Controller('merchants')
@@ -156,6 +157,21 @@ export class MerchantController {
     @CurrentUser() currentUser: CurrentUserPayload,
   ) {
     return this.commandService.update(currentUser.merchantId!, dto);
+  }
+
+  @Patch(':id/active')
+  @ApiOperation({ summary: 'Update merchant active status' })
+  @ApiBearerAuth('BearerAuth')
+  @ApiParam({ name: 'id', description: 'Merchant ID' })
+  @ApiOkResponseBase()
+  @ApiBadRequestBase()
+  @ApiNotFoundBase()
+  @ApiUnauthorizedBase()
+  async adminUpdateActive(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: AcitveDto,
+  ) {
+    return this.commandService.updateActive(id, dto);
   }
 
   @Delete(':id')

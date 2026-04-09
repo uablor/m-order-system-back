@@ -147,7 +147,7 @@ export class PaymentCommandService {
       }
     }
 
-    const paymenht= this.paymentRepository.update(
+    const updatedPayment = await this.paymentRepository.update(
       id,
       {
         status: PaymentVerificationStatusEnum.REJECTED,
@@ -158,28 +158,41 @@ export class PaymentCommandService {
       manager,
     );
 
-      await this.customerOrderRepository.update(
-        customerOrder.id,
-        {
-          paymentStatus: PaymentStatusEnum.UNPAID,
-        },
-        manager,
-      );
-    
-
-  
-
-    await this.orderRepository.update(
-      order?.id!,
+    await this.customerOrderRepository.update(
+      customerOrder.id,
       {
         paymentStatus: PaymentStatusEnum.UNPAID,
       },
       manager,
     );
 
-    
+    // Check all Customer Orders for this Main Order to determine correct status
+    const customerOrderRepo = manager.getRepository(CustomerOrderOrmEntity);
+    const allCustomerOrders = await customerOrderRepo.find({
+      where: { order: { id: order!.id } }
+    });
 
-    return paymenht
+    const allPaid = allCustomerOrders.every(co => co.paymentStatus === PaymentStatusEnum.PAID);
+    const allUnpaid = allCustomerOrders.every(co => co.paymentStatus === PaymentStatusEnum.UNPAID);
+
+    let orderStatus: PaymentStatusEnum;
+    if (allPaid) {
+      orderStatus = PaymentStatusEnum.PAID;
+    } else if (allUnpaid) {
+      orderStatus = PaymentStatusEnum.UNPAID;
+    } else {
+      orderStatus = PaymentStatusEnum.UNPAID; // Mixed status - default to UNPAID
+    }
+
+    await this.orderRepository.update(
+      order!.id,
+      {
+        paymentStatus: orderStatus,
+      },
+      manager,
+    );
+
+    return updatedPayment
 
   }
 
@@ -278,17 +291,20 @@ export class PaymentCommandService {
       await customerOrderRepo.update(customerOrder.id, {
         totalPaid: newPaid,
         remainingAmount: remainingAmount,
-        // ຍັງບໍາໄດ້ເຮັດເລື່ອງ remainingAmount ແລະ paymentStatus ສໍາລັບ customerOrder
         paymentStatus: PaymentStatusEnum.PAID,
       });
     
 
-      const isPaid = orderEntity?.customerOrders?.every(co => co.paymentStatus === PaymentStatusEnum.PAID);
-      if (orderEntity && isPaid !== undefined) {
-      await orderRepo.update(orderEntity.id, {
-        paymentStatus: isPaid ? PaymentStatusEnum.PAID : PaymentStatusEnum.UNPAID,
-      });
-    }
+    // Check all Customer Orders for this Main Order to determine correct status
+    const allCustomerOrders = await customerOrderRepo.find({
+      where: { order: { id: orderEntity!.id } }
+    });
+    
+    const allPaid = allCustomerOrders.every(co => co.paymentStatus === PaymentStatusEnum.PAID);
+    
+    await this.orderRepository.update(orderEntity!.id, {
+      paymentStatus: allPaid ? PaymentStatusEnum.PAID : PaymentStatusEnum.UNPAID,
+    }, manager);
 
     return updatedPayment;
   }

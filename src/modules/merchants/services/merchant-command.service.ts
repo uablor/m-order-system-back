@@ -6,6 +6,7 @@ import { MerchantUpdateDto } from '../dto/merchant-update.dto';
 import { MerchantOrmEntity } from '../entities/merchant.orm-entity';
 import { ImageQueryRepository } from 'src/modules/images/repositories/image.query-repository';
 import { ImageOrmEntity } from 'src/modules/images/entities/image.orm-entity';
+import { AcitveDto } from 'src/common/base/dtos/active.dto';
 
 @Injectable()
 export class MerchantCommandService {
@@ -77,6 +78,21 @@ export class MerchantCommandService {
         ...(dto.defaultCurrency !== undefined && { defaultCurrency: dto.defaultCurrency }),
         ...(dto.isActive !== undefined && { isActive: dto.isActive }),
       };
+      await this.merchantRepository.update(id, updateData, manager);
+    });
+  }
+
+  async updateActive(id: number, dto: AcitveDto): Promise<void> {
+    await this.transactionService.run(async (manager) => {
+      const existing = await this.merchantRepository.findOneById(id, manager);
+      if (!existing) {
+        throw new NotFoundException('Merchant not found');
+      }
+      
+      const updateData: Partial<MerchantOrmEntity> = {
+        isActive: dto.isActive ?? true,
+      };
+      
       await this.merchantRepository.update(id, updateData, manager);
     });
   }

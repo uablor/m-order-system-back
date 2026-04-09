@@ -8,6 +8,7 @@ import { MerchantDetailResponseDto } from '../dto/merchant-detail-response.dto';
 import type { CurrentUserPayload } from '../../../common/decorators/current-user.decorator';
 import { MerchantGetPriceCurrencySummaryDto } from 'src/modules/dashboard/dto/merchant-price-currency-summary.dto';
 import { DashboardQueryService } from 'src/modules/dashboard/services/dashboard-query.service';
+import { AcitveDto } from 'src/common/base/dtos/active.dto';
 export declare class MerchantController {
     protected readonly commandService: MerchantCommandService;
     protected readonly queryService: MerchantQueryService;
@@ -24,5 +25,6 @@ export declare class MerchantController {
     getById(id: number): Promise<import("../../../common/base/interfaces/response.interface").ResponseInterface<MerchantResponseDto>>;
     adminUpdate(id: number, dto: MerchantUpdateDto): Promise<void>;
     merchantUpdate(dto: MerchantUpdateDto, currentUser: CurrentUserPayload): Promise<void>;
+    adminUpdateActive(id: number, dto: AcitveDto): Promise<void>;
     adminDelete(id: number): Promise<void>;
 }

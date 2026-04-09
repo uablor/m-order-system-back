@@ -56,9 +56,18 @@ export class CustomerOrderQueryService {
 
   async getSummary(dto: TokenQueryDto): Promise<any[]> {
 
+    // Build query conditions dynamically
+    let whereConditions = ['c.unique_token = ?'];
+    let queryParams: any[] = [dto.customerToken];
+    
+    if (dto.notificationToken) {
+      whereConditions.push('n.unique_token = ?');
+      queryParams.push(dto.notificationToken);
+    }
+
     const query = `
 SELECT 
-  er.base_currency as baseCurrency,
+  COALESCE(er.base_currency, 'LAK') as baseCurrency,
 
   SUM(ois.selling_total) as totalAll,
 
@@ -72,15 +81,12 @@ SELECT
     THEN ois.selling_total ELSE 0 END
   ) as totalPaid,
 
-  er.rate as rate
+  COALESCE(er.rate, 1) as rate
 
-FROM notifications n
-
-JOIN customers c
-  ON c.id = n.customer_id
+FROM customers c
 
 JOIN customer_orders co
-  ON co.notification_id = n.id
+  ON co.customer_id = c.id
 
 JOIN customer_order_items coi
   ON coi.customer_order_id = co.id
@@ -88,23 +94,21 @@ JOIN customer_order_items coi
 JOIN order_item_skus ois
   ON ois.id = coi.order_item_sku_id
 
+LEFT JOIN notifications n
+  ON n.id = co.notification_id
+
 LEFT JOIN exchange_rates er
   ON er.id = ois.exchange_rate_sell_id
 
 WHERE
-  c.unique_token = ?
-  AND n.unique_token = ?
-  AND JSON_CONTAINS(n.related_orders, JSON_QUOTE(CAST(co.id AS CHAR(50))))
+  ${whereConditions.join(' AND ')}
 
 GROUP BY
   er.base_currency,
   er.rate
 `;
 
-    const rows = await this.dataSource.query(query, [
-      dto.customerToken,
-      dto.notificationToken
-    ]);
+    const rows = await this.dataSource.query(query, queryParams);
 
     let lakTotalAll = 0;
     let lakTotalUnpaid = 0;

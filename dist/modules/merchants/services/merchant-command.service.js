@@ -77,6 +77,18 @@ let MerchantCommandService = class MerchantCommandService {
             await this.merchantRepository.update(id, updateData, manager);
         });
     }
+    async updateActive(id, dto) {
+        await this.transactionService.run(async (manager) => {
+            const existing = await this.merchantRepository.findOneById(id, manager);
+            if (!existing) {
+                throw new common_1.NotFoundException('Merchant not found');
+            }
+            const updateData = {
+                isActive: dto.isActive ?? true,
+            };
+            await this.merchantRepository.update(id, updateData, manager);
+        });
+    }
     async delete(id) {
         await this.transactionService.run(async (manager) => {
             const found = await this.merchantRepository.findOneById(id, manager);

@@ -5,9 +5,9 @@ import { MerchantRepository } from '../../merchants/repositories/merchant.reposi
 import { UserCreateDto } from '../dto/user-create.dto';
 import { UserUpdateDto } from '../dto/user-update.dto';
 import { UserMerchantCreateDto } from '../dto/user-merchant-create.dto';
-import { CurrentUserPayload } from 'src/common/decorators/current-user.decorator';
 import { ChangePasswordDto } from '../dto/change-password.dto';
 import { AcitveDto } from 'src/common/base/dtos/active.dto';
+import { CurrentUserPayload } from 'src/common/decorators/current-user.decorator';
 import { ImageQueryRepository } from 'src/modules/images/repositories/image.query-repository';
 export declare class UserCommandService {
     private readonly userRepository;

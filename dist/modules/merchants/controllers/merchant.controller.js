@@ -28,6 +28,7 @@ const swagger_decorators_1 = require("../../../common/swagger/swagger.decorators
 const response_helper_1 = require("../../../common/base/helpers/response.helper");
 const merchant_price_currency_summary_dto_1 = require("../../dashboard/dto/merchant-price-currency-summary.dto");
 const dashboard_query_service_1 = require("../../dashboard/services/dashboard-query.service");
+const active_dto_1 = require("../../../common/base/dtos/active.dto");
 let MerchantController = class MerchantController {
     commandService;
     queryService;
@@ -65,6 +66,9 @@ let MerchantController = class MerchantController {
     }
     async merchantUpdate(dto, currentUser) {
         return this.commandService.update(currentUser.merchantId, dto);
+    }
+    async adminUpdateActive(id, dto) {
+        return this.commandService.updateActive(id, dto);
     }
     async adminDelete(id) {
         return this.commandService.delete(id);
@@ -193,6 +197,21 @@ __decorate([
     __metadata("design:paramtypes", [merchant_update_dto_1.MerchantUpdateDto, Object]),
     __metadata("design:returntype", Promise)
 ], MerchantController.prototype, "merchantUpdate", null);
+__decorate([
+    (0, common_1.Patch)(':id/active'),
+    (0, swagger_1.ApiOperation)({ summary: 'Update merchant active status' }),
+    (0, swagger_1.ApiBearerAuth)('BearerAuth'),
+    (0, swagger_1.ApiParam)({ name: 'id', description: 'Merchant ID' }),
+    (0, swagger_decorators_1.ApiOkResponseBase)(),
+    (0, swagger_decorators_1.ApiBadRequestBase)(),
+    (0, swagger_decorators_1.ApiNotFoundBase)(),
+    (0, swagger_decorators_1.ApiUnauthorizedBase)(),
+    __param(0, (0, common_1.Param)('id', common_1.ParseIntPipe)),
+    __param(1, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Number, active_dto_1.AcitveDto]),
+    __metadata("design:returntype", Promise)
+], MerchantController.prototype, "adminUpdateActive", null);
 __decorate([
     (0, common_1.Delete)(':id'),
     (0, swagger_1.ApiOperation)({ summary: 'Delete merchant' }),
