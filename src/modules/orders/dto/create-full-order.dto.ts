@@ -132,6 +132,12 @@ export class CreateFullOrderDto {
   @MaxLength(100)
   orderCode: string;
 
+  @ApiPropertyOptional({ description: 'Exchange rate ID for shipping cost conversion' })
+  @IsOptional()
+  @IsNumber()
+  @Min(1)
+  shippingExchangeRateId?: number;
+
   @ApiProperty({ type: [CreateFullOrderItemDto] })
   @IsArray()
   @ValidateNested({ each: true })

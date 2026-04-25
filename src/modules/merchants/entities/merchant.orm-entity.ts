@@ -15,7 +15,7 @@ export class MerchantOrmEntity extends BaseOrmEntity {
   @Column({ name: 'owner_user_id', type: 'int' })
   ownerUserId: number;
 
-  @ManyToOne(() => UserOrmEntity, { onDelete: 'RESTRICT' })
+  @ManyToOne(() => UserOrmEntity)
   @JoinColumn({ name: 'owner_user_id' })
   ownerUser: UserOrmEntity;
 

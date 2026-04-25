@@ -62,6 +62,16 @@ export class OrderOrmEntity extends BaseOrmEntity {
   @Column({ name: 'total_purchase_cost', type: 'decimal', precision: 18, scale: 2, default: 0 })
   totalPurchaseCost: number;
 
+  // new filed
+  // FK เก็บไว้ shippingExchangeRate อัตราแลกเปลี่ยนต้นทาง
+  @ManyToOne(() => ExchangeRateOrmEntity, { nullable: true, onDelete: 'SET NULL' })
+  @JoinColumn({ name: 'shipping_exchange_rate_id' })
+  shippingExchangeRate:ExchangeRateOrmEntity | null;
+  
+  // ค่า shipping exchange rate ณ เวลาสร้าง order
+  @Column({ name: 'shipping_exchange_rate_value', type: 'decimal', precision: 18, scale: 6, nullable: true })
+  shippingExchangeRateValue: number | null;
+
   // ต้นทุนค่าขนส่งรวมทั้งหมด (หน่วย: กีบ)
   @Column({ name: 'total_shipping_cost', type: 'decimal', precision: 18, scale: 2, default: 0 })
   totalShippingCost: number;

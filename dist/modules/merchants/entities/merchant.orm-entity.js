@@ -35,7 +35,7 @@ __decorate([
     __metadata("design:type", Number)
 ], MerchantOrmEntity.prototype, "ownerUserId", void 0);
 __decorate([
-    (0, typeorm_1.ManyToOne)(() => user_orm_entity_1.UserOrmEntity, { onDelete: 'RESTRICT' }),
+    (0, typeorm_1.ManyToOne)(() => user_orm_entity_1.UserOrmEntity),
     (0, typeorm_1.JoinColumn)({ name: 'owner_user_id' }),
     __metadata("design:type", user_orm_entity_1.UserOrmEntity)
 ], MerchantOrmEntity.prototype, "ownerUser", void 0);

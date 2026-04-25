@@ -8,6 +8,7 @@ import { CustomerOrderItemRepository } from '../repositories/customer-order-item
 import { MerchantRepository } from '../../merchants/repositories/merchant.repository';
 import { CustomerRepository } from '../../customers/repositories/customer.repository';
 import { ExchangeRateQueryRepository } from '../../exchange-rates/repositories/exchange-rate.query-repository';
+import { ExchangeRateRepository } from '../../exchange-rates/repositories/exchange-rate.repository';
 import { CreateFullOrderDto } from '../dto/create-full-order.dto';
 import { OrderCreateDto } from '../dto/order-create.dto';
 import { OrderUpdateDto } from '../dto/order-update.dto';
@@ -20,6 +21,7 @@ import { CurrentUserPayload } from 'src/common/decorators/current-user.decorator
 import { ArrivalStatusEnum } from '../enum/enum.entities';
 import { convertToBaseCurrency, convertToTargetCurrency } from 'src/common/utils/convert-to-target-currency.utils';
 import { PaymentStatusEnum } from 'src/modules/payments/enum/payment.enum';
+import { ExchangeRateOrmEntity } from 'src/modules/exchange-rates/entities/exchange-rate.orm-entity';
 
 const ZERO = 0;
 
@@ -41,6 +43,7 @@ export class OrderCommandService {
     private readonly merchantRepository: MerchantRepository,
     private readonly customerRepository: CustomerRepository,
     private readonly exchangeRateQueryRepository: ExchangeRateQueryRepository,
+    private readonly exchangeRateRepository: ExchangeRateRepository,
   ) {}
 
   async create(
@@ -116,6 +119,15 @@ export class OrderCommandService {
         throw new BadRequestException('SELL exchange rate not found');
       }
 
+      // ดึง shipping exchange rate ถ้ามีการส่งมา
+      let shippingExchangeRateEntity: ExchangeRateOrmEntity | null = null;
+      if (dto.shippingExchangeRateId) {
+        shippingExchangeRateEntity = await this.exchangeRateRepository.findOneById(dto.shippingExchangeRateId, manager);
+        if (!shippingExchangeRateEntity) {
+          throw new BadRequestException('Shipping exchange rate not found');
+        }
+      }
+
       // 1) สร้าง Order header (totals จะ update ทีหลัง)
       const order = await this.orderRepository.create(
         {
@@ -125,6 +137,8 @@ export class OrderCommandService {
           orderDate,
           exchangeRateBuy: buyRateEntity,
           exchangeRateSell: sellRateEntity,
+          shippingExchangeRate: shippingExchangeRateEntity,
+          shippingExchangeRateValue: shippingExchangeRateEntity ? Number(shippingExchangeRateEntity.rate) : null,
           exchangeRateBuyValue: Number(buyRateEntity.rate),
           exchangeRateSellValue: Number(sellRateEntity.rate),
           arrivalStatus: ArrivalStatusEnum.NOT_ARRIVED,
@@ -155,6 +169,8 @@ export class OrderCommandService {
             imageId: itemDto.imageId ?? null,
             discountType: itemDto.discountType ?? null,
             discountValue: itemDto.discountValue ?? null,
+            shippingExchangeRate: shippingExchangeRateEntity,
+            shippingExchangeRateValue: shippingExchangeRateEntity ? Number(shippingExchangeRateEntity.rate) : null,
             quantity: 0, // จะคำนวณจาก SKUs
             purchaseTotal: 0,
             shippingTotal: 0,
@@ -218,10 +234,18 @@ export class OrderCommandService {
           totalProfit += Number(sku.profit);
         }
 
-        // Shipping at ITEM level (ไม่คูณ exchange rate - ใช้ค่าดิบ)
+        // Shipping at ITEM level
         const shippingPrice = itemDto.shippingPrice ?? 0;
         const totalShippingCost = shippingPrice * totalQuantity;
-        const totalCostBeforeDiscount = totalPurchaseCost + totalShippingCost;
+
+        // คำนวณ totalCostBeforeDiscount โดย convert ไป target currency แล้วค่อยรวมกัน
+        // ตาม pattern: convertToTargetCurrency -> คำนวณ -> convertToBaseCurrency
+        const shippingTotalTargetCurrency = shippingExchangeRateEntity
+          ? convertToTargetCurrency(totalShippingCost, shippingExchangeRateEntity)
+          : totalShippingCost.toString();
+        const purchaseTotalTargetCurrency = convertToTargetCurrency(totalPurchaseCost, buyRateEntity);
+        const totalCostBeforeDiscountTargetCurrency = Number(purchaseTotalTargetCurrency) + Number(shippingTotalTargetCurrency);
+        const totalCostBeforeDiscount = convertToBaseCurrency(totalCostBeforeDiscountTargetCurrency, buyRateEntity);
 
         // คำนวณส่วนลดระดับ item
         let discountAmount = 0;
@@ -450,6 +474,9 @@ export class OrderCommandService {
           'orderItems',
           'orderItems.image',
           'orderItems.skus',
+          'exchangeRateBuy',
+          'exchangeRateSell',
+          'shippingExchangeRate',
           'customerOrders',
           'customerOrders.customerOrderItems',
           'customerOrders.customerOrderItems.orderItemSku',

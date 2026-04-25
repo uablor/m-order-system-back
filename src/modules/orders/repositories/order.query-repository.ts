@@ -85,6 +85,7 @@ export class OrderQueryRepository extends BaseQueryRepository<OrderOrmEntity> {
       .leftJoinAndSelect('orderItems.skus', 'skus')
       .leftJoinAndSelect('order.exchangeRateBuy', 'exchangeRateBuy')
       .leftJoinAndSelect('order.exchangeRateSell', 'exchangeRateSell')
+      .leftJoinAndSelect('order.shippingExchangeRate', 'shippingExchangeRate')
       .leftJoinAndSelect('skus.exchangeRateBuy', 'skusExchangeRateBuy')
       .leftJoinAndSelect('skus.exchangeRateSell', 'skusExchangeRateSell');
 

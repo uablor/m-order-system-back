@@ -4,6 +4,7 @@ import { OrderOrmEntity } from './order.orm-entity';
 import { ImageOrmEntity } from 'src/modules/images/entities/image.orm-entity';
 import { OrderItemSkuOrmEntity } from './order-item-sku.orm-entity';
 import { CustomerOrderItemOrmEntity } from './customer-order-item.orm-entity';
+import { ExchangeRateOrmEntity } from 'src/modules/exchange-rates/entities/exchange-rate.orm-entity';
 
 export type DiscountType = 'PERCENT' | 'FIX';
 
@@ -164,6 +165,16 @@ export class OrderItemOrmEntity extends BaseOrmEntity {
   // SUM(sku.purchaseTotal)  → ต้นทุนซื้อรวม
   @Column({ name: 'purchase_total', type: 'decimal', precision: 18, scale: 2, default: 0 })
   purchaseTotal: number;
+  
+  // new filed
+  // FK เก็บไว้ shippingExchangeRate อัตราแลกเปลี่ยนต้นทาง
+  @ManyToOne(() => ExchangeRateOrmEntity, { nullable: true, onDelete: 'SET NULL' })
+  @JoinColumn({ name: 'shipping_exchange_rate_id' })
+  shippingExchangeRate:ExchangeRateOrmEntity | null;
+
+  // ค่า shipping exchange rate ณ เวลาสร้าง order
+  @Column({ name: 'shipping_exchange_rate_value', type: 'decimal', precision: 18, scale: 6, nullable: true })
+  shippingExchangeRateValue: number | null;
 
   // SUM(sku.shippingTotal)  → ค่าขนส่งรวม
   @Column({ name: 'shipping_total', type: 'decimal', precision: 18, scale: 2, default: 0 })

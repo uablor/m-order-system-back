@@ -148,6 +148,17 @@ export class OrderResponseDto {
     isActive: boolean;
   } | null;
 
+  @ApiPropertyOptional({ nullable: true })
+  shippingExchangeRate: {
+    id: number;
+    baseCurrency: string;
+    targetCurrency: string;
+    rate: string | null;
+    rateType: string;
+    rateDate: Date;
+    isActive: boolean;
+  } | null;
+
   @ApiProperty()
   exchangeRateBuyValue: string | null;
 
@@ -196,6 +207,9 @@ export class OrderResponseDto {
 
   @ApiProperty()
   targetCurrencyTotalProfit: string;
+
+  @ApiProperty()
+  targetCurrencyTotalShippingCostByShippingExchangeRate: string;
 
   @ApiProperty()
   paymentStatus: string;

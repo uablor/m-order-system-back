@@ -293,7 +293,6 @@ export class PaymentCommandService {
         remainingAmount: remainingAmount,
         paymentStatus: PaymentStatusEnum.PAID,
       });
-    
 
     // Check all Customer Orders for this Main Order to determine correct status
     const allCustomerOrders = await customerOrderRepo.find({

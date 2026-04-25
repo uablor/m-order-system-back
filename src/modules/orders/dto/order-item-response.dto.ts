@@ -54,6 +54,17 @@ export class OrderItemResponseDto {
   } | null;
 
   @ApiPropertyOptional({ nullable: true })
+  shippingExchangeRate: {
+    id: number;
+    baseCurrency: string;
+    targetCurrency: string;
+    rate: string;
+    rateType: string;
+    rateDate: Date;
+    isActive: boolean;
+  } | null;
+
+  @ApiPropertyOptional({ nullable: true })
   exchangeRateBuyValue: string | null;
 
   @ApiPropertyOptional({ nullable: true })
