@@ -28,6 +28,7 @@ export declare class CreateFullCustomerOrderDto {
 }
 export declare class CreateFullOrderDto {
     orderCode: string;
+    shippingExchangeRateId?: number;
     items: CreateFullOrderItemDto[];
     customerOrders: CreateFullCustomerOrderDto[];
 }

@@ -23,6 +23,7 @@ class OrderItemResponseDto {
     discountValue;
     exchangeRateBuy;
     exchangeRateSell;
+    shippingExchangeRate;
     exchangeRateBuyValue;
     exchangeRateSellValue;
     quantity;
@@ -87,6 +88,10 @@ __decorate([
     (0, swagger_1.ApiPropertyOptional)({ nullable: true }),
     __metadata("design:type", Object)
 ], OrderItemResponseDto.prototype, "exchangeRateSell", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)({ nullable: true }),
+    __metadata("design:type", Object)
+], OrderItemResponseDto.prototype, "shippingExchangeRate", void 0);
 __decorate([
     (0, swagger_1.ApiPropertyOptional)({ nullable: true }),
     __metadata("design:type", Object)

@@ -48,6 +48,10 @@ let MerchantRepository = class MerchantRepository {
     async findOneByOwnerUserId(ownerUserId, manager) {
         return this.getRepo(manager).findOne({ where: { ownerUserId } });
     }
+    async setActive(id, isActive, manager) {
+        const repo = this.getRepo(manager);
+        await repo.update({ id }, { isActive });
+    }
 };
 exports.MerchantRepository = MerchantRepository;
 exports.MerchantRepository = MerchantRepository = __decorate([

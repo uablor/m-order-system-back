@@ -20,6 +20,7 @@ const customer_order_item_repository_1 = require("../repositories/customer-order
 const merchant_repository_1 = require("../../merchants/repositories/merchant.repository");
 const customer_repository_1 = require("../../customers/repositories/customer.repository");
 const exchange_rate_query_repository_1 = require("../../exchange-rates/repositories/exchange-rate.query-repository");
+const exchange_rate_repository_1 = require("../../exchange-rates/repositories/exchange-rate.repository");
 const enum_entities_1 = require("../enum/enum.entities");
 const convert_to_target_currency_utils_1 = require("../../../common/utils/convert-to-target-currency.utils");
 const payment_enum_1 = require("../../payments/enum/payment.enum");
@@ -41,7 +42,8 @@ let OrderCommandService = class OrderCommandService {
     merchantRepository;
     customerRepository;
     exchangeRateQueryRepository;
-    constructor(transactionService, orderRepository, orderItemRepository, orderItemSkuRepository, customerOrderRepository, customerOrderItemRepository, merchantRepository, customerRepository, exchangeRateQueryRepository) {
+    exchangeRateRepository;
+    constructor(transactionService, orderRepository, orderItemRepository, orderItemSkuRepository, customerOrderRepository, customerOrderItemRepository, merchantRepository, customerRepository, exchangeRateQueryRepository, exchangeRateRepository) {
         this.transactionService = transactionService;
         this.orderRepository = orderRepository;
         this.orderItemRepository = orderItemRepository;
@@ -51,6 +53,7 @@ let OrderCommandService = class OrderCommandService {
         this.merchantRepository = merchantRepository;
         this.customerRepository = customerRepository;
         this.exchangeRateQueryRepository = exchangeRateQueryRepository;
+        this.exchangeRateRepository = exchangeRateRepository;
     }
     async create(dto, createdByUserId) {
         return this.transactionService.run(async (manager) => {
@@ -117,6 +120,13 @@ let OrderCommandService = class OrderCommandService {
             if (!sellRateEntity) {
                 throw new common_1.BadRequestException('SELL exchange rate not found');
             }
+            let shippingExchangeRateEntity = null;
+            if (dto.shippingExchangeRateId) {
+                shippingExchangeRateEntity = await this.exchangeRateRepository.findOneById(dto.shippingExchangeRateId, manager);
+                if (!shippingExchangeRateEntity) {
+                    throw new common_1.BadRequestException('Shipping exchange rate not found');
+                }
+            }
             const order = await this.orderRepository.create({
                 merchant,
                 createdByUser: currentUser ? { id: currentUser.userId } : null,
@@ -124,6 +134,8 @@ let OrderCommandService = class OrderCommandService {
                 orderDate,
                 exchangeRateBuy: buyRateEntity,
                 exchangeRateSell: sellRateEntity,
+                shippingExchangeRate: shippingExchangeRateEntity,
+                shippingExchangeRateValue: shippingExchangeRateEntity ? Number(shippingExchangeRateEntity.rate) : null,
                 exchangeRateBuyValue: Number(buyRateEntity.rate),
                 exchangeRateSellValue: Number(sellRateEntity.rate),
                 arrivalStatus: enum_entities_1.ArrivalStatusEnum.NOT_ARRIVED,
@@ -146,6 +158,8 @@ let OrderCommandService = class OrderCommandService {
                     imageId: itemDto.imageId ?? null,
                     discountType: itemDto.discountType ?? null,
                     discountValue: itemDto.discountValue ?? null,
+                    shippingExchangeRate: shippingExchangeRateEntity,
+                    shippingExchangeRateValue: shippingExchangeRateEntity ? Number(shippingExchangeRateEntity.rate) : null,
                     quantity: 0,
                     purchaseTotal: 0,
                     shippingTotal: 0,
@@ -194,7 +208,12 @@ let OrderCommandService = class OrderCommandService {
                 }
                 const shippingPrice = itemDto.shippingPrice ?? 0;
                 const totalShippingCost = shippingPrice * totalQuantity;
-                const totalCostBeforeDiscount = totalPurchaseCost + totalShippingCost;
+                const shippingTotalTargetCurrency = shippingExchangeRateEntity
+                    ? (0, convert_to_target_currency_utils_1.convertToTargetCurrency)(totalShippingCost, shippingExchangeRateEntity)
+                    : totalShippingCost.toString();
+                const purchaseTotalTargetCurrency = (0, convert_to_target_currency_utils_1.convertToTargetCurrency)(totalPurchaseCost, buyRateEntity);
+                const totalCostBeforeDiscountTargetCurrency = Number(purchaseTotalTargetCurrency) + Number(shippingTotalTargetCurrency);
+                const totalCostBeforeDiscount = (0, convert_to_target_currency_utils_1.convertToBaseCurrency)(totalCostBeforeDiscountTargetCurrency, buyRateEntity);
                 let discountAmount = 0;
                 if (itemEntity.discountType && itemEntity.discountValue != null) {
                     if (itemEntity.discountType === 'PERCENT') {
@@ -354,6 +373,9 @@ let OrderCommandService = class OrderCommandService {
                     'orderItems',
                     'orderItems.image',
                     'orderItems.skus',
+                    'exchangeRateBuy',
+                    'exchangeRateSell',
+                    'shippingExchangeRate',
                     'customerOrders',
                     'customerOrders.customerOrderItems',
                     'customerOrders.customerOrderItems.orderItemSku',
@@ -379,6 +401,7 @@ exports.OrderCommandService = OrderCommandService = __decorate([
         customer_order_item_repository_1.CustomerOrderItemRepository,
         merchant_repository_1.MerchantRepository,
         customer_repository_1.CustomerRepository,
-        exchange_rate_query_repository_1.ExchangeRateQueryRepository])
+        exchange_rate_query_repository_1.ExchangeRateQueryRepository,
+        exchange_rate_repository_1.ExchangeRateRepository])
 ], OrderCommandService);
 //# sourceMappingURL=order-command.service.js.map

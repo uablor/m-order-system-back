@@ -62,6 +62,15 @@ export declare class OrderResponseDto {
         rateDate: Date;
         isActive: boolean;
     } | null;
+    shippingExchangeRate: {
+        id: number;
+        baseCurrency: string;
+        targetCurrency: string;
+        rate: string | null;
+        rateType: string;
+        rateDate: Date;
+        isActive: boolean;
+    } | null;
     exchangeRateBuyValue: string | null;
     exchangeRateSellValue: string | null;
     totalPurchaseCost: string;
@@ -78,6 +87,7 @@ export declare class OrderResponseDto {
     targetCurrencyTotalFinalCost: string;
     targetCurrencyTotalSellingAmount: string;
     targetCurrencyTotalProfit: string;
+    targetCurrencyTotalShippingCostByShippingExchangeRate: string;
     paymentStatus: string;
     orderItems: OrderItemResponseDto[];
     customerOrders: CustomerOrderResponseDto[];

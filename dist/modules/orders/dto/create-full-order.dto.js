@@ -172,6 +172,7 @@ __decorate([
 ], CreateFullCustomerOrderDto.prototype, "items", void 0);
 class CreateFullOrderDto {
     orderCode;
+    shippingExchangeRateId;
     items;
     customerOrders;
 }
@@ -182,6 +183,13 @@ __decorate([
     (0, class_validator_1.MaxLength)(100),
     __metadata("design:type", String)
 ], CreateFullOrderDto.prototype, "orderCode", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)({ description: 'Exchange rate ID for shipping cost conversion' }),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsNumber)(),
+    (0, class_validator_1.Min)(1),
+    __metadata("design:type", Number)
+], CreateFullOrderDto.prototype, "shippingExchangeRateId", void 0);
 __decorate([
     (0, swagger_1.ApiProperty)({ type: [CreateFullOrderItemDto] }),
     (0, class_validator_1.IsArray)(),

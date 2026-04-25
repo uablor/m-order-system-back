@@ -32,6 +32,8 @@ let OrderOrmEntity = class OrderOrmEntity extends base_orm_entities_1.BaseOrmEnt
     exchangeRateBuyValue;
     exchangeRateSellValue;
     totalPurchaseCost;
+    shippingExchangeRate;
+    shippingExchangeRateValue;
     totalShippingCost;
     totalCostBeforeDiscount;
     totalDiscount;
@@ -95,6 +97,15 @@ __decorate([
     (0, typeorm_1.Column)({ name: 'total_purchase_cost', type: 'decimal', precision: 18, scale: 2, default: 0 }),
     __metadata("design:type", Number)
 ], OrderOrmEntity.prototype, "totalPurchaseCost", void 0);
+__decorate([
+    (0, typeorm_1.ManyToOne)(() => exchange_rate_orm_entity_1.ExchangeRateOrmEntity, { nullable: true, onDelete: 'SET NULL' }),
+    (0, typeorm_1.JoinColumn)({ name: 'shipping_exchange_rate_id' }),
+    __metadata("design:type", Object)
+], OrderOrmEntity.prototype, "shippingExchangeRate", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ name: 'shipping_exchange_rate_value', type: 'decimal', precision: 18, scale: 6, nullable: true }),
+    __metadata("design:type", Object)
+], OrderOrmEntity.prototype, "shippingExchangeRateValue", void 0);
 __decorate([
     (0, typeorm_1.Column)({ name: 'total_shipping_cost', type: 'decimal', precision: 18, scale: 2, default: 0 }),
     __metadata("design:type", Number)

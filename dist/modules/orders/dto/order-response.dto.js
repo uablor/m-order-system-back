@@ -177,6 +177,7 @@ class OrderResponseDto {
     notifiedAt;
     exchangeRateBuy;
     exchangeRateSell;
+    shippingExchangeRate;
     exchangeRateBuyValue;
     exchangeRateSellValue;
     totalPurchaseCost;
@@ -193,6 +194,7 @@ class OrderResponseDto {
     targetCurrencyTotalFinalCost;
     targetCurrencyTotalSellingAmount;
     targetCurrencyTotalProfit;
+    targetCurrencyTotalShippingCostByShippingExchangeRate;
     paymentStatus;
     orderItems;
     customerOrders;
@@ -240,6 +242,10 @@ __decorate([
     (0, swagger_1.ApiPropertyOptional)({ nullable: true }),
     __metadata("design:type", Object)
 ], OrderResponseDto.prototype, "exchangeRateSell", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)({ nullable: true }),
+    __metadata("design:type", Object)
+], OrderResponseDto.prototype, "shippingExchangeRate", void 0);
 __decorate([
     (0, swagger_1.ApiProperty)(),
     __metadata("design:type", Object)
@@ -304,6 +310,10 @@ __decorate([
     (0, swagger_1.ApiProperty)(),
     __metadata("design:type", String)
 ], OrderResponseDto.prototype, "targetCurrencyTotalProfit", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)(),
+    __metadata("design:type", String)
+], OrderResponseDto.prototype, "targetCurrencyTotalShippingCostByShippingExchangeRate", void 0);
 __decorate([
     (0, swagger_1.ApiProperty)(),
     __metadata("design:type", String)

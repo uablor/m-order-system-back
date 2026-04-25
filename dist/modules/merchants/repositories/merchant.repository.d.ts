@@ -9,4 +9,5 @@ export declare class MerchantRepository {
     delete(id: number, manager?: EntityManager): Promise<boolean>;
     findOneById(id: number, manager?: EntityManager): Promise<MerchantOrmEntity | null>;
     findOneByOwnerUserId(ownerUserId: number, manager?: EntityManager): Promise<MerchantOrmEntity | null>;
+    setActive(id: number, isActive: boolean, manager?: EntityManager): Promise<void>;
 }

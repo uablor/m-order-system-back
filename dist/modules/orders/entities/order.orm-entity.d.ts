@@ -19,6 +19,8 @@ export declare class OrderOrmEntity extends BaseOrmEntity {
     exchangeRateBuyValue: number | null;
     exchangeRateSellValue: number | null;
     totalPurchaseCost: number;
+    shippingExchangeRate: ExchangeRateOrmEntity | null;
+    shippingExchangeRateValue: number | null;
     totalShippingCost: number;
     totalCostBeforeDiscount: number;
     totalDiscount: number;

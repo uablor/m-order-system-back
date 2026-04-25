@@ -68,6 +68,7 @@ let OrderQueryRepository = class OrderQueryRepository extends base_query_reposit
             .leftJoinAndSelect('orderItems.skus', 'skus')
             .leftJoinAndSelect('order.exchangeRateBuy', 'exchangeRateBuy')
             .leftJoinAndSelect('order.exchangeRateSell', 'exchangeRateSell')
+            .leftJoinAndSelect('order.shippingExchangeRate', 'shippingExchangeRate')
             .leftJoinAndSelect('skus.exchangeRateBuy', 'skusExchangeRateBuy')
             .leftJoinAndSelect('skus.exchangeRateSell', 'skusExchangeRateSell');
         buildFilters(qb);

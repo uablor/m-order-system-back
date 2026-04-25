@@ -31,6 +31,15 @@ export declare class OrderItemResponseDto {
         rateDate: Date;
         isActive: boolean;
     } | null;
+    shippingExchangeRate: {
+        id: number;
+        baseCurrency: string;
+        targetCurrency: string;
+        rate: string;
+        rateType: string;
+        rateDate: Date;
+        isActive: boolean;
+    } | null;
     exchangeRateBuyValue: string | null;
     exchangeRateSellValue: string | null;
     quantity: number;

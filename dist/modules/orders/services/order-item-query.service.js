@@ -25,7 +25,7 @@ let OrderItemQueryService = class OrderItemQueryService {
     async getById(id) {
         const entity = await this.orderItemQueryRepository.repository.findOne({
             where: { id },
-            relations: ['order', 'order.exchangeRateBuy', 'order.exchangeRateSell', 'image', 'order.merchant', 'skus', 'skus.exchangeRateSell', 'skus.exchangeRateBuy'],
+            relations: ['order', 'order.exchangeRateBuy', 'order.exchangeRateSell', 'order.shippingExchangeRate', 'image', 'order.merchant', 'skus', 'skus.exchangeRateSell', 'skus.exchangeRateBuy'],
         });
         if (!entity)
             return null;
@@ -133,6 +133,15 @@ let OrderItemQueryService = class OrderItemQueryService {
                 rateType: entity.order.exchangeRateSell.rateType,
                 rateDate: entity.order.exchangeRateSell.rateDate,
                 isActive: entity.order.exchangeRateSell.isActive,
+            } : null,
+            shippingExchangeRate: entity.order?.shippingExchangeRate ? {
+                id: entity.order.shippingExchangeRate.id,
+                baseCurrency: entity.order.shippingExchangeRate.baseCurrency,
+                targetCurrency: entity.order.shippingExchangeRate.targetCurrency,
+                rate: entity.order.shippingExchangeRate.rate.toString(),
+                rateType: entity.order.shippingExchangeRate.rateType,
+                rateDate: entity.order.shippingExchangeRate.rateDate,
+                isActive: entity.order.shippingExchangeRate.isActive,
             } : null,
             exchangeRateBuyValue: entity.order?.exchangeRateBuyValue?.toString() || null,
             exchangeRateSellValue: entity.order?.exchangeRateSellValue?.toString() || null,

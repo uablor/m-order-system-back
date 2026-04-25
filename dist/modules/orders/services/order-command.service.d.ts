@@ -7,6 +7,7 @@ import { CustomerOrderItemRepository } from '../repositories/customer-order-item
 import { MerchantRepository } from '../../merchants/repositories/merchant.repository';
 import { CustomerRepository } from '../../customers/repositories/customer.repository';
 import { ExchangeRateQueryRepository } from '../../exchange-rates/repositories/exchange-rate.query-repository';
+import { ExchangeRateRepository } from '../../exchange-rates/repositories/exchange-rate.repository';
 import { CreateFullOrderDto } from '../dto/create-full-order.dto';
 import { OrderCreateDto } from '../dto/order-create.dto';
 import { OrderUpdateDto } from '../dto/order-update.dto';
@@ -21,7 +22,8 @@ export declare class OrderCommandService {
     private readonly merchantRepository;
     private readonly customerRepository;
     private readonly exchangeRateQueryRepository;
-    constructor(transactionService: TransactionService, orderRepository: OrderRepository, orderItemRepository: OrderItemRepository, orderItemSkuRepository: OrderItemSkuRepository, customerOrderRepository: CustomerOrderRepository, customerOrderItemRepository: CustomerOrderItemRepository, merchantRepository: MerchantRepository, customerRepository: CustomerRepository, exchangeRateQueryRepository: ExchangeRateQueryRepository);
+    private readonly exchangeRateRepository;
+    constructor(transactionService: TransactionService, orderRepository: OrderRepository, orderItemRepository: OrderItemRepository, orderItemSkuRepository: OrderItemSkuRepository, customerOrderRepository: CustomerOrderRepository, customerOrderItemRepository: CustomerOrderItemRepository, merchantRepository: MerchantRepository, customerRepository: CustomerRepository, exchangeRateQueryRepository: ExchangeRateQueryRepository, exchangeRateRepository: ExchangeRateRepository);
     create(dto: OrderCreateDto, createdByUserId: number | null): Promise<{
         id: number;
     }>;

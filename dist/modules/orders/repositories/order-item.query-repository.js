@@ -30,6 +30,7 @@ let OrderItemQueryRepository = class OrderItemQueryRepository extends base_query
             .leftJoinAndSelect('orderItem.order', 'order')
             .leftJoinAndSelect('order.exchangeRateBuy', 'exchangeRateBuy')
             .leftJoinAndSelect('order.exchangeRateSell', 'exchangeRateSell')
+            .leftJoinAndSelect('order.shippingExchangeRate', 'shippingExchangeRate')
             .leftJoinAndSelect('orderItem.image', 'image')
             .leftJoinAndSelect('orderItem.skus', 'skus')
             .leftJoinAndSelect('skus.exchangeRateBuy', 'skuExchangeRateBuy')
