@@ -79,6 +79,15 @@ export class CustomerOrderResponseDto {
   @ApiProperty({ description: 'Whether this order has a pending payment waiting for approval' })
   hasPendingPayment: boolean;
 
+  @ApiProperty({ description: 'Discount type: PERCENT or FIX', required: false, nullable: true })
+  discountType: string | null;
+
+  @ApiProperty({ description: 'Discount value (percentage or fixed amount)', required: false, nullable: true })
+  discountValue: number | null;
+
+  @ApiProperty({ description: 'Calculated discount amount', required: false })
+  discountAmount: number;
+
   @ApiProperty({ type: [CustomerOrderItemResponseDto] })
   customerOrderItems: CustomerOrderItemResponseDto[];
 

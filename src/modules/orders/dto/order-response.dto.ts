@@ -86,6 +86,15 @@ export class CustomerOrderResponseDto {
 
   @ApiProperty()
   paymentStatus: string;
+  
+  @ApiPropertyOptional({ nullable: true })
+  discountType: string | null;
+  
+  @ApiPropertyOptional({ nullable: true })
+  discountValue: number | null;
+  
+  @ApiPropertyOptional({ nullable: true })
+  discountAmount: string | null;
 
   // @ApiProperty({ description: 'Whether this order has a pending payment waiting for approval' })
   // hasPendingPayment: boolean;

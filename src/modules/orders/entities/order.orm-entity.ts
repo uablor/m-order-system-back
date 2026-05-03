@@ -73,8 +73,8 @@ export class OrderOrmEntity extends BaseOrmEntity {
   shippingExchangeRateValue: number | null;
 
   // ต้นทุนค่าขนส่งรวมทั้งหมด (หน่วย: กีบ)
-  @Column({ name: 'total_shipping_cost', type: 'decimal', precision: 18, scale: 2, default: 0 })
-  totalShippingCost: number;
+  @Column({ name: 'total_shipping', type: 'decimal', precision: 18, scale: 2, default: 0 })
+  totalShipping: number;
 
   // ต้นทุนรวมก่อนหักส่วนลด (หน่วย: กีบ)
   @Column({ name: 'total_cost_before_discount', type: 'decimal', precision: 18, scale: 2, default: 0 })

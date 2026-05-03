@@ -67,17 +67,6 @@ export class CreateFullOrderItemDto {
   @Type(() => CreateFullOrderItemSkuDto)
   skus: CreateFullOrderItemSkuDto[];
 
-  @ApiPropertyOptional({ enum: ['PERCENT', 'FIX'], description: 'PERCENT = ສ່ວນຫຼຸດເປີເຊັນ, FIX = ສ່ວນຫຼຸດເງິນສົດ (in buy currency)' })
-  @IsOptional()
-  @IsIn(['PERCENT', 'FIX'])
-  discountType?: 'PERCENT' | 'FIX';
-
-  @ApiPropertyOptional({ example: 10 })
-  @IsOptional()
-  @IsNumber()
-  @Min(0)
-  discountValue?: number;
-
   @ApiPropertyOptional({ description: 'Product image ID' })
   @IsOptional()
   @IsNumber()
@@ -123,6 +112,17 @@ export class CreateFullCustomerOrderDto {
   @ValidateNested({ each: true })
   @Type(() => CreateFullCustomerOrderItemDto)
   items: CreateFullCustomerOrderItemDto[];
+
+  @ApiPropertyOptional({ enum: ['PERCENT', 'FIX'], description: 'PERCENT = ສ່ວນຫຼຸດເປີເຊັນ, FIX = ສ່ວນຫຼຸດເງິນສົດ (at customer order level)' })
+  @IsOptional()
+  @IsIn(['PERCENT', 'FIX'])
+  discountType?: 'PERCENT' | 'FIX';
+
+  @ApiPropertyOptional({ example: 10, description: 'Discount value (percentage or fixed amount)' })
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  discountValue?: number;
 
 }
 

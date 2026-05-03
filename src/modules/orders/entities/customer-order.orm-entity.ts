@@ -6,6 +6,8 @@ import { CustomerOrderItemOrmEntity } from './customer-order-item.orm-entity';
 import { NotificationOrmEntity } from 'src/modules/notifications/entities/notification.orm-entity';
 import { PaymentStatusEnum } from 'src/modules/payments/enum/payment.enum';
 
+export type DiscountType = 'PERCENT' | 'FIX';
+
 @Entity('customer_orders')
 export class CustomerOrderOrmEntity extends BaseOrmEntity {
   @ManyToOne(() => OrderOrmEntity, (o) => o.customerOrders, { onDelete: 'CASCADE' })
@@ -27,6 +29,19 @@ export class CustomerOrderOrmEntity extends BaseOrmEntity {
 
   @Column({ name: 'payment_status', type: 'enum', enum: PaymentStatusEnum, default: PaymentStatusEnum.NOT_CREATED })
   paymentStatus: PaymentStatusEnum;
+
+  // ─── Discount (at customer order level) ─────────────────────────
+  // PERCENT = ສ່ວນຫຼຸດເປີເຊັນ (จาก purchaseTotal)
+  // FIX     = ສ່ວນຫຼຸດເງິນສົດ
+
+  @Column({ name: 'discount_type', type: 'varchar', length: 10, nullable: true })
+  discountType: DiscountType | null;
+
+  @Column({ name: 'discount_value', type: 'decimal', precision: 18, scale: 4, nullable: true })
+  discountValue: number | null;
+
+  @Column({ name: 'discount_amount', type: 'decimal', precision: 18, scale: 2, default: 0 })
+  discountAmount: number;
 
   @OneToMany(() => CustomerOrderItemOrmEntity, (coi) => coi.customerOrder)
   customerOrderItems: CustomerOrderItemOrmEntity[];

@@ -62,7 +62,7 @@ export class OrderCommandService {
           orderCode: dto.orderCode,
           orderDate,
           arrivalStatus: dto.arrivalStatus ?? 'NOT_ARRIVED',
-          totalShippingCost: shippingCost,
+          totalShipping: shippingCost,
           totalPurchaseCost: ZERO,
           totalCostBeforeDiscount: ZERO,
           totalDiscount: ZERO,
@@ -86,7 +86,7 @@ export class OrderCommandService {
       if (dto.orderDate !== undefined) updateData.orderDate = new Date(dto.orderDate);
       if (dto.arrivedAt !== undefined) updateData.arrivedAt = dto.arrivedAt ? new Date(dto.arrivedAt) : null;
       if (dto.notifiedAt !== undefined) updateData.notifiedAt = dto.notifiedAt ? new Date(dto.notifiedAt) : null;
-      if (dto.totalShippingCost !== undefined) updateData.totalShippingCost = (dto.totalShippingCost);
+      if (dto.totalShippingCost !== undefined) updateData.totalShipping = (dto.totalShippingCost);
       await this.orderRepository.update(id, updateData, manager);
     });
   }
@@ -143,7 +143,7 @@ export class OrderCommandService {
           exchangeRateSellValue: Number(sellRateEntity.rate),
           arrivalStatus: ArrivalStatusEnum.NOT_ARRIVED,
           totalPurchaseCost: ZERO,
-          totalShippingCost: ZERO,
+          totalShipping: ZERO,
           totalCostBeforeDiscount: ZERO,
           totalDiscount: ZERO,
           totalFinalCost: ZERO,
@@ -167,15 +167,12 @@ export class OrderCommandService {
             order,
             productName: itemDto.productName,
             imageId: itemDto.imageId ?? null,
-            discountType: itemDto.discountType ?? null,
-            discountValue: itemDto.discountValue ?? null,
             shippingExchangeRate: shippingExchangeRateEntity,
             shippingExchangeRateValue: shippingExchangeRateEntity ? Number(shippingExchangeRateEntity.rate) : null,
             quantity: 0, // จะคำนวณจาก SKUs
             purchaseTotal: 0,
             shippingTotal: 0,
             totalCostBeforeDiscount: 0,
-            discountAmount: 0,
             finalCost: 0,
             sellingTotal: 0,
             profit: 0,
@@ -236,7 +233,7 @@ export class OrderCommandService {
 
         // Shipping at ITEM level
         const shippingPrice = itemDto.shippingPrice ?? 0;
-        const totalShippingCost = shippingPrice * totalQuantity;
+        const totalShippingCost = shippingPrice;
 
         // คำนวณ totalCostBeforeDiscount โดย convert ไป target currency แล้วค่อยรวมกัน
         // ตาม pattern: convertToTargetCurrency -> คำนวณ -> convertToBaseCurrency
@@ -247,17 +244,8 @@ export class OrderCommandService {
         const totalCostBeforeDiscountTargetCurrency = Number(purchaseTotalTargetCurrency) + Number(shippingTotalTargetCurrency);
         const totalCostBeforeDiscount = convertToBaseCurrency(totalCostBeforeDiscountTargetCurrency, buyRateEntity);
 
-        // คำนวณส่วนลดระดับ item
-        let discountAmount = 0;
-        if (itemEntity.discountType && itemEntity.discountValue != null) {
-          if (itemEntity.discountType === 'PERCENT') {
-            discountAmount = totalCostBeforeDiscount * (itemEntity.discountValue / 100);
-          } else {
-            discountAmount = itemEntity.discountValue;
-          }
-        }
-
-        const finalCost = totalCostBeforeDiscount - discountAmount;
+        // No discount at item level anymore - discount moved to CustomerOrder level
+        const finalCost = totalCostBeforeDiscount;
         
         // Convert ไป target currency แล้วคำนวณ item profit
         const sellingTotalTargetCurrency  = convertToTargetCurrency(totalSellingAmount, sellRateEntity);
@@ -271,9 +259,6 @@ export class OrderCommandService {
           {
             quantity: totalQuantity,
             purchaseTotal: totalPurchaseCost,
-            shippingTotal: totalShippingCost,
-            totalCostBeforeDiscount: totalCostBeforeDiscount,
-            discountAmount: discountAmount,
             finalCost: finalCost,
             sellingTotal: totalSellingAmount,
             profit: itemProfit,
@@ -284,9 +269,6 @@ export class OrderCommandService {
         // อัพเดต object ใน memory เพื่อใช้ต่อ
         itemEntity.quantity = totalQuantity;
         itemEntity.purchaseTotal = totalPurchaseCost;
-        itemEntity.shippingTotal = totalShippingCost;
-        itemEntity.totalCostBeforeDiscount = totalCostBeforeDiscount;
-        itemEntity.discountAmount = discountAmount;
         itemEntity.finalCost = finalCost;
         itemEntity.sellingTotal = totalSellingAmount;
         itemEntity.profit = itemProfit;
@@ -376,6 +358,16 @@ export class OrderCommandService {
         const remaining = totalSellingAmount - totalPaid;
         const paymentStatus = calcPaymentStatus(totalSellingAmount, totalPaid);
 
+        // Calculate discount at CustomerOrder level
+        let discountAmount = 0;
+        if (coDto.discountType && coDto.discountValue != null) {
+          if (coDto.discountType === 'PERCENT') {
+            discountAmount = totalSellingAmount * (coDto.discountValue / 100);
+          } else {
+            discountAmount = coDto.discountValue;
+          }
+        }
+
         const customerOrder = await this.customerOrderRepository.create(
           {
             order,
@@ -384,6 +376,9 @@ export class OrderCommandService {
             totalPaid: totalPaid,
             remainingAmount: remaining,
             paymentStatus,
+            discountType: coDto.discountType ?? null,
+            discountValue: coDto.discountValue ?? null,
+            discountAmount: discountAmount,
           } as Partial<CustomerOrderOrmEntity>,
           manager,
         );
@@ -437,17 +432,22 @@ export class OrderCommandService {
 
       for (const oi of orderItems) {
         totalPurchaseCost += Number(oi.purchaseTotal);
-        totalShippingCost += Number(oi.shippingTotal);
-        totalCostBeforeDiscount += Number(oi.totalCostBeforeDiscount);
-        totalDiscount += Number(oi.discountAmount);
         totalFinalCost += Number(oi.finalCost);
         totalSellingAmount += Number(oi.sellingTotal);
         totalProfit += Number(oi.profit);
       }
 
+      // Note: Discount is now at CustomerOrder level, not OrderItem level
+      // Order-level totals are calculated from OrderItem aggregates
+      totalShippingCost = 0; // Shipping handled at Order level now
+      totalCostBeforeDiscount = totalPurchaseCost + totalShippingCost;
+
+      // Calculate total discount from CustomerOrders
+      totalDiscount = 0;
       let paidAmount = 0;
       for (const co of customerOrders) {
         paidAmount += Number(co.totalPaid);
+        totalDiscount += Number(co.discountAmount);
       }
       const remainingAmount = totalSellingAmount - paidAmount;
       const orderPaymentStatus = calcPaymentStatus(totalSellingAmount, paidAmount);
@@ -456,7 +456,7 @@ export class OrderCommandService {
         order.id,
         {
           totalPurchaseCost: totalPurchaseCost,
-          totalShippingCost: totalShippingCost,
+          totalShipping: totalShippingCost,
           totalCostBeforeDiscount: totalCostBeforeDiscount,
           totalDiscount: totalDiscount,
           totalFinalCost: totalFinalCost,

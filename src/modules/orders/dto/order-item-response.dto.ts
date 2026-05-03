@@ -26,12 +26,6 @@ export class OrderItemResponseDto {
   } | null;
 
   @ApiPropertyOptional({ nullable: true })
-  discountType: string | null;
-
-  @ApiPropertyOptional({ nullable: true })
-  discountValue: string | null;
-
-  @ApiPropertyOptional({ nullable: true })
   exchangeRateBuy: {
     id: number;
     baseCurrency: string;
@@ -77,15 +71,6 @@ export class OrderItemResponseDto {
   purchaseTotal: string;
 
   @ApiProperty()
-  shippingTotal: string;
-
-  @ApiProperty()
-  totalCostBeforeDiscount: string;
-
-  @ApiProperty()
-  discountAmount: string;
-
-  @ApiProperty()
   finalCost: string;
 
   @ApiProperty()
@@ -110,16 +95,7 @@ export class OrderItemResponseDto {
   targetCurrencyProfit: string;
 
   @ApiProperty()
-  targetCurrencyDiscountAmount: string;
-
-  @ApiProperty()
   targetCurrencyFinalCost: string;
-
-  @ApiProperty()
-  targetCurrencyTotalCostBeforeDiscount: string;
-
-  @ApiProperty()
-  targetCurrencyShippingTotal: string;
 
   @ApiProperty({ type: [OrderItemSkuResponseDto] })
   skus: OrderItemSkuResponseDto[];

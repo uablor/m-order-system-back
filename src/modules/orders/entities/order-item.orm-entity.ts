@@ -145,16 +145,6 @@ export class OrderItemOrmEntity extends BaseOrmEntity {
   productName: string;
 
 
-  // ─── Discount (ใช้กับทุก SKU ใน item นี้) ────────────────────────
-  // PERCENT = ลด % จาก totalCostBeforeDiscount
-  // FIX     = ลดจำนวนเงินคงที่
-
-  @Column({ name: 'discount_type', type: 'varchar', length: 10, nullable: true })
-  discountType: DiscountType | null;
-
-  @Column({ name: 'discount_value', type: 'decimal', precision: 18, scale: 4, nullable: true })
-  discountValue: number | null;
-
   // ─── Aggregated Totals (SUM จากทุก SKU) ──────────────────────────
   // ค่าพวกนี้คำนวณจาก skus ทั้งหมด แล้วค่อย save ลง DB
 
@@ -168,27 +158,23 @@ export class OrderItemOrmEntity extends BaseOrmEntity {
   
   // new filed
   // FK เก็บไว้ shippingExchangeRate อัตราแลกเปลี่ยนต้นทาง
-  @ManyToOne(() => ExchangeRateOrmEntity, { nullable: true, onDelete: 'SET NULL' })
-  @JoinColumn({ name: 'shipping_exchange_rate_id' })
-  shippingExchangeRate:ExchangeRateOrmEntity | null;
+  // @ManyToOne(() => ExchangeRateOrmEntity, { nullable: true, onDelete: 'SET NULL' })
+  // @JoinColumn({ name: 'shipping_exchange_rate_id' })
+  // shippingExchangeRate:ExchangeRateOrmEntity | null;
 
-  // ค่า shipping exchange rate ณ เวลาสร้าง order
-  @Column({ name: 'shipping_exchange_rate_value', type: 'decimal', precision: 18, scale: 6, nullable: true })
-  shippingExchangeRateValue: number | null;
+  // // ค่า shipping exchange rate ณ เวลาสร้าง order
+  // @Column({ name: 'shipping_exchange_rate_value', type: 'decimal', precision: 18, scale: 6, nullable: true })
+  // shippingExchangeRateValue: number | null;
 
   // SUM(sku.shippingTotal)  → ค่าขนส่งรวม
-  @Column({ name: 'shipping_total', type: 'decimal', precision: 18, scale: 2, default: 0 })
-  shippingTotal: number;
+  // @Column({ name: 'shipping_total', type: 'decimal', precision: 18, scale: 2, default: 0 })
+  // shippingTotal: number;
 
   // purchaseTotal + shippingTotal
-  @Column({ name: 'total_cost_before_discount', type: 'decimal', precision: 18, scale: 2, default: 0 })
-  totalCostBeforeDiscount: number;
+  // @Column({ name: 'total_cost_before_discount', type: 'decimal', precision: 18, scale: 2, default: 0 })
+  // totalCostBeforeDiscount: number;
 
-  // คำนวณจาก discountType + discountValue
-  @Column({ name: 'discount_amount', type: 'decimal', precision: 18, scale: 2, default: 0 })
-  discountAmount: number;
-
-  // totalCostBeforeDiscount - discountAmount
+  // purchaseTotal (no discount at item level anymore)
   @Column({ name: 'final_cost', type: 'decimal', precision: 18, scale: 2, default: 0 })
   finalCost: number;
 
