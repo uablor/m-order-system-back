@@ -12,7 +12,6 @@ export declare class CreateFullOrderItemDto {
     productName: string;
     skus: CreateFullOrderItemSkuDto[];
     imageId?: number;
-    shippingPrice?: number;
 }
 export declare class CreateFullCustomerOrderItemDto {
     orderItemIndex: number;
@@ -29,6 +28,7 @@ export declare class CreateFullCustomerOrderDto {
 export declare class CreateFullOrderDto {
     orderCode: string;
     shippingExchangeRateId?: number;
+    shippingPrice?: number;
     items: CreateFullOrderItemDto[];
     customerOrders: CreateFullCustomerOrderDto[];
 }

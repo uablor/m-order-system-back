@@ -71,7 +71,6 @@ class CreateFullOrderItemDto {
     productName;
     skus;
     imageId;
-    shippingPrice;
 }
 exports.CreateFullOrderItemDto = CreateFullOrderItemDto;
 __decorate([
@@ -99,13 +98,6 @@ __decorate([
     (0, class_validator_1.IsNumber)(),
     __metadata("design:type", Number)
 ], CreateFullOrderItemDto.prototype, "imageId", void 0);
-__decorate([
-    (0, swagger_1.ApiPropertyOptional)({ description: 'Shipping price per unit in foreign currency' }),
-    (0, class_validator_1.IsOptional)(),
-    (0, class_validator_1.IsNumber)(),
-    (0, class_validator_1.Min)(0),
-    __metadata("design:type", Number)
-], CreateFullOrderItemDto.prototype, "shippingPrice", void 0);
 class CreateFullCustomerOrderItemDto {
     orderItemIndex;
     skuIndex;
@@ -173,6 +165,7 @@ __decorate([
 class CreateFullOrderDto {
     orderCode;
     shippingExchangeRateId;
+    shippingPrice;
     items;
     customerOrders;
 }
@@ -190,6 +183,13 @@ __decorate([
     (0, class_validator_1.Min)(1),
     __metadata("design:type", Number)
 ], CreateFullOrderDto.prototype, "shippingExchangeRateId", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)({ description: 'Shipping price per unit in foreign currency' }),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsNumber)(),
+    (0, class_validator_1.Min)(0),
+    __metadata("design:type", Number)
+], CreateFullOrderDto.prototype, "shippingPrice", void 0);
 __decorate([
     (0, swagger_1.ApiProperty)({ type: [CreateFullOrderItemDto] }),
     (0, class_validator_1.IsArray)(),

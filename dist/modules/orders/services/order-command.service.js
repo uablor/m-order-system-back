@@ -203,7 +203,7 @@ let OrderCommandService = class OrderCommandService {
                     totalSellingAmount += Number(sku.sellingTotal);
                     totalProfit += Number(sku.profit);
                 }
-                const shippingPrice = itemDto.shippingPrice ?? 0;
+                const shippingPrice = dto.shippingPrice ?? 0;
                 const totalShippingCost = shippingPrice;
                 const shippingTotalTargetCurrency = shippingExchangeRateEntity
                     ? (0, convert_to_target_currency_utils_1.convertToTargetCurrency)(totalShippingCost, shippingExchangeRateEntity)
