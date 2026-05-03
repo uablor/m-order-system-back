@@ -11,8 +11,6 @@ export declare class OrderItemResponseDto {
         fileName: string;
         originalName: string;
     } | null;
-    discountType: string | null;
-    discountValue: string | null;
     exchangeRateBuy: {
         id: number;
         baseCurrency: string;
@@ -44,9 +42,6 @@ export declare class OrderItemResponseDto {
     exchangeRateSellValue: string | null;
     quantity: number;
     purchaseTotal: string;
-    shippingTotal: string;
-    totalCostBeforeDiscount: string;
-    discountAmount: string;
     finalCost: string;
     sellingTotal: string;
     profit: string;
@@ -55,10 +50,7 @@ export declare class OrderItemResponseDto {
     targetCurrencyPurchaseTotal: string;
     targetCurrencySellingTotal: string;
     targetCurrencyProfit: string;
-    targetCurrencyDiscountAmount: string;
     targetCurrencyFinalCost: string;
-    targetCurrencyTotalCostBeforeDiscount: string;
-    targetCurrencyShippingTotal: string;
     skus: OrderItemSkuResponseDto[];
     createdAt: Date;
     updatedAt: Date;

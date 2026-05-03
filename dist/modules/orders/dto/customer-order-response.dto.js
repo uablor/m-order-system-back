@@ -84,6 +84,9 @@ class CustomerOrderResponseDto {
     targetCurrencyRemainingAmount;
     paymentStatus;
     hasPendingPayment;
+    discountType;
+    discountValue;
+    discountAmount;
     customerOrderItems;
     createdAt;
     updatedAt;
@@ -145,6 +148,18 @@ __decorate([
     (0, swagger_1.ApiProperty)({ description: 'Whether this order has a pending payment waiting for approval' }),
     __metadata("design:type", Boolean)
 ], CustomerOrderResponseDto.prototype, "hasPendingPayment", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)({ description: 'Discount type: PERCENT or FIX', required: false, nullable: true }),
+    __metadata("design:type", Object)
+], CustomerOrderResponseDto.prototype, "discountType", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)({ description: 'Discount value (percentage or fixed amount)', required: false, nullable: true }),
+    __metadata("design:type", Object)
+], CustomerOrderResponseDto.prototype, "discountValue", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)({ description: 'Calculated discount amount', required: false }),
+    __metadata("design:type", Number)
+], CustomerOrderResponseDto.prototype, "discountAmount", void 0);
 __decorate([
     (0, swagger_1.ApiProperty)({ type: [CustomerOrderItemResponseDto] }),
     __metadata("design:type", Array)

@@ -105,6 +105,9 @@ class CustomerOrderResponseDto {
     targetCurrencyPaidAmount;
     targetCurrencyRemainingAmount;
     paymentStatus;
+    discountType;
+    discountValue;
+    discountAmount;
     customerOrderItems;
     createdAt;
     updatedAt;
@@ -154,6 +157,18 @@ __decorate([
     (0, swagger_1.ApiProperty)(),
     __metadata("design:type", String)
 ], CustomerOrderResponseDto.prototype, "paymentStatus", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)({ nullable: true }),
+    __metadata("design:type", Object)
+], CustomerOrderResponseDto.prototype, "discountType", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)({ nullable: true }),
+    __metadata("design:type", Object)
+], CustomerOrderResponseDto.prototype, "discountValue", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)({ nullable: true }),
+    __metadata("design:type", Object)
+], CustomerOrderResponseDto.prototype, "discountAmount", void 0);
 __decorate([
     (0, swagger_1.ApiProperty)({ type: [CustomerOrderItemResponseDto] }),
     __metadata("design:type", Array)

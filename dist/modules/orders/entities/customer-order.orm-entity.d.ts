@@ -4,6 +4,7 @@ import { CustomerOrmEntity } from '../../customers/entities/customer.orm-entity'
 import { CustomerOrderItemOrmEntity } from './customer-order-item.orm-entity';
 import { NotificationOrmEntity } from 'src/modules/notifications/entities/notification.orm-entity';
 import { PaymentStatusEnum } from 'src/modules/payments/enum/payment.enum';
+export type DiscountType = 'PERCENT' | 'FIX';
 export declare class CustomerOrderOrmEntity extends BaseOrmEntity {
     order: OrderOrmEntity;
     customer: CustomerOrmEntity;
@@ -11,6 +12,9 @@ export declare class CustomerOrderOrmEntity extends BaseOrmEntity {
     totalPaid: number;
     remainingAmount: number;
     paymentStatus: PaymentStatusEnum;
+    discountType: DiscountType | null;
+    discountValue: number | null;
+    discountAmount: number;
     customerOrderItems: CustomerOrderItemOrmEntity[];
     notification: NotificationOrmEntity;
 }

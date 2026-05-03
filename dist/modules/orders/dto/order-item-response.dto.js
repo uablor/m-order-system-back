@@ -19,8 +19,6 @@ class OrderItemResponseDto {
     orderItemIndex;
     imageId;
     image;
-    discountType;
-    discountValue;
     exchangeRateBuy;
     exchangeRateSell;
     shippingExchangeRate;
@@ -28,9 +26,6 @@ class OrderItemResponseDto {
     exchangeRateSellValue;
     quantity;
     purchaseTotal;
-    shippingTotal;
-    totalCostBeforeDiscount;
-    discountAmount;
     finalCost;
     sellingTotal;
     profit;
@@ -39,10 +34,7 @@ class OrderItemResponseDto {
     targetCurrencyPurchaseTotal;
     targetCurrencySellingTotal;
     targetCurrencyProfit;
-    targetCurrencyDiscountAmount;
     targetCurrencyFinalCost;
-    targetCurrencyTotalCostBeforeDiscount;
-    targetCurrencyShippingTotal;
     skus;
     createdAt;
     updatedAt;
@@ -75,14 +67,6 @@ __decorate([
 __decorate([
     (0, swagger_1.ApiPropertyOptional)({ nullable: true }),
     __metadata("design:type", Object)
-], OrderItemResponseDto.prototype, "discountType", void 0);
-__decorate([
-    (0, swagger_1.ApiPropertyOptional)({ nullable: true }),
-    __metadata("design:type", Object)
-], OrderItemResponseDto.prototype, "discountValue", void 0);
-__decorate([
-    (0, swagger_1.ApiPropertyOptional)({ nullable: true }),
-    __metadata("design:type", Object)
 ], OrderItemResponseDto.prototype, "exchangeRateBuy", void 0);
 __decorate([
     (0, swagger_1.ApiPropertyOptional)({ nullable: true }),
@@ -108,18 +92,6 @@ __decorate([
     (0, swagger_1.ApiProperty)(),
     __metadata("design:type", String)
 ], OrderItemResponseDto.prototype, "purchaseTotal", void 0);
-__decorate([
-    (0, swagger_1.ApiProperty)(),
-    __metadata("design:type", String)
-], OrderItemResponseDto.prototype, "shippingTotal", void 0);
-__decorate([
-    (0, swagger_1.ApiProperty)(),
-    __metadata("design:type", String)
-], OrderItemResponseDto.prototype, "totalCostBeforeDiscount", void 0);
-__decorate([
-    (0, swagger_1.ApiProperty)(),
-    __metadata("design:type", String)
-], OrderItemResponseDto.prototype, "discountAmount", void 0);
 __decorate([
     (0, swagger_1.ApiProperty)(),
     __metadata("design:type", String)
@@ -155,19 +127,7 @@ __decorate([
 __decorate([
     (0, swagger_1.ApiProperty)(),
     __metadata("design:type", String)
-], OrderItemResponseDto.prototype, "targetCurrencyDiscountAmount", void 0);
-__decorate([
-    (0, swagger_1.ApiProperty)(),
-    __metadata("design:type", String)
 ], OrderItemResponseDto.prototype, "targetCurrencyFinalCost", void 0);
-__decorate([
-    (0, swagger_1.ApiProperty)(),
-    __metadata("design:type", String)
-], OrderItemResponseDto.prototype, "targetCurrencyTotalCostBeforeDiscount", void 0);
-__decorate([
-    (0, swagger_1.ApiProperty)(),
-    __metadata("design:type", String)
-], OrderItemResponseDto.prototype, "targetCurrencyShippingTotal", void 0);
 __decorate([
     (0, swagger_1.ApiProperty)({ type: [order_item_sku_response_dto_1.OrderItemSkuResponseDto] }),
     __metadata("design:type", Array)

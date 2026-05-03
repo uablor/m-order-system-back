@@ -16,7 +16,6 @@ const order_orm_entity_1 = require("./order.orm-entity");
 const image_orm_entity_1 = require("../../images/entities/image.orm-entity");
 const order_item_sku_orm_entity_1 = require("./order-item-sku.orm-entity");
 const customer_order_item_orm_entity_1 = require("./customer-order-item.orm-entity");
-const exchange_rate_orm_entity_1 = require("../../exchange-rates/entities/exchange-rate.orm-entity");
 let OrderItemOrmEntity = class OrderItemOrmEntity extends base_orm_entities_1.BaseOrmEntity {
     order;
     customerOrderItems;
@@ -24,15 +23,8 @@ let OrderItemOrmEntity = class OrderItemOrmEntity extends base_orm_entities_1.Ba
     imageId;
     skus;
     productName;
-    discountType;
-    discountValue;
     quantity;
     purchaseTotal;
-    shippingExchangeRate;
-    shippingExchangeRateValue;
-    shippingTotal;
-    totalCostBeforeDiscount;
-    discountAmount;
     finalCost;
     sellingTotal;
     profit;
@@ -65,14 +57,6 @@ __decorate([
     __metadata("design:type", String)
 ], OrderItemOrmEntity.prototype, "productName", void 0);
 __decorate([
-    (0, typeorm_1.Column)({ name: 'discount_type', type: 'varchar', length: 10, nullable: true }),
-    __metadata("design:type", Object)
-], OrderItemOrmEntity.prototype, "discountType", void 0);
-__decorate([
-    (0, typeorm_1.Column)({ name: 'discount_value', type: 'decimal', precision: 18, scale: 4, nullable: true }),
-    __metadata("design:type", Object)
-], OrderItemOrmEntity.prototype, "discountValue", void 0);
-__decorate([
     (0, typeorm_1.Column)({ type: 'int', default: 0 }),
     __metadata("design:type", Number)
 ], OrderItemOrmEntity.prototype, "quantity", void 0);
@@ -80,27 +64,6 @@ __decorate([
     (0, typeorm_1.Column)({ name: 'purchase_total', type: 'decimal', precision: 18, scale: 2, default: 0 }),
     __metadata("design:type", Number)
 ], OrderItemOrmEntity.prototype, "purchaseTotal", void 0);
-__decorate([
-    (0, typeorm_1.ManyToOne)(() => exchange_rate_orm_entity_1.ExchangeRateOrmEntity, { nullable: true, onDelete: 'SET NULL' }),
-    (0, typeorm_1.JoinColumn)({ name: 'shipping_exchange_rate_id' }),
-    __metadata("design:type", Object)
-], OrderItemOrmEntity.prototype, "shippingExchangeRate", void 0);
-__decorate([
-    (0, typeorm_1.Column)({ name: 'shipping_exchange_rate_value', type: 'decimal', precision: 18, scale: 6, nullable: true }),
-    __metadata("design:type", Object)
-], OrderItemOrmEntity.prototype, "shippingExchangeRateValue", void 0);
-__decorate([
-    (0, typeorm_1.Column)({ name: 'shipping_total', type: 'decimal', precision: 18, scale: 2, default: 0 }),
-    __metadata("design:type", Number)
-], OrderItemOrmEntity.prototype, "shippingTotal", void 0);
-__decorate([
-    (0, typeorm_1.Column)({ name: 'total_cost_before_discount', type: 'decimal', precision: 18, scale: 2, default: 0 }),
-    __metadata("design:type", Number)
-], OrderItemOrmEntity.prototype, "totalCostBeforeDiscount", void 0);
-__decorate([
-    (0, typeorm_1.Column)({ name: 'discount_amount', type: 'decimal', precision: 18, scale: 2, default: 0 }),
-    __metadata("design:type", Number)
-], OrderItemOrmEntity.prototype, "discountAmount", void 0);
 __decorate([
     (0, typeorm_1.Column)({ name: 'final_cost', type: 'decimal', precision: 18, scale: 2, default: 0 }),
     __metadata("design:type", Number)

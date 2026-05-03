@@ -70,8 +70,6 @@ class CreateFullOrderItemDto {
     Index = 0;
     productName;
     skus;
-    discountType;
-    discountValue;
     imageId;
     shippingPrice;
 }
@@ -95,19 +93,6 @@ __decorate([
     (0, class_transformer_1.Type)(() => CreateFullOrderItemSkuDto),
     __metadata("design:type", Array)
 ], CreateFullOrderItemDto.prototype, "skus", void 0);
-__decorate([
-    (0, swagger_1.ApiPropertyOptional)({ enum: ['PERCENT', 'FIX'], description: 'PERCENT = ສ່ວນຫຼຸດເປີເຊັນ, FIX = ສ່ວນຫຼຸດເງິນສົດ (in buy currency)' }),
-    (0, class_validator_1.IsOptional)(),
-    (0, class_validator_1.IsIn)(['PERCENT', 'FIX']),
-    __metadata("design:type", String)
-], CreateFullOrderItemDto.prototype, "discountType", void 0);
-__decorate([
-    (0, swagger_1.ApiPropertyOptional)({ example: 10 }),
-    (0, class_validator_1.IsOptional)(),
-    (0, class_validator_1.IsNumber)(),
-    (0, class_validator_1.Min)(0),
-    __metadata("design:type", Number)
-], CreateFullOrderItemDto.prototype, "discountValue", void 0);
 __decorate([
     (0, swagger_1.ApiPropertyOptional)({ description: 'Product image ID' }),
     (0, class_validator_1.IsOptional)(),
@@ -156,6 +141,8 @@ __decorate([
 class CreateFullCustomerOrderDto {
     customerId;
     items;
+    discountType;
+    discountValue;
 }
 exports.CreateFullCustomerOrderDto = CreateFullCustomerOrderDto;
 __decorate([
@@ -170,6 +157,19 @@ __decorate([
     (0, class_transformer_1.Type)(() => CreateFullCustomerOrderItemDto),
     __metadata("design:type", Array)
 ], CreateFullCustomerOrderDto.prototype, "items", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)({ enum: ['PERCENT', 'FIX'], description: 'PERCENT = ສ່ວນຫຼຸດເປີເຊັນ, FIX = ສ່ວນຫຼຸດເງິນສົດ (at customer order level)' }),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsIn)(['PERCENT', 'FIX']),
+    __metadata("design:type", String)
+], CreateFullCustomerOrderDto.prototype, "discountType", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)({ example: 10, description: 'Discount value (percentage or fixed amount)' }),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsNumber)(),
+    (0, class_validator_1.Min)(0),
+    __metadata("design:type", Number)
+], CreateFullCustomerOrderDto.prototype, "discountValue", void 0);
 class CreateFullOrderDto {
     orderCode;
     shippingExchangeRateId;

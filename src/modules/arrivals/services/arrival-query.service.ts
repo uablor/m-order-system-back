@@ -163,13 +163,11 @@ export class ArrivalQueryService {
         publicUrl: item.orderItem?.image?.publicUrl ?? null,
         purchasePrice: item.orderItem?.skus?.[0]?.purchasePrice ?? null,
         purchaseTotal: item.orderItem?.purchaseTotal ?? 0,
-        shippingPrice: item.orderItem?.shippingTotal && item.orderItem?.quantity > 0 
-          ? (item.orderItem.shippingTotal / item.orderItem.quantity) 
-          : 0,
-        totalCostBeforeDiscount: item.orderItem?.totalCostBeforeDiscount ?? 0,
-        discountType: item.orderItem?.discountType ?? null,
-        discountValue: item.orderItem?.discountValue ?? null,
-        discountAmount: item.orderItem?.discountAmount ?? 0,
+        shippingPrice: 0,
+        totalCostBeforeDiscount: item.orderItem?.purchaseTotal ?? 0,
+        discountType: null,
+        discountValue: null,
+        discountAmount: 0,
         finalCost: item.orderItem?.finalCost ?? 0,
         sellingPriceForeign: item.orderItem?.skus?.[0]?.sellingPriceForeign ?? null,
         sellingTotal: item.orderItem?.sellingTotal ?? 0,

@@ -231,8 +231,8 @@ export class OrderCommandService {
           totalProfit += Number(sku.profit);
         }
 
-        // Shipping at ITEM level
-        const shippingPrice = itemDto.shippingPrice ?? 0;
+        // Shipping at ORDER level (moved from item level)
+        const shippingPrice = dto.shippingPrice ?? 0;
         const totalShippingCost = shippingPrice;
 
         // คำนวณ totalCostBeforeDiscount โดย convert ไป target currency แล้วค่อยรวมกัน

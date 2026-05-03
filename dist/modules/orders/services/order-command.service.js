@@ -68,7 +68,7 @@ let OrderCommandService = class OrderCommandService {
                 orderCode: dto.orderCode,
                 orderDate,
                 arrivalStatus: dto.arrivalStatus ?? 'NOT_ARRIVED',
-                totalShippingCost: shippingCost,
+                totalShipping: shippingCost,
                 totalPurchaseCost: ZERO,
                 totalCostBeforeDiscount: ZERO,
                 totalDiscount: ZERO,
@@ -95,7 +95,7 @@ let OrderCommandService = class OrderCommandService {
             if (dto.notifiedAt !== undefined)
                 updateData.notifiedAt = dto.notifiedAt ? new Date(dto.notifiedAt) : null;
             if (dto.totalShippingCost !== undefined)
-                updateData.totalShippingCost = (dto.totalShippingCost);
+                updateData.totalShipping = (dto.totalShippingCost);
             await this.orderRepository.update(id, updateData, manager);
         });
     }
@@ -140,7 +140,7 @@ let OrderCommandService = class OrderCommandService {
                 exchangeRateSellValue: Number(sellRateEntity.rate),
                 arrivalStatus: enum_entities_1.ArrivalStatusEnum.NOT_ARRIVED,
                 totalPurchaseCost: ZERO,
-                totalShippingCost: ZERO,
+                totalShipping: ZERO,
                 totalCostBeforeDiscount: ZERO,
                 totalDiscount: ZERO,
                 totalFinalCost: ZERO,
@@ -156,15 +156,12 @@ let OrderCommandService = class OrderCommandService {
                     order,
                     productName: itemDto.productName,
                     imageId: itemDto.imageId ?? null,
-                    discountType: itemDto.discountType ?? null,
-                    discountValue: itemDto.discountValue ?? null,
                     shippingExchangeRate: shippingExchangeRateEntity,
                     shippingExchangeRateValue: shippingExchangeRateEntity ? Number(shippingExchangeRateEntity.rate) : null,
                     quantity: 0,
                     purchaseTotal: 0,
                     shippingTotal: 0,
                     totalCostBeforeDiscount: 0,
-                    discountAmount: 0,
                     finalCost: 0,
                     sellingTotal: 0,
                     profit: 0,
@@ -207,23 +204,14 @@ let OrderCommandService = class OrderCommandService {
                     totalProfit += Number(sku.profit);
                 }
                 const shippingPrice = itemDto.shippingPrice ?? 0;
-                const totalShippingCost = shippingPrice * totalQuantity;
+                const totalShippingCost = shippingPrice;
                 const shippingTotalTargetCurrency = shippingExchangeRateEntity
                     ? (0, convert_to_target_currency_utils_1.convertToTargetCurrency)(totalShippingCost, shippingExchangeRateEntity)
                     : totalShippingCost.toString();
                 const purchaseTotalTargetCurrency = (0, convert_to_target_currency_utils_1.convertToTargetCurrency)(totalPurchaseCost, buyRateEntity);
                 const totalCostBeforeDiscountTargetCurrency = Number(purchaseTotalTargetCurrency) + Number(shippingTotalTargetCurrency);
                 const totalCostBeforeDiscount = (0, convert_to_target_currency_utils_1.convertToBaseCurrency)(totalCostBeforeDiscountTargetCurrency, buyRateEntity);
-                let discountAmount = 0;
-                if (itemEntity.discountType && itemEntity.discountValue != null) {
-                    if (itemEntity.discountType === 'PERCENT') {
-                        discountAmount = totalCostBeforeDiscount * (itemEntity.discountValue / 100);
-                    }
-                    else {
-                        discountAmount = itemEntity.discountValue;
-                    }
-                }
-                const finalCost = totalCostBeforeDiscount - discountAmount;
+                const finalCost = totalCostBeforeDiscount;
                 const sellingTotalTargetCurrency = (0, convert_to_target_currency_utils_1.convertToTargetCurrency)(totalSellingAmount, sellRateEntity);
                 const finalCostTargetCurrency = (0, convert_to_target_currency_utils_1.convertToTargetCurrency)(finalCost, buyRateEntity);
                 const itemProfitTargetCurrency = Number(sellingTotalTargetCurrency) - Number(finalCostTargetCurrency);
@@ -231,18 +219,12 @@ let OrderCommandService = class OrderCommandService {
                 await this.orderItemRepository.update(itemEntity.id, {
                     quantity: totalQuantity,
                     purchaseTotal: totalPurchaseCost,
-                    shippingTotal: totalShippingCost,
-                    totalCostBeforeDiscount: totalCostBeforeDiscount,
-                    discountAmount: discountAmount,
                     finalCost: finalCost,
                     sellingTotal: totalSellingAmount,
                     profit: itemProfit,
                 }, manager);
                 itemEntity.quantity = totalQuantity;
                 itemEntity.purchaseTotal = totalPurchaseCost;
-                itemEntity.shippingTotal = totalShippingCost;
-                itemEntity.totalCostBeforeDiscount = totalCostBeforeDiscount;
-                itemEntity.discountAmount = discountAmount;
                 itemEntity.finalCost = finalCost;
                 itemEntity.sellingTotal = totalSellingAmount;
                 itemEntity.profit = itemProfit;
@@ -305,6 +287,15 @@ let OrderCommandService = class OrderCommandService {
                 const totalPaid = 0;
                 const remaining = totalSellingAmount - totalPaid;
                 const paymentStatus = calcPaymentStatus(totalSellingAmount, totalPaid);
+                let discountAmount = 0;
+                if (coDto.discountType && coDto.discountValue != null) {
+                    if (coDto.discountType === 'PERCENT') {
+                        discountAmount = totalSellingAmount * (coDto.discountValue / 100);
+                    }
+                    else {
+                        discountAmount = coDto.discountValue;
+                    }
+                }
                 const customerOrder = await this.customerOrderRepository.create({
                     order,
                     customer,
@@ -312,6 +303,9 @@ let OrderCommandService = class OrderCommandService {
                     totalPaid: totalPaid,
                     remainingAmount: remaining,
                     paymentStatus,
+                    discountType: coDto.discountType ?? null,
+                    discountValue: coDto.discountValue ?? null,
+                    discountAmount: discountAmount,
                 }, manager);
                 customerOrders.push(customerOrder);
                 for (const coItem of coItemsToCreate) {
@@ -344,22 +338,23 @@ let OrderCommandService = class OrderCommandService {
             let totalProfit = 0;
             for (const oi of orderItems) {
                 totalPurchaseCost += Number(oi.purchaseTotal);
-                totalShippingCost += Number(oi.shippingTotal);
-                totalCostBeforeDiscount += Number(oi.totalCostBeforeDiscount);
-                totalDiscount += Number(oi.discountAmount);
                 totalFinalCost += Number(oi.finalCost);
                 totalSellingAmount += Number(oi.sellingTotal);
                 totalProfit += Number(oi.profit);
             }
+            totalShippingCost = 0;
+            totalCostBeforeDiscount = totalPurchaseCost + totalShippingCost;
+            totalDiscount = 0;
             let paidAmount = 0;
             for (const co of customerOrders) {
                 paidAmount += Number(co.totalPaid);
+                totalDiscount += Number(co.discountAmount);
             }
             const remainingAmount = totalSellingAmount - paidAmount;
             const orderPaymentStatus = calcPaymentStatus(totalSellingAmount, paidAmount);
             await this.orderRepository.update(order.id, {
                 totalPurchaseCost: totalPurchaseCost,
-                totalShippingCost: totalShippingCost,
+                totalShipping: totalShippingCost,
                 totalCostBeforeDiscount: totalCostBeforeDiscount,
                 totalDiscount: totalDiscount,
                 totalFinalCost: totalFinalCost,

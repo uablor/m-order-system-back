@@ -11,8 +11,6 @@ export declare class CreateFullOrderItemDto {
     Index: number;
     productName: string;
     skus: CreateFullOrderItemSkuDto[];
-    discountType?: 'PERCENT' | 'FIX';
-    discountValue?: number;
     imageId?: number;
     shippingPrice?: number;
 }
@@ -25,6 +23,8 @@ export declare class CreateFullCustomerOrderItemDto {
 export declare class CreateFullCustomerOrderDto {
     customerId: number;
     items: CreateFullCustomerOrderItemDto[];
+    discountType?: 'PERCENT' | 'FIX';
+    discountValue?: number;
 }
 export declare class CreateFullOrderDto {
     orderCode: string;

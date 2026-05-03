@@ -31,6 +31,9 @@ export declare class CustomerOrderResponseDto {
     targetCurrencyPaidAmount: string;
     targetCurrencyRemainingAmount: string;
     paymentStatus: string;
+    discountType: string | null;
+    discountValue: number | null;
+    discountAmount: string | null;
     customerOrderItems: CustomerOrderItemResponseDto[];
     createdAt: Date;
     updatedAt: Date;

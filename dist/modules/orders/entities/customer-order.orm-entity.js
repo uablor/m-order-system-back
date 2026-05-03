@@ -24,6 +24,9 @@ let CustomerOrderOrmEntity = class CustomerOrderOrmEntity extends base_orm_entit
     totalPaid;
     remainingAmount;
     paymentStatus;
+    discountType;
+    discountValue;
+    discountAmount;
     customerOrderItems;
     notification;
 };
@@ -54,6 +57,18 @@ __decorate([
     (0, typeorm_1.Column)({ name: 'payment_status', type: 'enum', enum: payment_enum_1.PaymentStatusEnum, default: payment_enum_1.PaymentStatusEnum.NOT_CREATED }),
     __metadata("design:type", String)
 ], CustomerOrderOrmEntity.prototype, "paymentStatus", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ name: 'discount_type', type: 'varchar', length: 10, nullable: true }),
+    __metadata("design:type", Object)
+], CustomerOrderOrmEntity.prototype, "discountType", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ name: 'discount_value', type: 'decimal', precision: 18, scale: 4, nullable: true }),
+    __metadata("design:type", Object)
+], CustomerOrderOrmEntity.prototype, "discountValue", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ name: 'discount_amount', type: 'decimal', precision: 18, scale: 2, default: 0 }),
+    __metadata("design:type", Number)
+], CustomerOrderOrmEntity.prototype, "discountAmount", void 0);
 __decorate([
     (0, typeorm_1.OneToMany)(() => customer_order_item_orm_entity_1.CustomerOrderItemOrmEntity, (coi) => coi.customerOrder),
     __metadata("design:type", Array)

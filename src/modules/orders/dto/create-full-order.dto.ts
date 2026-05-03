@@ -71,12 +71,6 @@ export class CreateFullOrderItemDto {
   @IsOptional()
   @IsNumber()
   imageId?: number;
-
-  @ApiPropertyOptional({ description: 'Shipping price per unit in foreign currency' })
-  @IsOptional()
-  @IsNumber()
-  @Min(0)
-  shippingPrice?: number;
 }
 
 export class CreateFullCustomerOrderItemDto {
@@ -137,6 +131,12 @@ export class CreateFullOrderDto {
   @IsNumber()
   @Min(1)
   shippingExchangeRateId?: number;
+
+  @ApiPropertyOptional({ description: 'Shipping price per unit in foreign currency' })
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  shippingPrice?: number;
 
   @ApiProperty({ type: [CreateFullOrderItemDto] })
   @IsArray()

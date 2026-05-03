@@ -170,6 +170,9 @@ GROUP BY
       targetCurrencyRemainingAmount: convertToTargetCurrency(entity.remainingAmount, entity.order?.exchangeRateSell),
       paymentStatus: entity.paymentStatus,
       hasPendingPayment: entity.paymentStatus === 'UNPAID',
+      discountType: entity.discountType,
+      discountValue: entity.discountValue,
+      discountAmount: entity.discountAmount,
       customerOrderItems: entity.customerOrderItems?.map(item => {
         console.log('=== BACKEND: Processing CustomerOrderItem ===');
         console.log('item.id:', item.id);
