@@ -2,6 +2,7 @@ import {
   BadRequestException,
   Injectable,
   NotFoundException,
+  
 } from '@nestjs/common';
 import { TransactionService } from '../../../common/transaction/transaction.service';
 import { ArrivalRepository } from '../repositories/arrival.repository';
